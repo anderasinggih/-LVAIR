@@ -1,13 +1,10 @@
 import { getApiBaseUrl } from './api.js';
 
-let lastBlockCount = 0;
+let seenLogIds = new Set();
 
-function appendLog(tag, tagClass, text) {
+function appendLog(timeStr, tag, tagClass, text) {
   const container = document.getElementById('log-stream-container');
   if (!container) return;
-
-  const now = new Date();
-  const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
 
   const row = document.createElement('div');
   row.className = 'log-row';
@@ -29,10 +26,11 @@ async function fetchNodeTelemetry() {
   const apiUrl = getApiBaseUrl();
 
   try {
-    const [resStatus, resConfig, resBlocks] = await Promise.all([
+    const [resStatus, resConfig, resBlocks, resLogs] = await Promise.all([
       fetch(`${apiUrl}/api/node/status`).catch(() => null),
       fetch(`${apiUrl}/api/config`).catch(() => null),
-      fetch(`${apiUrl}/api/blocks`).catch(() => null)
+      fetch(`${apiUrl}/api/blocks`).catch(() => null),
+      fetch(`${apiUrl}/api/telemetry/logs`).catch(() => null)
     ]);
 
     if (resStatus && resStatus.ok) {
@@ -54,11 +52,19 @@ async function fetchNodeTelemetry() {
         elBadge.innerText = 'Node Online';
         elBadge.className = 'badge badge-success';
       }
+    }
 
-      if (status.blockHeight > lastBlockCount && lastBlockCount > 0) {
-        appendLog('NEW_BLOCK', 'tag-block', `Consensus finalized Block #${status.blockHeight} (Merkle: ${(status.merkleRoot || '').substring(0, 16)}...)`);
+    if (resLogs && resLogs.ok) {
+      const logs = await resLogs.json();
+      if (Array.isArray(logs)) {
+        // Render in chronological order to add missing
+        const newLogs = logs.filter(l => !seenLogIds.has(l.id));
+        newLogs.reverse().forEach(l => {
+          seenLogIds.add(l.id);
+          const time = new Date(l.timestamp).toTimeString().split(' ')[0];
+          appendLog(time, l.type, l.tag, l.message);
+        });
       }
-      lastBlockCount = status.blockHeight;
     }
 
     if (resBlocks && resBlocks.ok) {
@@ -104,57 +110,10 @@ function renderBlocksTable(blocks) {
   }).join('');
 }
 
-function connectP2PWebSocket() {
-  const apiUrl = getApiBaseUrl();
-  const wsUrl = apiUrl.replace(/^http/, 'ws').replace(':3001', ':6001');
-
-  try {
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      appendLog('P2P_OPEN', 'tag-peer', `Connected to P2P Broadcast Network (${wsUrl})`);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === 'NEW_BLOCK') {
-          appendLog('BLOCK_BROADCAST', 'tag-block', `Gossip received Block #${msg.block.index} (${msg.block.transactions?.length || 0} txs)`);
-          fetchNodeTelemetry();
-        } else if (msg.type === 'AIRDROP_CLAIMED') {
-          appendLog('CLAIM_BROADCAST', 'tag-claim', `Wallet ${msg.userAddress.substring(0, 8)}... claimed airdrop on-chain`);
-          fetchNodeTelemetry();
-        } else if (msg.type === 'CONFIG_UPDATED') {
-          appendLog('CONFIG_BROADCAST', 'tag-sync', `Airdrop quota updated to ${msg.config.airdropClaimAmount} LVAIR`);
-          fetchNodeTelemetry();
-        } else if (msg.type === 'WHITELIST_RESET') {
-          appendLog('RESET_BROADCAST', 'tag-sync', `Airdrop whitelist was reset`);
-          fetchNodeTelemetry();
-        } else if (msg.type === 'SWAP_EXECUTED') {
-          appendLog('SWAP_BROADCAST', 'tag-swap', `Swap settled! New Price: $${(msg.newPrice || 0.25).toFixed(4)}`);
-          fetchNodeTelemetry();
-        }
-      } catch (e) {}
-    };
-
-    ws.onclose = () => {
-      appendLog('P2P_RECONNECT', 'tag-sync', 'P2P Stream disconnected. Reconnecting in 3s...');
-      setTimeout(connectP2PWebSocket, 3000);
-    };
-
-    ws.onerror = () => {
-      ws.close();
-    };
-  } catch (e) {
-    setTimeout(connectP2PWebSocket, 3000);
-  }
-}
-
 window.addEventListener('DOMContentLoaded', () => {
-  appendLog('MONITOR_INIT', 'tag-sync', 'Observer dashboard mounted. Starting telemetry polling...');
+  const nowTime = new Date().toTimeString().split(' ')[0];
+  appendLog(nowTime, 'MONITOR_INIT', 'tag-sync', 'Telemetry stream connected directly to Node RPC Server.');
+  
   fetchNodeTelemetry();
-  connectP2PWebSocket();
-
-  // 1-second interval telemetry refresh
   setInterval(fetchNodeTelemetry, 1000);
 });

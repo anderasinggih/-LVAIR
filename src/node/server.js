@@ -21,6 +21,22 @@ let protocolConfig = {
   ownerAddress: null
 };
 
+// In-memory ring buffer for live telemetry logs (HTTP fallback)
+const broadcastLogs = [];
+function logEvent(type, tag, message, data = {}) {
+  const item = {
+    id: Date.now() + Math.random(),
+    timestamp: Date.now(),
+    type,
+    tag,
+    message,
+    data
+  };
+  broadcastLogs.unshift(item);
+  if (broadcastLogs.length > 200) broadcastLogs.pop();
+  return item;
+}
+
 async function startFullNode() {
   console.log('===================================================');
   console.log('  LVAIR PROTOCOL FULL-NODE (L1 ENGINE)');
@@ -71,6 +87,10 @@ async function startFullNode() {
     });
   });
 
+  app.get('/api/telemetry/logs', (req, res) => {
+    res.json(broadcastLogs);
+  });
+
   app.post('/api/config/airdrop', (req, res) => {
     try {
       const { amount } = req.body;
@@ -81,6 +101,7 @@ async function startFullNode() {
       blockchain.airdropClaimAmount = parsed;
       blockchain.saveState();
 
+      logEvent('CONFIG_UPDATED', 'tag-sync', `Airdrop quota updated to ${parsed} LVAIR`);
       broadcast({ type: 'CONFIG_UPDATED', config: protocolConfig });
 
       res.json({ success: true, airdropClaimAmount: parsed });
@@ -94,6 +115,7 @@ async function startFullNode() {
       blockchain.claimedAddresses.clear();
       blockchain.saveState();
 
+      logEvent('WHITELIST_RESET', 'tag-sync', 'Airdrop whitelist was reset');
       broadcast({ type: 'WHITELIST_RESET' });
 
       res.json({ success: true, message: 'Airdrop whitelist reset successfully' });
@@ -112,6 +134,7 @@ async function startFullNode() {
       ammPool.lvairReserve = airNum;
       ammPool.usdtReserve = usdtNum;
 
+      logEvent('RESERVES_UPDATED', 'tag-swap', `Pool reserves rebalanced: ${airNum.toLocaleString()} LVAIR / $${usdtNum.toLocaleString()} USDT`);
       broadcast({ type: 'RESERVES_UPDATED', reserves: { lvair: airNum, usdt: usdtNum, price: ammPool.getCurrentPrice() } });
 
       res.json({ success: true, reserves: { lvair: airNum, usdt: usdtNum, price: ammPool.getCurrentPrice() } });
@@ -165,6 +188,7 @@ async function startFullNode() {
       const result = await blockchain.claimAirdrop(userAddress);
       await storage.appendRawBlock(result.block);
 
+      logEvent('AIRDROP_CLAIMED', 'tag-claim', `Wallet ${userAddress.substring(0, 8)}... claimed airdrop on-chain`, { block: result.block.index });
       broadcast({ type: 'AIRDROP_CLAIMED', userAddress, block: result.block });
 
       res.json({
@@ -188,6 +212,7 @@ async function startFullNode() {
       const block = await blockchain.minePendingTransactions(from);
       await storage.appendRawBlock(block);
 
+      logEvent('TRANSFER_EXECUTED', 'tag-block', `Transfer ${amount} ${token} from ${from.substring(0,6)}... to ${to.substring(0,6)}...`, { block: block.index });
       broadcast({ type: 'NEW_BLOCK', block });
 
       res.json({ success: true, txHash: tx.txHash, blockIndex: block.index });
@@ -202,6 +227,7 @@ async function startFullNode() {
       const result = await ammPool.executeSwap(userAddress, inputAmount, inputToken);
       await storage.appendRawBlock(result.block);
 
+      logEvent('SWAP_EXECUTED', 'tag-swap', `Swap settled: ${inputAmount} ${inputToken} by ${userAddress.substring(0,6)}... New Price: $${result.newPrice.toFixed(4)}`, { block: result.block.index });
       broadcast({ type: 'SWAP_EXECUTED', trade: result.trade, newPrice: result.newPrice });
 
       res.json({ success: true, result });
@@ -212,6 +238,7 @@ async function startFullNode() {
 
   app.listen(HTTP_PORT, () => {
     console.log(`[RPC] HTTP RPC Server listening on http://0.0.0.0:${HTTP_PORT}`);
+    logEvent('NODE_BOOT', 'tag-sync', `LVAIR Core Node booted on port ${HTTP_PORT}`);
   });
 
   const sockets = [];
@@ -219,6 +246,7 @@ async function startFullNode() {
 
   p2pServer.on('connection', (ws) => {
     sockets.push(ws);
+    logEvent('PEER_CONNECTED', 'tag-peer', `New node peer connected. Total peers: ${sockets.length}`);
     console.log(`[P2P] Peer connected. Total active peers: ${sockets.length}`);
 
     ws.send(JSON.stringify({ type: 'CHAIN_SYNC', chain: blockchain.chain }));
@@ -237,6 +265,7 @@ async function startFullNode() {
     ws.on('close', () => {
       const idx = sockets.indexOf(ws);
       if (idx !== -1) sockets.splice(idx, 1);
+      logEvent('PEER_DISCONNECTED', 'tag-peer', `Peer disconnected. Remaining peers: ${sockets.length}`);
       console.log(`[P2P] Peer disconnected. Remaining peers: ${sockets.length}`);
     });
   });
