@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Blockchain } from '../core/blockchain.js';
-import { AMMPool } from '../core/trading.js';
+import { AMMPool } from '../core/amm.js';
 import { NodeStorageEngine } from './storage.js';
 import { Transaction } from '../core/block.js';
 
@@ -20,16 +20,23 @@ async function startFullNode() {
   console.log('  LVAIR PROTOCOL FULL-NODE (L1 ENGINE)');
   console.log('===================================================');
 
-  // 1. LevelDB & raw .dat storage relative to project root
   const storage = new NodeStorageEngine(DATA_DIR);
   console.log(`Database storage initialized at: ${DATA_DIR}`);
 
-  // 2. Initialize Blockchain Core
   const blockchain = new Blockchain(2);
   
   const existingBlocks = await storage.readAllRawBlocks();
   if (existingBlocks.length > 0) {
     blockchain.chain = existingBlocks;
+    existingBlocks.forEach(b => {
+      if (b.transactions) {
+        b.transactions.forEach(t => {
+          if (t.type === 'AIRDROP_CLAIM' && t.toAddress) {
+            blockchain.claimedAddresses.add(t.toAddress);
+          }
+        });
+      }
+    });
     console.log(`Loaded ${existingBlocks.length} blocks from physical LevelDB & blk00000.dat ledger`);
   } else {
     await blockchain.init();
@@ -39,12 +46,10 @@ async function startFullNode() {
 
   const ammPool = new AMMPool(blockchain, 100000, 25000);
 
-  // 3. HTTP RPC Server (JSON-RPC / REST)
   const app = express();
   app.use(cors());
   app.use(express.json());
 
-  // RPC Endpoints
   app.get('/api/node/status', async (req, res) => {
     res.json({
       network: 'LVAIR Mainnet L1',
@@ -58,7 +63,8 @@ async function startFullNode() {
       reserves: {
         lvair: ammPool.lvairReserve,
         usdt: ammPool.usdtReserve,
-      }
+      },
+      claimedWallets: blockchain.claimedAddresses.size
     });
   });
 
@@ -68,11 +74,36 @@ async function startFullNode() {
 
   app.get('/api/balance/:address', (req, res) => {
     const address = req.params.address;
+    const isClaimed = Array.from(blockchain.claimedAddresses).some(
+      addr => (addr || '').toLowerCase() === (address || '').toLowerCase()
+    );
     res.json({
       address,
       lvair: blockchain.getBalanceOfAddress(address, 'LVAIR'),
       usdt: blockchain.getBalanceOfAddress(address, 'USDT'),
+      hasClaimedAirdrop: isClaimed
     });
+  });
+
+  app.post('/api/airdrop/claim', async (req, res) => {
+    try {
+      const { userAddress } = req.body;
+      if (!userAddress) throw new Error('userAddress is required');
+
+      const result = await blockchain.claimAirdrop(userAddress);
+      await storage.appendRawBlock(result.block);
+
+      broadcast({ type: 'AIRDROP_CLAIMED', userAddress, block: result.block });
+
+      res.json({
+        success: true,
+        txHash: result.tx.txHash,
+        blockIndex: result.block.index,
+        balance: blockchain.getBalanceOfAddress(userAddress, 'LVAIR')
+      });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
   });
 
   app.post('/api/tx/send', async (req, res) => {
@@ -82,7 +113,6 @@ async function startFullNode() {
       tx.txHash = await tx.calculateHash();
       await blockchain.addTransaction(tx);
       
-      // Auto-mine into block
       const block = await blockchain.minePendingTransactions(from);
       await storage.appendRawBlock(block);
 
@@ -112,7 +142,6 @@ async function startFullNode() {
     console.log(`[RPC] HTTP RPC Server listening on http://0.0.0.0:${HTTP_PORT}`);
   });
 
-  // 4. P2P Gossip WebSocket Network
   const sockets = [];
   const p2pServer = new WebSocketServer({ port: P2P_PORT });
 
@@ -120,7 +149,6 @@ async function startFullNode() {
     sockets.push(ws);
     console.log(`[P2P] Peer connected. Total active peers: ${sockets.length}`);
 
-    // Send full chain to newly connected peer
     ws.send(JSON.stringify({ type: 'CHAIN_SYNC', chain: blockchain.chain }));
 
     ws.on('message', async (message) => {

@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "node": "node src/node/server.js",
     "test:core": "node src/core/test-runner.js"
   },
   "dependencies": {
