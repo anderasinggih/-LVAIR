@@ -6,7 +6,7 @@ export class TokenSecurityAuditor {
     this.ammPool = ammPool;
   }
 
-  auditToken(tokenSymbol = 'AIR') {
+  auditToken(tokenSymbol = 'LVAIR') {
     const checks = [];
     let riskScore = 0; // 0 = Safe, 100 = High Risk
 
@@ -16,7 +16,7 @@ export class TokenSecurityAuditor {
       name: 'Genesis Supply Mint Cap',
       passed: true,
       severity: 'LOW',
-      description: 'Total initial genesis cap hardcoded to 10,000,000 $AIR with strict block mining emission.'
+      description: 'Total initial genesis cap hardcoded to 10,000,000 $LVAIR with strict block mining emission.'
     });
 
     // 2. Liquidity Lock & Reserve Ratio
@@ -28,7 +28,7 @@ export class TokenSecurityAuditor {
         name: 'AMM Liquidity Pool Verification',
         passed: true,
         severity: 'LOW',
-        description: `Verified pool reserves: ${airReserve.toLocaleString()} AIR / ${usdtReserve.toLocaleString()} USDT`
+        description: `Verified pool reserves: ${airReserve.toLocaleString()} LVAIR / ${usdtReserve.toLocaleString()} USDT`
       });
     } else {
       checks.push({
@@ -42,7 +42,7 @@ export class TokenSecurityAuditor {
     }
 
     // 3. Honeypot & Sell Tax Verification
-    const quoteSell = this.ammPool.getQuote(100, 'AIR');
+    const quoteSell = this.ammPool.getQuote(100, 'LVAIR');
     if (quoteSell.outputAmount > 0) {
       checks.push({
         id: 'HONEYPOT_CHECK',

@@ -1,6 +1,17 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import crypto from 'crypto';
 
 const RECONNECT_MS = 5000;
+const HANDSHAKE_TIMEOUT_MS = 10000;
+const MAX_MSG_BYTES = 1024 * 1024;
+const RATE_WINDOW_MS = 1000;
+const RATE_MAX_MSGS = 20;
+
+const NETWORK_SECRET = process.env.P2P_SECRET || 'lvair-mainnet-l1-gossip-secret-2026';
+
+function hmacChallenge(secret, nonce) {
+  return crypto.createHmac('sha256', secret).update(nonce).digest('hex');
+}
 
 export class P2PNetwork {
   constructor({ p2pPort, advertisedUrl = '', seedNodes = [], onTx, onBlock, onChainReceived, getChain, log = () => {} }) {
@@ -52,9 +63,46 @@ export class P2PNetwork {
   }
 
   _attach(ws, isInbound) {
-    this.sockets.add(ws);
-    ws.on('message', raw => this._onMessage(ws, raw));
+    const nonce = crypto.randomBytes(16).toString('hex');
+    ws._p2pAuth = { authenticated: false, nonce, ts: Date.now() };
+    ws._p2pRate = { window: Date.now(), count: 0 };
+
+    this._send(ws, { type: 'challenge', nonce });
+
+    const timer = setTimeout(() => {
+      if (!ws._p2pAuth.authenticated) {
+        this.log('P2P', 'Handshake timeout — closing unauthenticated peer');
+        ws.close();
+      }
+    }, HANDSHAKE_TIMEOUT_MS);
+
+    ws._p2pAuthTimer = timer;
+
+    ws.on('message', raw => {
+      if (raw.length > MAX_MSG_BYTES) {
+        this.log('P2P', 'Message too large (' + raw.length + ' bytes) — closing');
+        ws.close();
+        return;
+      }
+
+      const now = Date.now();
+      const rate = ws._p2pRate;
+      if (now - rate.window > RATE_WINDOW_MS) {
+        rate.window = now;
+        rate.count = 0;
+      }
+      rate.count++;
+      if (rate.count > RATE_MAX_MSGS) {
+        this.log('P2P', 'Rate limit exceeded — closing peer');
+        ws.close();
+        return;
+      }
+
+      this._onMessage(ws, raw);
+    });
+
     ws.on('close', () => {
+      if (ws._p2pAuthTimer) clearTimeout(ws._p2pAuthTimer);
       const url = this.wsNodeUrl.get(ws);
       if (url && this.nodeConnections.get(url) === ws) this.nodeConnections.delete(url);
       this.wsNodeUrl.delete(ws);
@@ -65,20 +113,38 @@ export class P2PNetwork {
         setTimeout(() => this._connectTo(url), RECONNECT_MS);
       }
     });
-
-    this._send(ws, {
-      type: 'hello',
-      network: 'LVAIR Mainnet L1',
-      height: this.getChain().length,
-      latestHash: this.tipHash(),
-      node: this.advertisedUrl
-    });
-    this._send(ws, { type: 'peers', list: Array.from(this.known) });
   }
 
   _onMessage(ws, raw) {
     let msg;
     try { msg = JSON.parse(raw); } catch (e) { return; }
+
+    if (!ws._p2pAuth.authenticated) {
+      if (msg.type === 'challenge_response') {
+        const expected = hmacChallenge(NETWORK_SECRET, ws._p2pAuth.nonce);
+        if (msg.answer === expected) {
+          ws._p2pAuth.authenticated = true;
+          if (ws._p2pAuthTimer) clearTimeout(ws._p2pAuthTimer);
+          this.log('P2P', 'Peer authenticated');
+          this.sockets.add(ws);
+          this._send(ws, {
+            type: 'hello',
+            network: 'LVAIR Mainnet L1',
+            height: this.getChain().length,
+            latestHash: this.tipHash(),
+            node: this.advertisedUrl
+          });
+          this._send(ws, { type: 'peers', list: Array.from(this.known) });
+        } else {
+          this.log('P2P', 'Authentication failed — closing');
+          ws.close();
+        }
+      } else {
+        this.log('P2P', 'Expected challenge_response, got ' + msg.type + ' — closing');
+        ws.close();
+      }
+      return;
+    }
 
     this.log('P2P', 'Received message type: ' + msg.type);
 
@@ -153,12 +219,44 @@ export class P2PNetwork {
     }
     this.outbound.set(url, ws);
     ws.on('open', () => {
-      this.log('P2P', 'Connected to peer ' + url);
-      this._attach(ws, false);
+      this.log('P2P', 'Connected to peer ' + url + ' — awaiting challenge');
+      ws._p2pAuth = { authenticated: false };
+      ws._p2pRate = { window: Date.now(), count: 0 };
+
+      ws.on('message', raw => {
+        if (raw.length > MAX_MSG_BYTES) { ws.close(); return; }
+
+        const now = Date.now();
+        const rate = ws._p2pRate;
+        if (now - rate.window > RATE_WINDOW_MS) { rate.window = now; rate.count = 0; }
+        rate.count++;
+        if (rate.count > RATE_MAX_MSGS) { ws.close(); return; }
+
+        let msg;
+        try { msg = JSON.parse(raw); } catch (e) { return; }
+
+        if (!ws._p2pAuth.authenticated) {
+          if (msg.type === 'challenge') {
+            const answer = hmacChallenge(NETWORK_SECRET, msg.nonce);
+            ws._p2pAuth.authenticated = true;
+            ws.send(JSON.stringify({ type: 'challenge_response', answer }));
+          }
+          return;
+        }
+
+        this._onMessage(ws, raw);
+      });
+
+      ws.on('close', () => {
+        this.outbound.delete(url);
+        if (this.known.has(url) && !this.nodeConnections.has(url)) {
+          setTimeout(() => this._connectTo(url), RECONNECT_MS);
+        }
+      });
+
+      ws.on('error', () => ws.close());
     });
-    ws.on('error', () => {
-      ws.close();
-    });
+    ws.on('error', () => ws.close());
     ws.on('close', () => {
       this.outbound.delete(url);
       if (this.known.has(url) && !this.nodeConnections.has(url)) {
