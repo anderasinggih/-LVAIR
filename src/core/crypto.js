@@ -90,11 +90,40 @@ export class CryptoEngine {
   }
 
   static async generateKeyPair() {
-    const chars = '0123456789abcdef';
-    let rand = '';
-    for (let i = 0; i < 64; i++) rand += chars[Math.floor(Math.random() * chars.length)];
-    
-    const addressHash = await this.sha256(rand + Date.now());
+    if (typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.subtle) {
+      try {
+        const keyPair = await globalThis.crypto.subtle.generateKey(
+          { name: 'ECDSA', namedCurve: 'P-256' },
+          true,
+          ['sign', 'verify']
+        );
+        const pubRaw = await globalThis.crypto.subtle.exportKey('raw', keyPair.publicKey);
+        const pubHex = Array.from(new Uint8Array(pubRaw)).map(b => b.toString(16).padStart(2, '0')).join('');
+        const privRaw = await globalThis.crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+        const privHex = Array.from(new Uint8Array(privRaw)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        const addressHash = await this.sha256(pubHex);
+        const address = `0x${addressHash.substring(0, 40)}`;
+
+        return {
+          publicKey: pubHex,
+          privateKey: privHex,
+          address,
+        };
+      } catch (e) {
+        console.warn('[crypto] subtle.generateKey failed, falling back:', e.message);
+      }
+    }
+
+    const randBytes = new Uint8Array(32);
+    if (typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.getRandomValues) {
+      globalThis.crypto.getRandomValues(randBytes);
+    } else {
+      for (let i = 0; i < 32; i++) randBytes[i] = Math.floor(Math.random() * 256);
+    }
+    const rand = Array.from(randBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const addressHash = await this.sha256(rand);
     const address = `0x${addressHash.substring(0, 40)}`;
 
     return {
