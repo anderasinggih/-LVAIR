@@ -458,16 +458,141 @@
         </div>
       </div>
 
-      <!-- dApp Footer (Professional Web3 Links) -->
-      <footer style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 32px 0; margin-top: 50px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; color: var(--text-tertiary); font-size: 0.82rem;">
+    <!-- ========================================================================= -->
+    <!-- PAGE 3: CRYPTOGRAPHICALLY PROTECTED ADMIN PORTAL                          -->
+    <!-- ========================================================================= -->
+    <div id="page-admin" class="app-wrapper" style="display: none; position: relative; z-index: 1;">
+      
+      <!-- Admin Header -->
+      <header class="app-header">
+        <div class="brand-section" style="cursor: pointer;" id="admin-brand-home-link" title="Back to Homepage">
+          <div class="logo-badge" style="background-color: #ef4444;">ADMIN</div>
+          <div class="brand-title">Protocol Control Center</div>
+          <span class="badge badge-neutral" style="font-size: 0.7rem;">← Home</span>
+        </div>
+
+        <div style="font-size: 0.8rem; color: var(--text-tertiary);">
+          Owner: <span id="admin-owner-display" style="font-family: var(--font-mono); color: #ffffff;">Checking...</span>
+        </div>
+      </header>
+
+      <!-- Authentication Barrier Card (If signature not verified) -->
+      <div id="admin-auth-card" class="panel" style="max-width: 540px; margin: 60px auto; text-align: center; padding: 40px 30px;">
+        <div style="font-size: 2.2rem; margin-bottom: 12px;">🔐</div>
+        <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 8px;">Protocol Owner Authorization Required</h2>
+        <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.6; margin-bottom: 24px;">
+          This area is cryptographically restricted. Connect the registered Protocol Owner wallet and sign the authorization challenge to access admin controls.
+        </p>
+        <button id="btn-claim-protocol-owner" class="btn-primary" style="width: 100%; padding: 14px;">
+          Verify Owner Signature →
+        </button>
+      </div>
+
+      <!-- Admin Controls Panel (Displayed only after Cryptographic Auth) -->
+      <div id="admin-controls-panel" style="display: none;">
+        
+        <!-- Metrics Grid -->
+        <div class="stat-grid" style="margin-bottom: 24px;">
+          <div class="stat-box">
+            <div class="stat-label">Bot Engine Status</div>
+            <div style="margin-top: 6px;"><span id="admin-bot-status" class="badge badge-success">Running</span></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Airdrop Wallets Claimed</div>
+            <div class="stat-val" id="admin-total-claims">0 Wallets</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Mined Blocks Height</div>
+            <div class="stat-val" id="admin-total-blocks">#1 Blocks</div>
+          </div>
+        </div>
+
+        <!-- 2-Column Controls Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px;">
+          
+          <!-- Card 1: Liquidity Bot Control -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🤖 Autonomous Market Maker Bot</span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.82rem; margin-bottom: 16px;">
+              Controls the background trading bot that maintains continuous liquidity flow and market depth on $LVAIR/USDT pool.
+            </p>
+            <button id="btn-toggle-bot" class="btn-secondary" style="width: 100%;">Pause Liquidity Bot</button>
+          </div>
+
+          <!-- Card 2: Airdrop Configuration -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🎁 Airdrop Allocation Manager</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tokens Per Wallet Claim</label>
+              <div class="input-container">
+                <input type="number" id="admin-airdrop-amount-input" class="input-field" value="250" />
+                <div class="token-tag">LVAIR</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button id="btn-save-airdrop-config" class="btn-primary" style="flex: 1; padding: 10px;">Save Amount</button>
+              <button id="btn-reset-airdrop-list" class="btn-secondary" style="flex: 1; padding: 10px; border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">Reset Whitelist</button>
+            </div>
+          </div>
+
+          <!-- Card 3: Pool Reserves Rebalancer -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">💧 Liquidity Pool Reserves</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pool $LVAIR Reserve</label>
+              <div class="input-container">
+                <input type="number" id="admin-pool-air-input" class="input-field" value="100000" />
+                <div class="token-tag">LVAIR</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pool USDT Reserve</label>
+              <div class="input-container">
+                <input type="number" id="admin-pool-usdt-input" class="input-field" value="25000" />
+                <div class="token-tag">USDT</div>
+              </div>
+            </div>
+            <button id="btn-update-pool-reserves" class="btn-primary" style="width: 100%;">Update Pool Reserves</button>
+          </div>
+
+          <!-- Card 4: Ledger & Node Diagnostics -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">⛓️ Core Node & Ledger Tools</span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.82rem; margin-bottom: 16px;">
+              Force block mining on local ledger and export full cryptographic snapshot.
+            </p>
+            <div style="display: flex; gap: 10px;">
+              <button id="btn-admin-force-mine" class="btn-secondary" style="flex: 1; padding: 10px;">Mine New Block</button>
+              <button id="btn-admin-export-state" class="btn-secondary" style="flex: 1; padding: 10px;">Export JSON</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- dApp Footer (Professional Web3 Links) -->
+    <footer style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 32px 0; margin-top: 50px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; color: var(--text-tertiary); font-size: 0.82rem;">
+      <div class="wide-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 16px;">
         <div>LVAIR Protocol © 2026 • Autonomous Liquidity Network</div>
         <div style="display: flex; gap: 20px;">
           <a href="#/" style="color: var(--text-secondary); text-decoration: none;">Homepage</a>
           <a href="#/swap" style="color: var(--text-secondary); text-decoration: none;">DEX Swap</a>
           <a href="#/airdrop" style="color: var(--text-secondary); text-decoration: none;">Airdrop</a>
-          <span style="color: var(--text-tertiary);">Explorer (Mainnet Block #1+)</span>
+          <a href="#/admin" style="color: var(--text-tertiary); text-decoration: none; font-size: 0.75rem;">Admin Portal 🔒</a>
         </div>
-      </footer>
+      </div>
+    </footer>
 
     </div>
 

@@ -11,6 +11,14 @@ import {
 
 export const CONNECTED_WALLET_KEY = 'LVAIR_CONNECTED_WALLET_ADDR';
 export const CONNECTED_PROVIDER_KEY = 'LVAIR_CONNECTED_WALLET_PROV';
+export const ADMIN_AUTH_TOKEN_KEY = 'LVAIR_ADMIN_AUTH_TOKEN_V1';
+
+// Protocol Owner Whitelist (Can be updated or signed via EIP-712 / Signature)
+export const PROTOCOL_OWNER_CONFIG = {
+  // First wallet that claims protocol ownership or configured admin address
+  ownerAddress: localStorage.getItem('LVAIR_PROTOCOL_OWNER_ADDR') || null,
+  isAdminAuthorized: false
+};
 
 export const AppState = {
   blockchain: null,

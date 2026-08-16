@@ -1,7 +1,8 @@
 import { pageLanding, pageApp } from './dom.js';
 import { renderLandingStats } from './pages/landing.js';
 import { renderChart } from './pages/swap.js';
-import { updateUI } from './state.js';
+import { renderAdminDashboard } from './pages/admin.js';
+import { updateUI, PROTOCOL_OWNER_CONFIG } from './state.js';
 import { showToast } from './components/toast.js';
 
 // Route Definitions & Security Authorization Map
@@ -9,7 +10,8 @@ export const ROUTES = {
   HOME: '#/',
   SWAP: '#/swap',
   TRANSFER: '#/transfer',
-  AIRDROP: '#/airdrop'
+  AIRDROP: '#/airdrop',
+  ADMIN: '#/admin'
 };
 
 // Protected routes that strictly require connected wallet
@@ -29,8 +31,9 @@ export function navigateTo(hash) {
 export function handleHashRouting() {
   const hash = window.location.hash || ROUTES.HOME;
   const savedWallet = localStorage.getItem('LVAIR_CONNECTED_WALLET_ADDR');
+  const pageAdmin = document.getElementById('page-admin');
 
-  // Strict Security Guard / Authentication Barrier
+  // Strict Security Guard / Authentication Barrier for Transfer & Airdrop
   if (PROTECTED_ROUTES.has(hash) && !savedWallet) {
     showToast('Unauthorized: Please connect your Web3 wallet to access this feature', 'error');
     const walletModal = document.getElementById('wallet-modal');
@@ -39,6 +42,17 @@ export function handleHashRouting() {
     // Redirect to swap
     window.location.hash = ROUTES.SWAP;
     return;
+  }
+
+  // Admin Route Handler
+  if (hash === ROUTES.ADMIN) {
+    if (pageLanding) pageLanding.style.display = 'none';
+    if (pageApp) pageApp.style.display = 'none';
+    if (pageAdmin) pageAdmin.style.display = 'block';
+    renderAdminDashboard();
+    return;
+  } else {
+    if (pageAdmin) pageAdmin.style.display = 'none';
   }
 
   if (hash.startsWith('#/swap') || hash.startsWith('#/transfer') || hash.startsWith('#/airdrop') || hash === '#/app') {
