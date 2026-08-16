@@ -16,7 +16,7 @@ import {
   btnTerminalEnterApp,
   walletModal
 } from '../dom.js';
-import contentData from '../content.json';
+import contentData from '../content.js';
 import { AppState } from '../state.js';
 import { navigateTo, ROUTES } from '../router.js';
 

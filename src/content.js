@@ -1,0 +1,101 @@
+export const contentData = {
+  project: {
+    name: "LVAIR Protocol",
+    symbol: "LVAIR",
+    pair: "LVAIR / USDT",
+    headline: "Autonomous Liquidity & Deterministic Settlement.",
+    subheadline: "Non-custodial constant-product automated market maker with sub-second cryptographic block finality and sovereign execution.",
+    badge: "Mainnet Verified • AMM Constant-Product Pool",
+    stats: {
+      initialPrice: "$0.2500",
+      totalSupply: "10,000,000 $LVAIR",
+      initialLiquidity: "100k / $25k",
+      volume24h: "$142,500+"
+    }
+  },
+  valueProps: [
+    {
+      title: "Constant-Product AMM Architecture",
+      description: "Deterministic price discovery governed strictly by invariant x · y = k, eliminating centralized orderbook intermediaries."
+    },
+    {
+      title: "Sovereign Non-Custodial Settlement",
+      description: "Direct wallet-to-contract execution. Users retain cryptographic private key ownership without custodial counterparty risk."
+    },
+    {
+      title: "Cryptographic State Verification",
+      description: "Sub-second ledger state validation backed by binary Merkle root trees and SHA-256 cryptographic hashing."
+    }
+  ],
+  tokenomics: [
+    {
+      label: "Liquidity Market Pair",
+      value: "$LVAIR / USDT",
+      description: "Autonomous spot pool with continuous liquidity and transparent 0.30% LP fee structure."
+    },
+    {
+      label: "Max Hard-Cap Supply",
+      value: "10,000,000 $LVAIR",
+      description: "Immutable supply ceiling with zero developer inflation, mint authority revocation, and locked protocol reserves."
+    },
+    {
+      label: "Protocol Genesis Liquidity",
+      value: "100,000 $LVAIR + $25k USDT",
+      description: "Bootstrapped liquidity baseline to ensure minimum slippage and deep market liquidity upon launch."
+    },
+    {
+      label: "Genesis Community Allocation",
+      value: "2,000,000 $LVAIR",
+      isHighlight: true,
+      description: "250 $LVAIR allocation per verified on-chain address to decentralize token governance."
+    }
+  ],
+  roadmap: [
+    {
+      phase: "Milestone 1 • Mainnet Genesis",
+      title: "Core Protocol & AMM Deployment",
+      status: "completed",
+      items: [
+        "Sovereign Blockchain Engine & Ledger",
+        "Constant-Product AMM Pool Initialization",
+        "Community Genesis Airdrop Distribution"
+      ]
+    },
+    {
+      phase: "Milestone 2 • Infrastructure Expansion",
+      title: "Multi-Provider Wallet & Indexing",
+      status: "current",
+      items: [
+        "EIP-1193 & Solana Wallet Standards",
+        "High-Throughput Mempool & Validator Sync",
+        "Real-Time Microstructure Orderflow Analytics"
+      ]
+    },
+    {
+      phase: "Milestone 3 • Interoperability & Scaling",
+      title: "Cross-Chain Liquidity Routing",
+      status: "upcoming",
+      items: [
+        "Decentralized Cross-Chain Warp Bridges",
+        "EVM & Solana SPL Token Expansion",
+        "Decentralized Governance Quorum"
+      ]
+    }
+  ],
+  faqs: [
+    {
+      question: "How does $LVAIR price discovery work?",
+      answer: "Price is computed deterministically by the Constant-Product formula: Price = Reserve_USDT / Reserve_LVAIR. Every trade dynamically shifts pool balances and updates execution spot prices."
+    },
+    {
+      question: "Is the trading protocol non-custodial?",
+      answer: "Yes. Transactions are signed directly via your Web3 wallet provider (MetaMask, Phantom, Binance). The protocol never takes custody of your private keys or assets."
+    },
+    {
+      question: "How is Genesis Airdrop eligibility verified?",
+      answer: "Eligible connected wallets can claim a fixed 250 $LVAIR allocation directly from the genesis pool. State inclusion is recorded permanently on the ledger with replay protection."
+    }
+  ]
+};
+
+export default contentData;
