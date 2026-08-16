@@ -49,5 +49,13 @@ jobs:
               cp -r /www/wwwroot/lvair-app/dist/* /www/wwwroot/lvair-admin/dist/
               echo "Synced Admin Ops Portal to /www/wwwroot/lvair-admin"
             fi
-            
+
+            # 3. Restart LVAIR Core Node Engine (pm2)
+            cd /www/wwwroot/lvair-app
+            if pm2 list | grep -qE "lvair-node|lvair"; then
+              pm2 restart lvair-node --update-env 2>/dev/null || pm2 restart lvair --update-env
+            else
+              pm2 restart all
+            fi
+
             echo "LVAIR Protocol Monorepo successfully deployed!"
