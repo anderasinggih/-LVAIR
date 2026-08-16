@@ -111,18 +111,29 @@ export function setupWalletModal() {
   if (optPhantom) {
     optPhantom.onclick = async () => {
       closeModal();
-      const phantom = window.phantom?.solana || window.solana;
-      if (phantom && phantom.isPhantom) {
+      
+      let solanaProvider = null;
+      if (window.phantom?.solana?.isPhantom) {
+        solanaProvider = window.phantom.solana;
+      } else if (window.solana?.isPhantom || window.solana) {
+        solanaProvider = window.solana;
+      }
+
+      if (solanaProvider) {
         try {
-          showToast('Connecting Phantom...');
-          const resp = await phantom.connect();
-          setConnectedWallet(resp.publicKey.toString(), 'Phantom');
+          showToast('Requesting connection from Phantom...');
+          const resp = await solanaProvider.connect({ onlyIfTrusted: false });
+          const pubkey = resp.publicKey ? resp.publicKey.toString() : solanaProvider.publicKey.toString();
+          setConnectedWallet(pubkey, 'Phantom');
         } catch (err) {
-          if (err.code === 4001) showToast('Connection rejected by user');
-          else showToast(`Phantom Error: ${err.message || err}`, 'error');
+          if (err.code === 4001) {
+            showToast('Connection rejected by user');
+          } else {
+            showToast(`Phantom Error: ${err.message || 'Connection failed'}`, 'error');
+          }
         }
       } else {
-        showToast('Phantom wallet not detected. Opening download page...', 'error');
+        showToast('Phantom wallet extension not detected. Opening download page...', 'error');
         window.open('https://phantom.app/', '_blank');
       }
     };
