@@ -25,13 +25,17 @@
           Connect the registered Protocol Owner wallet to access cryptographic governance.
         </p>
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button class="wallet-option-btn btn-secondary" data-provider="MetaMask" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <button id="wallet-opt-metamask" class="btn-secondary" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px;">
             <span>MetaMask (EVM)</span>
-            <span style="font-size: 0.8rem; color: #60a5fa;">Connect →</span>
+            <span id="tag-metamask" class="badge badge-neutral">Detecting</span>
           </button>
-          <button class="wallet-option-btn btn-secondary" data-provider="Phantom" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <button id="wallet-opt-phantom" class="btn-secondary" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px;">
             <span>Phantom (Solana)</span>
-            <span style="font-size: 0.8rem; color: #60a5fa;">Connect →</span>
+            <span id="tag-phantom" class="badge badge-neutral">Detecting</span>
+          </button>
+          <button id="wallet-opt-binance" class="btn-secondary" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px;">
+            <span>Binance Web3 Wallet</span>
+            <span id="tag-binance" class="badge badge-neutral">Detecting</span>
           </button>
         </div>
       </div>
