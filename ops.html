@@ -138,6 +138,10 @@
             <div class="form-group">
               <label class="form-label">Market Maker Strategy</label>
               <select id="admin-bot-mode-select" class="input-field" style="width: 100%;">
+                <option value="volatile">Volatile — Large Swings & Impulse Trades (XAUUSD-style)</option>
+                <option value="volume">Volume — High Frequency, Many Small Trades</option>
+                <option value="momentum">Momentum — Trend Following with Impulses</option>
+                <option value="random">Random — Unpredictable Spikes & Noise</option>
                 <option value="balanced">Balanced — Two-Way Flow</option>
                 <option value="accumulate">Accumulation — Net Buy Bias</option>
                 <option value="distribute">Distribution — Net Sell Bias</option>

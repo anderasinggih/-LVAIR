@@ -7,6 +7,8 @@ import cors from 'cors';
 import { Blockchain } from '../core/blockchain.js';
 import { AMMPool } from '../core/amm.js';
 import { TradingBotEngine } from '../core/market-maker.js';
+
+const VALID_BOT_MODES = TradingBotEngine.MODES;
 import { NodeStorageEngine } from './storage.js';
 import { Transaction, Block } from '../core/block.js';
 import { P2PNetwork } from './p2p.js';
@@ -52,7 +54,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => 
 const ENABLE_SIGNING = process.env.DISABLE_SIGNING !== '1';
 
 let botEngine = null;
-let botStrategyMode = 'balanced';
+let botStrategyMode = 'volatile';
 
 if (!fs.existsSync(LOGS_DIR)) fs.mkdirSync(LOGS_DIR, { recursive: true });
 
@@ -99,7 +101,7 @@ async function startFullNode() {
   console.log(`Telemetry ledger: ${LOG_FILE}`);
 
   const persistedBotMode = await storage.getState('bot_strategy_mode');
-  if (persistedBotMode && ['balanced', 'accumulate', 'distribute'].includes(persistedBotMode)) {
+  if (persistedBotMode && VALID_BOT_MODES.includes(persistedBotMode)) {
     botStrategyMode = persistedBotMode;
     console.log(`Restored market-maker strategy: ${botStrategyMode}`);
   }
@@ -857,7 +859,7 @@ async function startFullNode() {
   app.post('/api/bot/mode', requireAdmin, async (req, res) => {
     try {
       const { mode } = req.body || {};
-      if (!['balanced', 'accumulate', 'distribute'].includes(mode)) {
+      if (!VALID_BOT_MODES.includes(mode)) {
         return res.status(400).json({ success: false, error: 'Invalid strategy mode' });
       }
       botStrategyMode = mode;
