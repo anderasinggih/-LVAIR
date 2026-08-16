@@ -12,17 +12,11 @@ import { setupSwapPage, renderRecentTrades, renderChart } from './pages/swap.js'
 import { setupTransferPage } from './pages/transfer.js';
 import { setupAirdropPage } from './pages/airdrop.js';
 
-/**
- * Main Application Orchestrator
- * Fully modular architecture adhering to Web3 production standards
- */
 async function initApp() {
   try {
-    // 1. Setup & Resolve Router First (Instant zero-flicker rendering)
     restoreSavedWallet();
     setupRouter();
 
-    // 2. Initialize UI Handlers & Pages Synchronously
     setupLandingPage();
     setupSwapPage();
     setupTransferPage();
@@ -30,12 +24,10 @@ async function initApp() {
     setupWalletModal();
     setupTabsNavigation();
 
-    // 3. Initialize Blockchain, AMM Pool & State
     AppState.blockchain = new Blockchain(2);
     await AppState.blockchain.init();
     AppState.ammPool = new AMMPool(AppState.blockchain, 100000, 25000);
 
-    // 4. Autonomous Liquidity Engine
     AppState.botEngine = new TradingBotEngine(AppState.blockchain, AppState.ammPool);
     AppState.botEngine.start(4000, () => {
       updateUI();
@@ -47,7 +39,6 @@ async function initApp() {
     renderLandingStats();
     renderRecentTrades();
 
-    // 5. Native Wallet Listeners
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts) => {
         if (accounts && accounts.length > 0) {

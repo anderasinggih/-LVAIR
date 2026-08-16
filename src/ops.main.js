@@ -10,12 +10,10 @@ async function initAdminApp() {
     setupWalletModal();
     setupAdminHandlers();
 
-    // 1. Initialize Blockchain State
     AppState.blockchain = new Blockchain(2);
     await AppState.blockchain.init();
     AppState.ammPool = new AMMPool(AppState.blockchain, 100000, 25000);
 
-    // 2. Initialize Market Maker
     AppState.botEngine = new TradingBotEngine(AppState.blockchain, AppState.ammPool);
     AppState.botEngine.start(4000, () => {
       renderAdminDashboard();
@@ -52,7 +50,6 @@ function setupAdminHandlers() {
   const btnAdminForceMine = document.getElementById('btn-admin-force-mine');
   const btnAdminExportState = document.getElementById('btn-admin-export-state');
 
-  // 1. Ownership Claiming & Signature Verification
   if (btnClaimProtocolOwner) {
     btnClaimProtocolOwner.addEventListener('click', async () => {
       const { currentConnectedAddress } = AppState;
@@ -63,7 +60,6 @@ function setupAdminHandlers() {
         return;
       }
 
-      // If no owner registered yet, first caller claims genesis ownership
       if (!PROTOCOL_OWNER_CONFIG.ownerAddress) {
         PROTOCOL_OWNER_CONFIG.ownerAddress = currentConnectedAddress;
         localStorage.setItem('LVAIR_PROTOCOL_OWNER_ADDR', currentConnectedAddress);
@@ -73,7 +69,6 @@ function setupAdminHandlers() {
         return;
       }
 
-      // If already registered, perform cryptographic challenge signature
       if (currentConnectedAddress.toLowerCase() === PROTOCOL_OWNER_CONFIG.ownerAddress.toLowerCase()) {
         if (window.ethereum) {
           try {
@@ -99,7 +94,6 @@ function setupAdminHandlers() {
     });
   }
 
-  // 2. Bot Control
   if (btnToggleBot) {
     btnToggleBot.addEventListener('click', () => {
       const { botEngine } = AppState;
@@ -117,7 +111,6 @@ function setupAdminHandlers() {
     });
   }
 
-  // 3. Airdrop Allocation Adjustment
   if (btnSaveAirdropConfig) {
     btnSaveAirdropConfig.addEventListener('click', () => {
       const { blockchain } = AppState;
@@ -129,7 +122,6 @@ function setupAdminHandlers() {
     });
   }
 
-  // 4. Reset Airdrop Claims
   if (btnResetAirdropList) {
     btnResetAirdropList.addEventListener('click', () => {
       const { blockchain } = AppState;
@@ -141,7 +133,6 @@ function setupAdminHandlers() {
     });
   }
 
-  // 5. Pool Reserves Rebalance
   if (btnUpdatePoolReserves) {
     btnUpdatePoolReserves.addEventListener('click', () => {
       const { ammPool } = AppState;
@@ -157,7 +148,6 @@ function setupAdminHandlers() {
     });
   }
 
-  // 6. Force Mine Block
   if (btnAdminForceMine) {
     btnAdminForceMine.addEventListener('click', async () => {
       const { blockchain, currentConnectedAddress } = AppState;
@@ -177,7 +167,6 @@ function setupAdminHandlers() {
     });
   }
 
-  // 7. Export State
   if (btnAdminExportState) {
     btnAdminExportState.addEventListener('click', () => {
       const { blockchain } = AppState;
