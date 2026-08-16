@@ -74,6 +74,14 @@ function setupTabsNavigation() {
     });
   });
 
+  document.querySelectorAll('.spa-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const href = link.getAttribute('href');
+      if (href) navigateTo(href);
+    });
+  });
+
   if (appBrandHomeLink) {
     appBrandHomeLink.addEventListener('click', () => navigateTo(ROUTES.HOME));
   }
