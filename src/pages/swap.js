@@ -437,6 +437,13 @@ let chartType = 'line';
 let chartCandles = [];
 let chartLastFetch = 0;
 let chartFetchInFlight = false;
+let lastChartDecimals = 4;
+
+function pricePrecision(range) {
+  const r = Number(range);
+  if (!Number.isFinite(r) || r <= 0) return 4;
+  return Math.max(2, Math.ceil(-Math.log10(r / 4)) + 1);
+}
 
 function formatChartTime(ts) {
   const d = new Date(ts);
@@ -587,10 +594,18 @@ function updateChartHeader() {
   const depthEl = document.getElementById('chart-pool-depth');
   const price = ammPool.getCurrentPrice();
 
-  if (priceEl) priceEl.innerText = `$${price.toFixed(4)}`;
+  const series = buildChartSeries();
+  let dec = 4;
+  if (series.length >= 1) {
+    const sL = Math.min(...series.map(p => p.low));
+    const sH = Math.max(...series.map(p => p.high));
+    dec = pricePrecision(sH - sL);
+  }
+  lastChartDecimals = dec;
+
+  if (priceEl) priceEl.innerText = `$${price.toFixed(dec)}`;
 
   if (changeEl) {
-    const series = buildChartSeries();
     if (series.length >= 2) {
       const first = series[0].open;
       const last = series[series.length - 1].close;
@@ -599,7 +614,7 @@ function updateChartHeader() {
       const color = diff >= 0 ? '#10b981' : '#f87171';
       changeEl.style.color = color;
       if (nominalEl) {
-        nominalEl.innerText = `${diff >= 0 ? '+' : '-'}$${Math.abs(diff).toFixed(4)}`;
+        nominalEl.innerText = `${diff >= 0 ? '+' : '-'}$${Math.abs(diff).toFixed(dec)}`;
         nominalEl.style.color = color;
       }
       if (pctEl) {
@@ -648,9 +663,14 @@ export async function renderChart() {
   const isCandle = chartType === 'candle';
   const lows = series.map(p => p.low);
   const highs = series.map(p => p.high);
-  const minP = Math.min(...lows) * 0.99;
-  const maxP = Math.max(...highs) * 1.01;
+  const dataMin = Math.min(...lows);
+  const dataMax = Math.max(...highs);
+  const dataRange = dataMax - dataMin;
+  const pad = dataRange > 0 ? dataRange * 0.12 : Math.max(Math.abs(dataMax) || 1, 1e-9) * 0.0005;
+  const minP = dataMin - pad;
+  const maxP = dataMax + pad;
   const range = (maxP - minP) || 1;
+  lastChartDecimals = pricePrecision(range);
   const yOf = (p) => plotH - ((p - minP) / range) * plotH;
   const xOf = (i) => X_PAD + (i / (series.length - 1)) * (X_RIGHT - X_PAD);
 
@@ -671,7 +691,7 @@ export async function renderChart() {
     }
     const priceAtY = maxP - (range * i) / 4;
     ctx.fillStyle = 'rgba(148, 163, 184, 0.55)';
-    ctx.fillText(`$${priceAtY.toFixed(4)}`, W - 6, i === 4 ? y - 6 : y);
+    ctx.fillText(`$${priceAtY.toFixed(lastChartDecimals)}`, W - 6, i === 4 ? y - 6 : y);
   }
   ctx.textAlign = 'left';
 
@@ -821,7 +841,7 @@ function drawChartCrosshair(pt, W, H) {
 
   ctx.fillStyle = '#ffffff';
   ctx.font = '700 13px JetBrains Mono, monospace';
-  ctx.fillText(`$${pt.price.toFixed(4)}`, tx + 12, ty + 18);
+  ctx.fillText(`$${pt.price.toFixed(lastChartDecimals)}`, tx + 12, ty + 18);
 
   ctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
   ctx.font = '10px JetBrains Mono, monospace';
@@ -829,9 +849,9 @@ function drawChartCrosshair(pt, W, H) {
 
   if (chartType === 'candle') {
     ctx.fillStyle = '#10b981';
-    ctx.fillText(`O ${pt.open.toFixed(4)}  H ${pt.high.toFixed(4)}`, tx + 12, ty + 50);
+    ctx.fillText(`O ${pt.open.toFixed(lastChartDecimals)}  H ${pt.high.toFixed(lastChartDecimals)}`, tx + 12, ty + 50);
     ctx.fillStyle = '#f87171';
-    ctx.fillText(`L ${pt.low.toFixed(4)}  C ${pt.close.toFixed(4)}`, tx + 12, ty + 64);
+    ctx.fillText(`L ${pt.low.toFixed(lastChartDecimals)}  C ${pt.close.toFixed(lastChartDecimals)}`, tx + 12, ty + 64);
   } else {
     ctx.fillText(`L ${Number(pt.lvair || 0).toLocaleString()} / U ${Number(pt.usdt || 0).toLocaleString()}`, tx + 12, ty + 50);
     ctx.fillStyle = 'rgba(37, 99, 235, 0.9)';
