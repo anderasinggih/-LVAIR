@@ -507,7 +507,7 @@ async function ensureChartData() {
       chartCandles = data.candles;
       chartLastFetch = Date.now();
     }
-  } catch (e) {} finally {
+  } catch (e) { /* chart fetch failed — will retry on next interval */ } finally {
     chartFetchInFlight = false;
   }
 }

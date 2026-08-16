@@ -69,7 +69,7 @@ function logEvent(type, tag, message, data = {}) {
   if (broadcastLogs.length > 200) broadcastLogs.pop();
   try {
     fs.appendFileSync(LOG_FILE, JSON.stringify(item) + '\n', 'utf8');
-  } catch (e) {}
+  } catch (e) { console.warn('[LOG] Failed to write log:', e.message); }
   console.log(`[${type}] ${message}`);
   return item;
 }
@@ -77,14 +77,14 @@ function logEvent(type, tag, message, data = {}) {
 function loadPeersFile() {
   try {
     if (fs.existsSync(PEERS_FILE)) return JSON.parse(fs.readFileSync(PEERS_FILE, 'utf8'));
-  } catch (e) {}
+  } catch (e) { console.warn('[P2P] Failed to load peers file:', e.message); }
   return [];
 }
 
 function savePeersFile(urls) {
   try {
     fs.writeFileSync(PEERS_FILE, JSON.stringify(urls, null, 2), 'utf8');
-  } catch (e) {}
+  } catch (e) { console.warn('[P2P] Failed to save peers file:', e.message); }
 }
 
 async function startFullNode() {
@@ -149,7 +149,7 @@ async function startFullNode() {
           await blockchain.addTransaction(tx);
           validPending.push(txData);
         }
-      } catch (e) {}
+      } catch (e) { console.warn(`[MEMPOOL] Failed to restore tx: ${e.message}`); }
     }
     console.log(`Restored ${validPending.length} pending transactions from mempool`);
   }
@@ -167,7 +167,7 @@ async function startFullNode() {
         throw e;
       }
     }, fn);
-    lock = run.catch(() => {});
+    lock = run.catch(e => { console.warn('[LOCK] Consensus lock broken:', e.message); });
     return run;
   }
 
@@ -211,7 +211,7 @@ async function startFullNode() {
           if (inChain) return;
           await blockchain.addTransaction(tx);
           logEvent('TX_RECEIVED', 'tag-sync', `Transaction ${tx.txHash.slice(0, 10)}... received from peer (${tx.type})`);
-        } catch (e) {}
+        } catch (e) { logEvent('TX_ERROR', 'tag-sync', `Peer tx rejected: ${e.message}`); }
       });
     },
     onBlock: (block) => {
@@ -871,7 +871,7 @@ async function startFullNode() {
     console.log(`[SHUTDOWN] Mempool saved (${blockchain.pendingTransactions.length} pending txs)`);
     p2p.stop();
     httpServer.close();
-    try { await storage.close(); } catch (e) {}
+    try { await storage.close(); } catch (e) { console.warn('[SHUTDOWN] Failed to close storage:', e.message); }
     console.log('[SHUTDOWN] Clean exit.');
     process.exit(0);
   }

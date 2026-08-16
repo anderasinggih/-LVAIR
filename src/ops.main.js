@@ -63,7 +63,7 @@ async function refreshOpsState() {
     if (peersRes && peersRes.ok) {
       renderPeers(await peersRes.json());
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[OPS] Dashboard refresh failed:', e.message); }
   renderAdminDashboard();
 }
 

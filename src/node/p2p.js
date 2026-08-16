@@ -47,7 +47,7 @@ export class P2PNetwork {
 
   _send(ws, obj) {
     if (ws.readyState === WebSocket.OPEN) {
-      try { ws.send(JSON.stringify(obj)); } catch (e) {}
+      try { ws.send(JSON.stringify(obj)); } catch (e) { /* ws may have closed */ }
     }
   }
 

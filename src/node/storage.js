@@ -157,7 +157,7 @@ export class NodeStorageEngine {
   async saveMempool(transactions) {
     const key = 'mempool:pending';
     if (!transactions || transactions.length === 0) {
-      try { await this.db.del(key); } catch (e) {}
+      try { await this.db.del(key); } catch (e) { /* key may not exist */ }
       return;
     }
     await this.db.put(key, transactions);

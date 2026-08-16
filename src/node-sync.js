@@ -86,7 +86,7 @@ export async function refreshNodeState() {
         }
       }
     }
-  } catch (e) {}
+  } catch (e) { /* node offline or network error — expected during polling */ }
 
   setNodeIndicator(anyOk);
 

@@ -27,7 +27,7 @@ export async function rpcPost(path, body) {
     try {
       const j = JSON.parse(raw);
       detail = j.error || j.message || '';
-    } catch (e) {}
+    } catch (e) { /* response not JSON */ }
     if (detail) throw new Error(detail);
     throw new Error(`RPC ${path} failed (HTTP ${res.status}). ${raw.slice(0, 160) || 'Empty response'}`);
   }
@@ -47,7 +47,7 @@ export async function rpcGet(path) {
     try {
       const j = JSON.parse(raw);
       detail = j.error || j.message || '';
-    } catch (e) {}
+    } catch (e) { /* response not JSON */ }
     if (detail) throw new Error(detail);
     throw new Error(`RPC ${path} failed (HTTP ${res.status})`);
   }
@@ -112,7 +112,7 @@ export async function rpcAdminPost(path, body) {
     try {
       const j = JSON.parse(raw);
       detail = j.error || j.message || '';
-    } catch (e) {}
+    } catch (e) { /* response not JSON */ }
     if (detail) throw new Error(detail);
     throw new Error(`RPC ${path} failed (HTTP ${res.status})`);
   }
