@@ -90,6 +90,13 @@ async function startFullNode() {
   console.log(`Database storage initialized at: ${DATA_DIR}`);
   console.log(`Telemetry ledger: ${LOG_FILE}`);
 
+  const persistedBotMode = await storage.getState('bot_strategy_mode');
+  if (persistedBotMode && ['balanced', 'accumulate', 'distribute'].includes(persistedBotMode)) {
+    botStrategyMode = persistedBotMode;
+    console.log(`Restored market-maker strategy: ${botStrategyMode}`);
+  }
+  const persistedBotRunning = (await storage.getState('bot_running')) !== '0';
+
   const blockchain = new Blockchain(DIFFICULTY);
   blockchain.airdropClaimAmount = AIRDROP_AMOUNT;
   blockchain.miningReward = MINING_REWARD;
@@ -235,10 +242,15 @@ async function startFullNode() {
       blockchain, ammPool,
       submitSwap: async (wallet, amount, token) => submitSwap(wallet, amount, token)
     });
-    botEngine.start(4000, ({ action, price }) => {
-      logEvent('BOT_TRADE_SUBMITTED', 'tag-swap', `Market Maker ${action.type} ${action.inputAmount} ${action.inputToken} @ $${price.toFixed(4)} (${action.reason})`);
-    });
-    logEvent('BOT_STARTED', 'tag-sync', 'Autonomous Market Maker started');
+    botEngine.setMode(botStrategyMode);
+    if (persistedBotRunning) {
+      botEngine.start(4000, ({ action, price }) => {
+        logEvent('BOT_TRADE_SUBMITTED', 'tag-swap', `Market Maker ${action.type} ${action.inputAmount} ${action.inputToken} @ $${price.toFixed(4)} (${action.reason})`);
+      });
+      logEvent('BOT_STARTED', 'tag-sync', 'Autonomous Market Maker started');
+    } else {
+      logEvent('BOT_STARTED', 'tag-sync', 'Market Maker kept paused (previously stopped)');
+    }
   }
 
   async function submitTxAndBroadcast(tx) {
@@ -317,14 +329,26 @@ async function startFullNode() {
   });
 
   function computeMarketMetrics() {
-    let lvairSupply = 0;
+    const balances = {};
+    const apply = (address, delta) => {
+      if (!address) return;
+      const key = address.toLowerCase();
+      balances[key] = (balances[key] || 0) + delta;
+    };
     for (const block of blockchain.chain) {
       for (const tx of block.transactions || []) {
         if (tx.token !== 'LVAIR') continue;
-        if (tx.type === 'COINBASE_GENESIS' || tx.type === 'COINBASE_REWARD' || tx.type === 'AIRDROP_CLAIM') {
-          lvairSupply += Number(tx.amount);
-        }
+        apply(tx.fromAddress, -Number(tx.amount));
+        apply(tx.toAddress, Number(tx.amount));
       }
+    }
+    for (const tx of blockchain.pendingTransactions || []) {
+      if (tx.token !== 'LVAIR') continue;
+      apply(tx.fromAddress, -Number(tx.amount));
+    }
+    let lvairSupply = 0;
+    for (const v of Object.values(balances)) {
+      if (v > 0) lvairSupply += v;
     }
     const price = ammPool.getCurrentPrice();
     const now = Date.now();
@@ -633,6 +657,7 @@ async function startFullNode() {
         });
         logEvent('BOT_STARTED', 'tag-sync', 'Autonomous Market Maker started');
       }
+      await storage.putState('bot_running', botEngine && botEngine.isRunning ? '1' : '0');
       res.json({ success: true, running: botEngine ? botEngine.isRunning : false });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
@@ -647,6 +672,7 @@ async function startFullNode() {
       }
       botStrategyMode = mode;
       if (botEngine) botEngine.setMode(mode);
+      await storage.putState('bot_strategy_mode', mode);
       logEvent('BOT_MODE_UPDATED', 'tag-sync', `Market Maker strategy set to ${mode}`);
       res.json({ success: true, mode });
     } catch (err) {
