@@ -99,37 +99,41 @@ function showToast(message, type = 'success') {
 }
 
 async function initApp() {
-  blockchain = new Blockchain(2);
-  await blockchain.init();
-  ammPool = new AMMPool(blockchain, 100000, 25000);
+  try {
+    renderDynamicContent();
+    detectWalletProviders();
+    setupNavigationRouting();
+    setupWalletModalListeners();
+    setupTabs();
+    setupSwapListeners();
+    setupTransferListeners();
 
-  // Background Autonomous Liquidity Engine
-  botEngine = new TradingBotEngine(blockchain, ammPool);
-  botEngine.start(4000, () => {
+    blockchain = new Blockchain(2);
+    await blockchain.init();
+    ammPool = new AMMPool(blockchain, 100000, 25000);
+
+    // Background Autonomous Liquidity Engine
+    botEngine = new TradingBotEngine(blockchain, ammPool);
+    botEngine.start(4000, () => {
+      updateUI();
+      updateLandingLiveStats();
+    });
+
+    restoreSavedWallet();
     updateUI();
     updateLandingLiveStats();
-  });
 
-  renderDynamicContent();
-  detectWalletProviders();
-  setupNavigationRouting();
-  setupWalletModalListeners();
-  setupTabs();
-  setupSwapListeners();
-  setupTransferListeners();
-
-  restoreSavedWallet();
-  updateUI();
-  updateLandingLiveStats();
-
-  if (window.ethereum) {
-    window.ethereum.on('accountsChanged', (accounts) => {
-      if (accounts && accounts.length > 0) {
-        setConnectedWallet(accounts[0], 'MetaMask');
-      } else {
-        disconnectWallet();
-      }
-    });
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts && accounts.length > 0) {
+          setConnectedWallet(accounts[0], 'MetaMask');
+        } else {
+          disconnectWallet();
+        }
+      });
+    }
+  } catch (err) {
+    console.error('App initialization error:', err);
   }
 }
 
