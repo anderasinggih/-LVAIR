@@ -247,10 +247,13 @@
           <button class="tab-btn active" data-tab="trading">Swap</button>
           <button class="tab-btn" data-tab="transfer">Transfer</button>
           <button class="tab-btn" data-tab="airdrop">Airdrop</button>
-          <button class="tab-btn" data-tab="explorer">Explorer</button>
         </nav>
 
-        <div class="header-right">
+        <div class="header-right" style="display: flex; align-items: center; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-tertiary);" title="Consensus Synced">
+            <span style="display: inline-block; width: 6px; height: 6px; background: var(--accent-success); border-radius: 50%;"></span>
+            <span id="header-chain-status">Mainnet Live</span>
+          </div>
           <button id="btn-connect-wallet" class="btn-primary" style="padding: 9px 20px; font-size: 0.85rem; font-family: var(--font-mono);">
             Connect Wallet
           </button>
@@ -455,39 +458,15 @@
         </div>
       </div>
 
-      <!-- TAB 4: EXPLORER -->
-      <div class="tab-content" id="tab-explorer" style="display: none;">
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">Block Explorer & Ledger State</span>
-            <div style="display: flex; gap: 8px;">
-              <button id="btn-export-chain" class="btn-secondary" style="padding: 6px 14px; font-size: 0.75rem;">Export JSON</button>
-              <button id="btn-validate-chain" class="btn-secondary" style="padding: 6px 14px; font-size: 0.75rem;">Verify Chain</button>
-            </div>
-          </div>
-
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Height</th>
-                  <th>Block Hash</th>
-                  <th>Parent Hash</th>
-                  <th>Merkle Root</th>
-                  <th>Nonce</th>
-                  <th>Transactions</th>
-                  <th>Timestamp</th>
-                </tr>
-              </thead>
-              <tbody id="explorer-blocks-body"></tbody>
-            </table>
-          </div>
+      <!-- dApp Footer (Professional Web3 Links) -->
+      <footer style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 32px 0; margin-top: 50px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; color: var(--text-tertiary); font-size: 0.82rem;">
+        <div>LVAIR Protocol © 2026 • Autonomous Liquidity Network</div>
+        <div style="display: flex; gap: 20px;">
+          <a href="#/" style="color: var(--text-secondary); text-decoration: none;">Homepage</a>
+          <a href="#/swap" style="color: var(--text-secondary); text-decoration: none;">DEX Swap</a>
+          <a href="#/airdrop" style="color: var(--text-secondary); text-decoration: none;">Airdrop</a>
+          <span style="color: var(--text-tertiary);">Explorer (Mainnet Block #1+)</span>
         </div>
-      </div>
-
-      <!-- dApp Footer -->
-      <footer style="border-top: 1px solid var(--border-subtle); padding: 32px 0; margin-top: 40px; text-align: center; color: var(--text-tertiary); font-size: 0.82rem;">
-        <div>LVAIR Protocol © 2026 • Sovereign Decentralized Liquidity Network</div>
       </footer>
 
     </div>

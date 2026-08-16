@@ -9,8 +9,7 @@ export const ROUTES = {
   HOME: '#/',
   SWAP: '#/swap',
   TRANSFER: '#/transfer',
-  AIRDROP: '#/airdrop',
-  EXPLORER: '#/explorer'
+  AIRDROP: '#/airdrop'
 };
 
 // Protected routes that strictly require connected wallet
@@ -37,19 +36,18 @@ export function handleHashRouting() {
     const walletModal = document.getElementById('wallet-modal');
     if (walletModal) walletModal.style.display = 'flex';
     
-    // Redirect to swap or home
+    // Redirect to swap
     window.location.hash = ROUTES.SWAP;
     return;
   }
 
-  if (hash.startsWith('#/swap') || hash.startsWith('#/transfer') || hash.startsWith('#/airdrop') || hash.startsWith('#/explorer') || hash === '#/app') {
+  if (hash.startsWith('#/swap') || hash.startsWith('#/transfer') || hash.startsWith('#/airdrop') || hash === '#/app') {
     if (pageLanding) pageLanding.style.display = 'none';
     if (pageApp) pageApp.style.display = 'block';
 
     let targetTab = 'trading';
     if (hash === ROUTES.TRANSFER) targetTab = 'transfer';
     else if (hash === ROUTES.AIRDROP) targetTab = 'airdrop';
-    else if (hash === ROUTES.EXPLORER) targetTab = 'explorer';
 
     // Update active tab buttons
     const tabs = document.querySelectorAll('#page-app .tab-btn');

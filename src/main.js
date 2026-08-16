@@ -11,7 +11,6 @@ import { setupLandingPage, renderLandingStats } from './pages/landing.js';
 import { setupSwapPage, renderRecentTrades, renderChart } from './pages/swap.js';
 import { setupTransferPage } from './pages/transfer.js';
 import { setupAirdropPage } from './pages/airdrop.js';
-import { setupExplorerPage, renderExplorerBlocks } from './pages/explorer.js';
 
 /**
  * Main Application Orchestrator
@@ -24,7 +23,6 @@ async function initApp() {
     setupSwapPage();
     setupTransferPage();
     setupAirdropPage();
-    setupExplorerPage();
     setupWalletModal();
     setupTabsNavigation();
 
@@ -39,7 +37,6 @@ async function initApp() {
       updateUI();
       renderLandingStats();
       renderRecentTrades();
-      renderExplorerBlocks();
     });
 
     // 4. Restore Wallet & Initialize Routing
@@ -48,7 +45,6 @@ async function initApp() {
     updateUI();
     renderLandingStats();
     renderRecentTrades();
-    renderExplorerBlocks();
 
     // 5. Native Wallet Listeners
     if (window.ethereum) {
@@ -73,7 +69,6 @@ function setupTabsNavigation() {
       if (target === 'trading') navigateTo(ROUTES.SWAP);
       else if (target === 'transfer') navigateTo(ROUTES.TRANSFER);
       else if (target === 'airdrop') navigateTo(ROUTES.AIRDROP);
-      else if (target === 'explorer') navigateTo(ROUTES.EXPLORER);
     });
   });
 
