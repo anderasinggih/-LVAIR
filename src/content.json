@@ -3,9 +3,9 @@
     "name": "LVAIR Protocol",
     "symbol": "LVAIR",
     "pair": "LVAIR / USDT",
-    "headline": "Decentralized Liquidity & Autonomous Exchange.",
-    "subheadline": "Continuous constant-product market making, direct non-custodial swaps, and transparent Web3 settlement.",
-    "badge": "Mainnet Protocol • Verified Pool",
+    "headline": "Autonomous Liquidity & Deterministic Settlement.",
+    "subheadline": "Non-custodial constant-product automated market maker with sub-second cryptographic block finality and sovereign execution.",
+    "badge": "Mainnet Verified • AMM Constant-Product Pool",
     "stats": {
       "initialPrice": "$0.2500",
       "totalSupply": "10,000,000 $LVAIR",
@@ -15,85 +15,85 @@
   },
   "valueProps": [
     {
-      "title": "Automated Market Maker (AMM)",
-      "description": "Deterministic pricing powered by constant-product formula (x * y = k) for 24/7 autonomous liquidity."
+      "title": "Constant-Product AMM Architecture",
+      "description": "Deterministic price discovery governed strictly by invariant x · y = k, eliminating centralized orderbook intermediaries."
     },
     {
-      "title": "Non-Custodial Architecture",
-      "description": "Traders retain 100% control over private keys and assets directly from their Web3 wallet."
+      "title": "Sovereign Non-Custodial Settlement",
+      "description": "Direct wallet-to-contract execution. Users retain cryptographic private key ownership without custodial counterparty risk."
     },
     {
-      "title": "Cryptographic Block Settlement",
-      "description": "Instant transactions verified via SHA-256 binary Merkle proofs with zero intermediary delay."
+      "title": "Cryptographic State Verification",
+      "description": "Sub-second ledger state validation backed by binary Merkle root trees and SHA-256 cryptographic hashing."
     }
   ],
   "tokenomics": [
     {
-      "label": "Trading Pair",
+      "label": "Liquidity Market Pair",
       "value": "$LVAIR / USDT",
-      "description": "Direct decentralized liquidity pair active 24/7 with zero deposit fees."
+      "description": "Autonomous spot pool with continuous liquidity and transparent 0.30% LP fee structure."
     },
     {
-      "label": "Hard-Cap Supply",
+      "label": "Max Hard-Cap Supply",
       "value": "10,000,000 $LVAIR",
-      "description": "Fixed total supply without additional minting functions or dilution."
+      "description": "Immutable supply ceiling with zero developer inflation, mint authority revocation, and locked tokenomics."
     },
     {
-      "label": "Genesis Liquidity",
+      "label": "Protocol Genesis Liquidity",
       "value": "100,000 $LVAIR + $25k USDT",
-      "description": "Locked liquidity pool to guarantee immediate on-chain trade execution."
+      "description": "Bootstrapped liquidity baseline to ensure minimum slippage and deep market liquidity upon launch."
     },
     {
-      "label": "Community Allocation",
+      "label": "Genesis Community Allocation",
       "value": "2,000,000 $LVAIR",
       "isHighlight": true,
-      "description": "250 $LVAIR allocation per eligible wallet address for genesis distribution."
+      "description": "250 $LVAIR allocation per verified on-chain address to decentralize token governance."
     }
   ],
   "roadmap": [
     {
-      "phase": "Phase 1 • Q1 2026 (Completed)",
-      "title": "Protocol Deployment",
+      "phase": "Milestone 1 • Mainnet Genesis",
+      "title": "Core Protocol & AMM Deployment",
       "status": "completed",
       "items": [
-        "Smart Contract Deployment",
-        "AMM Liquidity Pool Activation",
-        "Genesis Airdrop Distribution"
+        "Sovereign Blockchain Engine & Ledger",
+        "Constant-Product AMM Pool Initialization",
+        "Community Genesis Airdrop Distribution"
       ]
     },
     {
-      "phase": "Phase 2 • Q2 2026 (Current)",
-      "title": "Wallet & DEX Expansion",
+      "phase": "Milestone 2 • Infrastructure Expansion",
+      "title": "Multi-Provider Wallet & Indexing",
       "status": "current",
       "items": [
-        "Multi-wallet provider integration",
-        "Market indexing & analytics API",
-        "Liquidity provider incentives"
+        "EIP-1193 & Solana Wallet Standards",
+        "High-Throughput Mempool & Validator Sync",
+        "Real-Time Microstructure Orderflow Analytics"
       ]
     },
     {
-      "phase": "Phase 3 • Q3 2026 (Upcoming)",
-      "title": "Cross-Chain Infrastructure",
+      "phase": "Milestone 3 • Interoperability & Scaling",
+      "title": "Cross-Chain Liquidity Routing",
       "status": "upcoming",
       "items": [
-        "Multi-chain token bridging",
-        "Layer-2 settlement support",
-        "DAO Governance activation"
+        "Decentralized Cross-Chain Warp Bridges",
+        "EVM & Solana SPL Token Expansion",
+        "Decentralized Governance Quorum"
       ]
     }
   ],
   "faqs": [
     {
-      "question": "How do I swap $LVAIR?",
-      "answer": "Connect your Web3 wallet (MetaMask, Phantom, Binance, etc.), enter the swap amount in the DEX terminal, and confirm the transaction."
+      "question": "How does $LVAIR price discovery work?",
+      "answer": "Price is computed deterministically by the Constant-Product formula: Price = Reserve_USDT / Reserve_LVAIR. Every trade dynamically shifts pool balances and updates execution spot prices."
     },
     {
-      "question": "Are funds custodial?",
-      "answer": "No. The protocol is 100% non-custodial. You retain direct ownership and control over your keys and funds at all times."
+      "question": "Is the trading protocol non-custodial?",
+      "answer": "Yes. Transactions are signed directly via your Web3 wallet provider (MetaMask, Phantom, Binance). The protocol never takes custody of your private keys or assets."
     },
     {
-      "question": "How do I claim the 250 $LVAIR Airdrop?",
-      "answer": "Navigate to the Airdrop tab with a connected wallet and click 'Claim 250 $LVAIR Airdrop' to receive your allocation."
+      "question": "How is Genesis Airdrop eligibility verified?",
+      "answer": "Eligible connected wallets can claim a fixed 250 $LVAIR allocation directly from the genesis pool. State inclusion is recorded permanently on the ledger with replay protection."
     }
   ]
 }
