@@ -67,8 +67,11 @@ export class Blockchain {
   }
 
   async claimAirdrop(userAddress) {
-    if (this.claimedAddresses.has(userAddress)) {
-      throw new Error('This address has already claimed the $LVAIR Genesis Airdrop.');
+    const userNormalized = (userAddress || '').toLowerCase();
+    for (const claimed of this.claimedAddresses) {
+      if (claimed.toLowerCase() === userNormalized) {
+        throw new Error('This address has already claimed the $LVAIR Genesis Airdrop.');
+      }
     }
 
     const airdropTx = new Transaction(
@@ -84,7 +87,7 @@ export class Blockchain {
     this.pendingTransactions.push(airdropTx);
     this.claimedAddresses.add(userAddress);
 
-    const minedBlock = await this.minePendingTransactions(userAddress);
+    const minedBlock = await this.minePendingTransactions(null);
     await this.saveState();
     return { tx: airdropTx, block: minedBlock };
   }
@@ -118,19 +121,24 @@ export class Blockchain {
   }
 
   getBalanceOfAddress(address, token = 'LVAIR') {
+    if (!address) return 0;
+    const target = address.toLowerCase();
     let balance = 0;
 
     for (const block of this.chain) {
       for (const trans of block.transactions) {
         if (trans.token !== token) continue;
-        if (trans.fromAddress === address) balance -= trans.amount;
-        if (trans.toAddress === address) balance += trans.amount;
+        const from = (trans.fromAddress || '').toLowerCase();
+        const to = (trans.toAddress || '').toLowerCase();
+        if (from === target) balance -= Number(trans.amount);
+        if (to === target) balance += Number(trans.amount);
       }
     }
 
     for (const trans of this.pendingTransactions) {
-      if (trans.token === token && trans.fromAddress === address) {
-        balance -= trans.amount;
+      if (trans.token === token) {
+        const from = (trans.fromAddress || '').toLowerCase();
+        if (from === target) balance -= Number(trans.amount);
       }
     }
 
