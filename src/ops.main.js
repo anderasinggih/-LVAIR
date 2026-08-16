@@ -1,24 +1,74 @@
-import { Blockchain } from './core/blockchain.js';
-import { AMMPool } from './core/amm.js';
-import { TradingBotEngine } from './core/market-maker.js';
 import { AppState, updateUI, PROTOCOL_OWNER_CONFIG } from './state.js';
 import { setupWalletModal, restoreSavedWallet, setConnectedWallet, disconnectWallet } from './components/wallet-modal.js';
 import { showToast } from './components/toast.js';
 import { getApiBaseUrl } from './api.js';
 
+let lastBotRunning = null;
+
+function seedMirrors() {
+  AppState.blockchain = {
+    chain: [],
+    claimedAddresses: new Set(),
+    airdropClaimAmount: 250,
+    miningReward: 10,
+    getBalanceOfAddress: () => 0,
+    getLatestBlock: () => ({ hash: '' })
+  };
+  AppState.ammPool = {
+    lvairReserve: 100000,
+    usdtReserve: 25000,
+    getCurrentPrice: () => AppState.ammPool.usdtReserve / AppState.ammPool.lvairReserve
+  };
+}
+
+async function refreshOpsState() {
+  const apiUrl = getApiBaseUrl();
+  try {
+    const [statusRes, cfgRes, ammRes] = await Promise.all([
+      fetch(`${apiUrl}/api/node/status`).catch(() => null),
+      fetch(`${apiUrl}/api/config`).catch(() => null),
+      fetch(`${apiUrl}/api/amm/state`).catch(() => null)
+    ]);
+
+    if (statusRes && statusRes.ok) {
+      const status = await statusRes.json();
+      AppState.blockchain.chain = Array.from({ length: status.blockHeight || 1 });
+      AppState.blockchain.claimedAddresses = new Set(Array.from({ length: status.claimedWallets || 0 }));
+      AppState.blockchain.airdropClaimAmount = status.airdropClaimAmount || 250;
+      AppState.blockchain.miningReward = 10;
+      lastBotRunning = !!status.botRunning;
+    }
+
+    if (cfgRes && cfgRes.ok) {
+      const cfg = await cfgRes.json();
+      AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount || 250;
+      AppState.blockchain.miningReward = cfg.miningReward || 10;
+    }
+
+    if (ammRes && ammRes.ok) {
+      const amm = await ammRes.json();
+      AppState.ammPool.lvairReserve = amm.lvairReserve;
+      AppState.ammPool.usdtReserve = amm.usdtReserve;
+      if (amm.botRunning !== undefined) lastBotRunning = !!amm.botRunning;
+    }
+  } catch (e) {}
+  renderAdminDashboard();
+}
+
+function postJson(url, body) {
+  const apiUrl = getApiBaseUrl();
+  return fetch(`${apiUrl}${url}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  });
+}
+
 async function initAdminApp() {
   try {
     setupWalletModal();
     setupAdminHandlers();
-
-    AppState.blockchain = new Blockchain(2);
-    await AppState.blockchain.init();
-    AppState.ammPool = new AMMPool(AppState.blockchain, 100000, 25000);
-
-    AppState.botEngine = new TradingBotEngine(AppState.blockchain, AppState.ammPool);
-    AppState.botEngine.start(4000, () => {
-      renderAdminDashboard();
-    });
+    seedMirrors();
 
     restoreSavedWallet();
     if (AppState.currentConnectedAddress && PROTOCOL_OWNER_CONFIG.ownerAddress) {
@@ -26,7 +76,8 @@ async function initAdminApp() {
         PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
       }
     }
-    renderAdminDashboard();
+    await refreshOpsState();
+    setInterval(refreshOpsState, 3000);
 
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts) => {
@@ -104,124 +155,125 @@ function setupAdminHandlers() {
   }
 
   if (btnToggleBot) {
-    btnToggleBot.addEventListener('click', () => {
-      const { botEngine } = AppState;
-      if (!botEngine) return;
-      if (botEngine.isRunning) {
-        botEngine.stop();
-        showToast('Autonomous Market Maker paused');
-      } else {
-        botEngine.start(4000, () => {
-          renderAdminDashboard();
-        });
-        showToast('Autonomous Market Maker started');
+    btnToggleBot.addEventListener('click', async () => {
+      try {
+        const res = await postJson('/api/bot/toggle');
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || 'RPC error');
+        }
+        const data = await res.json();
+        showToast(data.running ? 'Autonomous Market Maker started on node' : 'Autonomous Market Maker paused on node');
+      } catch (err) {
+        showToast(`Bot control error: ${err.message}`, 'error');
       }
-      renderAdminDashboard();
+      await refreshOpsState();
     });
   }
 
   if (btnSaveAirdropConfig) {
     btnSaveAirdropConfig.addEventListener('click', async () => {
-      const { blockchain } = AppState;
-      if (!blockchain) return;
       const amount = parseFloat(adminAirdropAmountInput.value);
       if (!amount || amount <= 0) return showToast('Enter a valid airdrop allocation amount', 'error');
-      blockchain.airdropClaimAmount = amount;
-      await blockchain.saveState();
-
       try {
-        const apiUrl = getApiBaseUrl();
-        await fetch(`${apiUrl}/api/config/airdrop`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount })
-        });
-      } catch (e) {}
-
-      showToast(`Airdrop quota per wallet updated to ${amount} $LVAIR`);
-      renderAdminDashboard();
+        const res = await postJson('/api/config/airdrop', { amount });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || 'RPC error');
+        }
+        await res.json();
+        showToast(`Airdrop quota per wallet updated to ${amount} $LVAIR`);
+      } catch (err) {
+        showToast(`Config error: ${err.message}`, 'error');
+      }
+      await refreshOpsState();
     });
   }
 
   if (btnResetAirdropList) {
     btnResetAirdropList.addEventListener('click', async () => {
-      const { blockchain } = AppState;
-      if (!blockchain) return;
-      blockchain.claimedAddresses.clear();
-      await blockchain.saveState();
-
       try {
-        const apiUrl = getApiBaseUrl();
-        await fetch(`${apiUrl}/api/config/reset-whitelist`, { method: 'POST' });
-      } catch (e) {}
-
-      showToast('Airdrop claims whitelist has been reset');
-      renderAdminDashboard();
+        const res = await postJson('/api/config/reset-whitelist');
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || 'RPC error');
+        }
+        await res.json();
+        showToast('Airdrop claims whitelist has been reset');
+      } catch (err) {
+        showToast(`Reset error: ${err.message}`, 'error');
+      }
+      await refreshOpsState();
     });
   }
 
   if (btnUpdatePoolReserves) {
     btnUpdatePoolReserves.addEventListener('click', async () => {
-      const { ammPool } = AppState;
-      if (!ammPool) return;
       const air = parseFloat(adminPoolAirInput.value);
       const usdt = parseFloat(adminPoolUsdtInput.value);
       if (!air || !usdt || air <= 0 || usdt <= 0) return showToast('Enter valid pool reserves', 'error');
-      ammPool.lvairReserve = air;
-      ammPool.usdtReserve = usdt;
-      ammPool.k = air * usdt;
-
       try {
-        const apiUrl = getApiBaseUrl();
-        await fetch(`${apiUrl}/api/config/reserves`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lvair: air, usdt })
-        });
-      } catch (e) {}
-
-      showToast(`Pool Reserves updated to ${air.toLocaleString()} LVAIR / $${usdt.toLocaleString()} USDT`);
-      renderAdminDashboard();
+        const res = await postJson('/api/config/reserves', { lvair: air, usdt });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || 'RPC error');
+        }
+        await res.json();
+        showToast(`Pool Reserves updated to ${air.toLocaleString()} LVAIR / $${usdt.toLocaleString()} USDT`);
+      } catch (err) {
+        showToast(`Reserve error: ${err.message}`, 'error');
+      }
+      await refreshOpsState();
     });
   }
 
   if (btnAdminForceMine) {
     btnAdminForceMine.addEventListener('click', async () => {
-      const { blockchain, currentConnectedAddress } = AppState;
-      if (!blockchain) return;
+      const { currentConnectedAddress } = AppState;
       btnAdminForceMine.disabled = true;
       btnAdminForceMine.innerText = 'Mining Block...';
       try {
-        await blockchain.minePendingTransactions(currentConnectedAddress || blockchain.systemAddress);
+        const res = await postJson('/api/mine', { minerRewardAddress: currentConnectedAddress || null });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || 'RPC error');
+        }
+        await res.json();
         showToast('New block mined and appended to the ledger!');
-        renderAdminDashboard();
       } catch (err) {
         showToast(`Mining error: ${err.message}`, 'error');
       } finally {
         btnAdminForceMine.disabled = false;
         btnAdminForceMine.innerText = 'Mine New Block';
       }
+      await refreshOpsState();
     });
   }
 
   if (btnAdminExportState) {
-    btnAdminExportState.addEventListener('click', () => {
-      const { blockchain } = AppState;
-      if (!blockchain) return;
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(blockchain.chain, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `lvair_protocol_ledger_export.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      showToast('Ledger JSON exported');
+    btnAdminExportState.addEventListener('click', async () => {
+      try {
+        const apiUrl = getApiBaseUrl();
+        const res = await fetch(`${apiUrl}/api/blocks`);
+        if (!res.ok) throw new Error('Unable to fetch ledger');
+        const chain = await res.json();
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(chain, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `lvair_protocol_ledger_export.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        showToast('Ledger JSON exported');
+      } catch (err) {
+        showToast(`Export error: ${err.message}`, 'error');
+      }
     });
   }
 }
 
 function renderAdminDashboard() {
-  const { blockchain, botEngine, ammPool, currentConnectedAddress, currentConnectedProvider } = AppState;
+  const { blockchain, ammPool, currentConnectedAddress } = AppState;
   const adminOwnerDisplay = document.getElementById('admin-owner-display');
   const adminBotStatus = document.getElementById('admin-bot-status');
   const adminTotalClaims = document.getElementById('admin-total-claims');
@@ -261,18 +313,18 @@ function renderAdminDashboard() {
   }
 
   if (adminBotStatus) {
-    const isRunning = botEngine && botEngine.isRunning;
+    const isRunning = !!lastBotRunning;
     adminBotStatus.innerText = isRunning ? 'Running (Active Liquidity)' : 'Paused';
     adminBotStatus.className = isRunning ? 'badge badge-success' : 'badge badge-danger';
   }
 
   if (btnToggleBot) {
-    const isRunning = botEngine && botEngine.isRunning;
+    const isRunning = !!lastBotRunning;
     btnToggleBot.innerText = isRunning ? 'Pause Market Maker' : 'Start Market Maker';
     btnToggleBot.className = isRunning ? 'btn-secondary' : 'btn-primary';
   }
 
-  if (adminTotalClaims) adminTotalClaims.innerText = blockchain ? `${blockchain.claimedAddresses.size} Wallets` : '0 Wallets';
+  if (adminTotalClaims) adminTotalClaims.innerText = blockchain && blockchain.claimedAddresses ? `${blockchain.claimedAddresses.size} Wallets` : '0 Wallets';
   if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${blockchain.chain.length} Blocks` : '#1 Blocks';
 
   if (blockchain) {
@@ -290,6 +342,8 @@ function renderAdminDashboard() {
       adminPoolUsdtInput.value = ammPool.usdtReserve;
     }
   }
+
+  updateUI();
 }
 
 window.addEventListener('DOMContentLoaded', initAdminApp);

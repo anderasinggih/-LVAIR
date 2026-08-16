@@ -49,6 +49,15 @@ export class Block {
     this.hash = '';
   }
 
+  static fromJSON(obj) {
+    const block = new Block(obj.index, obj.timestamp, obj.transactions, obj.previousHash);
+    block.merkleRoot = obj.merkleRoot || '';
+    block.nonce = obj.nonce || 0;
+    block.difficulty = obj.difficulty || 2;
+    block.hash = obj.hash || '';
+    return block;
+  }
+
   async calculateMerkleRoot() {
     const txHashes = this.transactions.map(t => t.txHash || '');
     this.merkleRoot = await CryptoEngine.calculateMerkleRoot(txHashes);

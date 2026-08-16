@@ -5,18 +5,17 @@ import {
   btnSendTransfer,
   walletModal
 } from '../dom.js';
-import { AppState, updateUI } from '../state.js';
-import { Transaction } from '../core/block.js';
+import { AppState } from '../state.js';
 import { showToast } from '../components/toast.js';
-import { renderLandingStats } from './landing.js';
 import { addToHistory } from './swap.js';
 import { getApiBaseUrl } from '../api.js';
+import { refreshNodeState } from '../node-sync.js';
 
 export function setupTransferPage() {
   if (!btnSendTransfer) return;
 
   btnSendTransfer.addEventListener('click', async () => {
-    const { blockchain, currentConnectedAddress } = AppState;
+    const { currentConnectedAddress } = AppState;
     if (!currentConnectedAddress) {
       showToast('Authentication required: Connect your Web3 wallet to transfer tokens', 'error');
       if (walletModal) walletModal.style.display = 'flex';
@@ -30,7 +29,7 @@ export function setupTransferPage() {
     if (!toAddress) return showToast('Please enter a valid destination address', 'error');
     if (!amount || amount <= 0) return showToast('Enter a valid transfer amount', 'error');
 
-    const currentBal = blockchain.getBalanceOfAddress(currentConnectedAddress, token);
+    const currentBal = AppState.blockchain.getBalanceOfAddress(currentConnectedAddress, token);
     if (currentBal < amount) {
       return showToast(`Insufficient ${token} balance. Available: ${currentBal} ${token}`, 'error');
     }
@@ -39,32 +38,27 @@ export function setupTransferPage() {
     btnSendTransfer.innerText = 'Settling Transaction...';
 
     try {
-      const tx = new Transaction(
-        currentConnectedAddress,
-        toAddress,
-        amount,
-        token,
-        'P2P_TRANSFER',
-        { memo: 'On-Chain Transfer' }
-      );
-      tx.txHash = await tx.calculateHash();
-      await blockchain.addTransaction(tx);
-      await blockchain.minePendingTransactions(currentConnectedAddress);
+      const apiUrl = getApiBaseUrl();
+      const res = await fetch(`${apiUrl}/api/tx/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: currentConnectedAddress,
+          to: toAddress,
+          amount,
+          token,
+          type: 'P2P_TRANSFER',
+          metadata: { memo: 'On-Chain Transfer' }
+        })
+      });
 
-      // Report to server monitor log (no re-execution, just telemetry)
-      try {
-        const apiUrl = getApiBaseUrl();
-        await fetch(`${apiUrl}/api/telemetry/event`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'TRANSFER_EXECUTED',
-            tag: 'tag-block',
-            message: `Transfer ${amount} ${token} from ${currentConnectedAddress.substring(0,8)}... to ${toAddress.substring(0,8)}...`,
-            data: { from: currentConnectedAddress, to: toAddress, amount, token }
-          })
-        });
-      } catch (e) {}
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || 'RPC rejected the transfer');
+      }
+
+      await res.json();
+      await refreshNodeState();
 
       showToast(`Transferred ${amount} ${token} on-chain!`);
       addToHistory({
@@ -75,12 +69,10 @@ export function setupTransferPage() {
         tokenIn: token,
         tokenOut: token,
         price: null,
-        blockIndex: blockchain.chain.length,
+        blockIndex: AppState.blockchain.chain.length,
         timestamp: Date.now()
       });
       transferRecipientInput.value = '';
-      updateUI();
-      renderLandingStats();
     } catch (err) {
       showToast(`Transfer Failed: ${err.message}`, 'error');
     } finally {

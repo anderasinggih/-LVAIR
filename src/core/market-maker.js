@@ -49,30 +49,31 @@ export class TradingBotEngine {
         this.rsiHistory.push({ timestamp: Date.now(), rsi });
 
         let action = null;
+        let result = null;
 
         if (rsi < 35) {
           const usdtAmount = Number((Math.random() * 15 + 5).toFixed(2));
           action = { type: 'BUY_LVAIR', inputAmount: usdtAmount, inputToken: 'USDT', reason: `RSI Oversold (${rsi.toFixed(1)})` };
-          await this.ammPool.executeSwap(this.botWallet, usdtAmount, 'USDT');
+          result = await this.ammPool.executeSwap(this.botWallet, usdtAmount, 'USDT');
         } else if (rsi > 65) {
           const lvairAmount = Number((Math.random() * 60 + 20).toFixed(2));
           action = { type: 'SELL_LVAIR', inputAmount: lvairAmount, inputToken: 'LVAIR', reason: `RSI Overbought (${rsi.toFixed(1)})` };
-          await this.ammPool.executeSwap(this.botWallet, lvairAmount, 'LVAIR');
+          result = await this.ammPool.executeSwap(this.botWallet, lvairAmount, 'LVAIR');
         } else {
           const isBuy = Math.random() > 0.5;
           if (isBuy) {
             const usdtAmount = Number((Math.random() * 8 + 2).toFixed(2));
             action = { type: 'BUY_LVAIR', inputAmount: usdtAmount, inputToken: 'USDT', reason: 'Market Making Flow' };
-            await this.ammPool.executeSwap(this.botWallet, usdtAmount, 'USDT');
+            result = await this.ammPool.executeSwap(this.botWallet, usdtAmount, 'USDT');
           } else {
             const lvairAmount = Number((Math.random() * 30 + 10).toFixed(2));
             action = { type: 'SELL_LVAIR', inputAmount: lvairAmount, inputToken: 'LVAIR', reason: 'Market Making Flow' };
-            await this.ammPool.executeSwap(this.botWallet, lvairAmount, 'LVAIR');
+            result = await this.ammPool.executeSwap(this.botWallet, lvairAmount, 'LVAIR');
           }
         }
 
         if (onBotAction) {
-          onBotAction({ action, rsi, price: this.ammPool.getCurrentPrice() });
+          onBotAction({ action, rsi, price: this.ammPool.getCurrentPrice(), trade: result ? result.trade : null, block: result ? result.block : null });
         }
       } catch {
         // Bot step skipped — pool may be rebalancing

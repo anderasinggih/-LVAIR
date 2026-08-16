@@ -1,17 +1,16 @@
 import { Blockchain } from './core/blockchain.js';
 import { AMMPool } from './core/amm.js';
-import { TradingBotEngine } from './core/market-maker.js';
 
-import { AppState, updateUI } from './state.js';
+import { AppState } from './state.js';
 import { appBrandHomeLink } from './dom.js';
 import { setupRouter, navigateTo, ROUTES } from './router.js';
 import { setupWalletModal, restoreSavedWallet, setConnectedWallet, disconnectWallet } from './components/wallet-modal.js';
 
-import { setupLandingPage, renderLandingStats } from './pages/landing.js';
-import { setupSwapPage, renderRecentTrades, renderChart, renderHistory } from './pages/swap.js';
+import { setupLandingPage } from './pages/landing.js';
+import { setupSwapPage, renderHistory, renderChart } from './pages/swap.js';
 import { setupTransferPage } from './pages/transfer.js';
 import { setupAirdropPage } from './pages/airdrop.js';
-import { getApiBaseUrl } from './api.js';
+import { refreshNodeState } from './node-sync.js';
 
 async function initApp() {
   try {
@@ -26,83 +25,10 @@ async function initApp() {
     setupTabsNavigation();
 
     AppState.blockchain = new Blockchain(2);
-    await AppState.blockchain.init();
-
-    try {
-      const apiUrl = getApiBaseUrl();
-      const [resCfg, resBlocks] = await Promise.all([
-        fetch(`${apiUrl}/api/config`),
-        fetch(`${apiUrl}/api/blocks`)
-      ]);
-
-      if (resCfg.ok) {
-        const cfg = await resCfg.json();
-        if (cfg.airdropClaimAmount) AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
-      }
-
-      if (resBlocks.ok) {
-        const blocks = await resBlocks.json();
-        if (blocks && blocks.length > 0) {
-          AppState.blockchain.chain = blocks;
-          blocks.forEach(b => {
-            if (b.transactions) {
-              b.transactions.forEach(t => {
-                if (t.type === 'AIRDROP_CLAIM' && t.toAddress) {
-                  AppState.blockchain.claimedAddresses.add(t.toAddress.toLowerCase());
-                }
-              });
-            }
-          });
-        }
-      }
-    } catch (e) {}
-
     AppState.ammPool = new AMMPool(AppState.blockchain, 100000, 25000);
 
-    AppState.botEngine = new TradingBotEngine(AppState.blockchain, AppState.ammPool);
-    AppState.botEngine.start(4000, () => {
-      updateUI();
-      renderLandingStats();
-      renderRecentTrades();
-    });
-
-    setInterval(async () => {
-      try {
-        const apiUrl = getApiBaseUrl();
-        const [resCfg, resBlocks] = await Promise.all([
-          fetch(`${apiUrl}/api/config`),
-          fetch(`${apiUrl}/api/blocks`)
-        ]);
-
-        if (resCfg.ok) {
-          const cfg = await resCfg.json();
-          if (cfg.airdropClaimAmount && AppState.blockchain) {
-            AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
-          }
-        }
-
-        if (resBlocks.ok) {
-          const blocks = await resBlocks.json();
-          if (blocks && blocks.length > 0 && AppState.blockchain) {
-            AppState.blockchain.chain = blocks;
-            blocks.forEach(b => {
-              if (b.transactions) {
-                b.transactions.forEach(t => {
-                  if (t.type === 'AIRDROP_CLAIM' && t.toAddress) {
-                    AppState.blockchain.claimedAddresses.add(t.toAddress.toLowerCase());
-                  }
-                });
-              }
-            });
-            updateUI();
-          }
-        }
-      } catch (e) {}
-    }, 3000);
-
-    updateUI();
-    renderLandingStats();
-    renderRecentTrades();
+    await refreshNodeState();
+    setInterval(refreshNodeState, 3000);
 
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts) => {

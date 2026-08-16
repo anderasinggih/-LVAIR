@@ -1,9 +1,6 @@
 import { Block, Transaction } from './block.js';
 import { CryptoEngine } from './crypto.js';
 
-
-const STORAGE_KEY = 'LVAIR_CHAIN_STATE_V1';
-
 export class Blockchain {
   constructor(difficulty = 2) {
     this.chain = [];
@@ -17,10 +14,8 @@ export class Blockchain {
   }
 
   async init() {
-    const loaded = await this.loadState();
-    if (!loaded || this.chain.length === 0) {
+    if (this.chain.length === 0) {
       await this.createGenesisBlock();
-      await this.saveState();
     }
   }
 
@@ -88,7 +83,6 @@ export class Blockchain {
     this.claimedAddresses.add(userAddress);
 
     const minedBlock = await this.minePendingTransactions(null);
-    await this.saveState();
     return { tx: airdropTx, block: minedBlock };
   }
 
@@ -116,7 +110,6 @@ export class Blockchain {
     this.chain.push(block);
     this.pendingTransactions = [];
 
-    await this.saveState();
     return block;
   }
 
@@ -166,44 +159,6 @@ export class Blockchain {
       }
     }
     return { valid: true };
-  }
-
-  async saveState() {
-    if (typeof localStorage !== 'undefined') {
-      const payload = {
-        chain: this.chain,
-        claimedAddresses: Array.from(this.claimedAddresses),
-        airdropClaimAmount: this.airdropClaimAmount
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    }
-  }
-
-  async loadState() {
-    if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          this.chain = parsed.chain.map(b => {
-            const block = new Block(b.index, b.timestamp, b.transactions, b.previousHash);
-            block.merkleRoot = b.merkleRoot;
-            block.nonce = b.nonce;
-            block.difficulty = b.difficulty;
-            block.hash = b.hash;
-            return block;
-          });
-          this.claimedAddresses = new Set(parsed.claimedAddresses || []);
-          if (parsed.airdropClaimAmount && parsed.airdropClaimAmount > 0) {
-            this.airdropClaimAmount = parsed.airdropClaimAmount;
-          }
-          return true;
-        } catch {
-          // Corrupt state — start fresh
-        }
-      }
-    }
-    return false;
   }
 }
 

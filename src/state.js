@@ -20,7 +20,6 @@ export const PROTOCOL_OWNER_CONFIG = {
 export const AppState = {
   blockchain: null,
   ammPool: null,
-  botEngine: null,
   currentConnectedAddress: null,
   currentConnectedProvider: null,
   currentInputToken: 'LVAIR'

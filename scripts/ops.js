@@ -40,7 +40,6 @@ async function runOps() {
 
     case 'reset-airdrop':
       blockchain.claimedAddresses.clear();
-      blockchain.saveState();
       console.log('\x1b[32m✔ Airdrop claims whitelist has been completely reset!\x1b[0m');
       break;
 

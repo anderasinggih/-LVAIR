@@ -103,12 +103,14 @@ export class AMMPool {
       id: inTx.txHash || `0x${Date.now()}`,
       timestamp: Date.now(),
       user: userAddress,
+      traderAddress: userAddress,
       type: isLvairToUsdt ? 'SELL_LVAIR' : 'BUY_LVAIR',
       inputAmount: Number(inputAmount),
       inputToken,
       outputAmount: Number(quote.outputAmount.toFixed(4)),
       outputToken: quote.outputToken,
       price: this.getCurrentPrice(),
+      effectivePrice: Number(quote.executionPrice.toFixed(4)),
       blockIndex: block.index,
     };
     this.trades.unshift(tradeEntry);

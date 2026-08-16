@@ -17,6 +17,7 @@ import { AppState, updateUI } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
 import { getApiBaseUrl } from '../api.js';
+import { refreshNodeState } from '../node-sync.js';
 
 let currentSlippage = 0.5;
 let lastSwapTimestamp = 0;
@@ -69,7 +70,7 @@ function recalculateQuote() {
   const val = parseFloat(swapInputAmount.value) || 0;
   const quote = ammPool.getQuote(val, currentInputToken);
 
-  if (swapOutputAmount) swapOutputAmount.value = quote.amountOut.toFixed(4);
+  if (swapOutputAmount) swapOutputAmount.value = quote.outputAmount.toFixed(4);
 
   const impact = quote.priceImpact;
   if (swapPriceImpact) {
@@ -91,7 +92,7 @@ function recalculateQuote() {
     }
   }
 
-  const minReceived = quote.amountOut * (1 - currentSlippage / 100);
+  const minReceived = quote.outputAmount * (1 - currentSlippage / 100);
   const minReceivedEl = document.getElementById('swap-min-received');
   if (minReceivedEl && val > 0) {
     const outToken = currentInputToken === 'LVAIR' ? 'USDT' : 'LVAIR';
@@ -108,6 +109,10 @@ function recalculateQuote() {
     } else {
       gasFeeEl.innerText = '~$0.00 (Subsidized)';
     }
+  }
+
+  if (swapPoolLiquidity) {
+    swapPoolLiquidity.innerText = `$${ammPool.usdtReserve.toLocaleString()}`;
   }
 }
 
@@ -140,7 +145,7 @@ export function setupSwapPage() {
 
   if (btnExecuteSwap) {
     btnExecuteSwap.addEventListener('click', async () => {
-      const { blockchain, ammPool, currentConnectedAddress, currentInputToken } = AppState;
+      const { blockchain, currentConnectedAddress, currentInputToken } = AppState;
       if (!currentConnectedAddress) {
         if (walletModal) walletModal.style.display = 'flex';
         return;
@@ -160,7 +165,7 @@ export function setupSwapPage() {
         return showToast(`Insufficient ${sanitizeText(currentInputToken)} balance. You have ${userBal.toLocaleString()} ${sanitizeText(currentInputToken)}`, 'error');
       }
 
-      const quote = ammPool.getQuote(amountIn, currentInputToken);
+      const quote = AppState.ammPool.getQuote(amountIn, currentInputToken);
       if (quote.priceImpact > 50) {
         return showToast('Price impact too high (>50%). Reduce swap amount.', 'error');
       }
@@ -170,34 +175,33 @@ export function setupSwapPage() {
       btnExecuteSwap.innerText = 'Executing On-Chain Swap...';
 
       try {
-        const isBuyingAir = currentInputToken === 'USDT';
-        const trade = await ammPool.executeTrade(
-          currentConnectedAddress,
-          isBuyingAir ? 'BUY_LVAIR' : 'SELL_LVAIR',
-          amountIn,
-          currentSlippage / 100
-        );
+        const apiUrl = getApiBaseUrl();
+        const res = await fetch(`${apiUrl}/api/swap`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userAddress: currentConnectedAddress,
+            inputAmount: amountIn,
+            inputToken: currentInputToken
+          })
+        });
 
-        // Report to server monitor log (no re-execution, just telemetry)
-        try {
-          const apiUrl = getApiBaseUrl();
-          await fetch(`${apiUrl}/api/telemetry/event`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: isBuyingAir ? 'BUY_LVAIR' : 'SELL_LVAIR',
-              tag: 'tag-swap',
-              message: `Swap ${amountIn} ${currentInputToken} by ${currentConnectedAddress.substring(0,8)}... => ${trade.amountOut.toFixed(4)} ${isBuyingAir ? 'LVAIR' : 'USDT'} @ $${trade.effectivePrice.toFixed(4)}`,
-              data: { userAddress: currentConnectedAddress, amountIn, amountOut: trade.amountOut, inputToken: currentInputToken }
-            })
-          });
-        } catch (e) {}
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || 'RPC rejected the swap');
+        }
+
+        const data = await res.json();
+        const trade = data.result.trade;
+        const isBuyingAir = currentInputToken === 'USDT';
+
+        await refreshNodeState();
 
         addToHistory({
           type: 'swap',
           subtype: isBuyingAir ? 'BUY_LVAIR' : 'SELL_LVAIR',
           amountIn,
-          amountOut: trade.amountOut,
+          amountOut: trade.outputAmount,
           tokenIn: isBuyingAir ? 'USDT' : 'LVAIR',
           tokenOut: isBuyingAir ? 'LVAIR' : 'USDT',
           price: trade.effectivePrice,
@@ -205,9 +209,8 @@ export function setupSwapPage() {
           timestamp: Date.now()
         });
 
-        showToast(`Swap Settled! Received ${trade.amountOut.toFixed(2)} ${isBuyingAir ? 'LVAIR' : 'USDT'}`);
+        showToast(`Swap Settled! Received ${trade.outputAmount.toFixed(2)} ${isBuyingAir ? 'LVAIR' : 'USDT'}`);
         updateUI();
-        renderRecentTrades();
         renderLandingStats();
       } catch (err) {
         showToast(`Swap Failed: ${err.message}`, 'error');
@@ -257,7 +260,7 @@ function setupHistoryTab() {
 }
 
 export function renderHistory() {
-  const { currentConnectedAddress, blockchain } = AppState;
+  const { currentConnectedAddress, blockchain, ammPool } = AppState;
   const walletNotice = document.getElementById('history-wallet-notice');
   const emptyNotice = document.getElementById('history-empty-notice');
   const tableWrapper = document.getElementById('history-table-wrapper');
@@ -276,7 +279,6 @@ export function renderHistory() {
 
   walletNotice.style.display = 'none';
 
-  // Build combined history from on-chain blocks and local session
   const userAddrNorm = currentConnectedAddress.toLowerCase();
   const onChainTxList = [];
 
@@ -287,55 +289,60 @@ export function renderHistory() {
           const fromNorm = (tx.fromAddress || '').toLowerCase();
           const toNorm = (tx.toAddress || '').toLowerCase();
 
+          if (tx.type === 'SWAP_IN' || tx.type === 'SWAP_OUT' || tx.type === 'COINBASE_REWARD' || tx.type === 'COINBASE_GENESIS') {
+            return;
+          }
+
           if (fromNorm === userAddrNorm || toNorm === userAddrNorm) {
-            let txType = 'swap';
-            let subType = tx.type || 'P2P_TRANSFER';
-            let amountIn = 0;
-            let amountOut = tx.amount || 0;
-            let tokenIn = '—';
-            let tokenOut = tx.token || 'LVAIR';
-
             if (tx.type === 'AIRDROP_CLAIM') {
-              txType = 'airdrop';
-              subType = 'CLAIM';
-              amountIn = 0;
-              amountOut = tx.amount;
-              tokenIn = '—';
-              tokenOut = 'LVAIR';
-            } else if (tx.type === 'P2P_TRANSFER') {
-              txType = 'transfer';
-              subType = 'TRANSFER';
-              amountIn = tx.amount;
-              amountOut = tx.amount;
-              tokenIn = tx.token;
-              tokenOut = tx.token;
-            } else if (tx.type === 'SWAP') {
-              txType = 'swap';
-              subType = (tx.metadata && tx.metadata.tradeType) || 'SWAP';
-              amountIn = (tx.metadata && tx.metadata.amountIn) || tx.amount;
-              amountOut = (tx.metadata && tx.metadata.amountOut) || tx.amount;
-              tokenIn = (tx.metadata && tx.metadata.tokenIn) || (subType === 'BUY_LVAIR' ? 'USDT' : 'LVAIR');
-              tokenOut = (tx.metadata && tx.metadata.tokenOut) || (subType === 'BUY_LVAIR' ? 'LVAIR' : 'USDT');
+              onChainTxList.push({
+                type: 'airdrop',
+                subtype: 'CLAIM',
+                amountIn: 0,
+                amountOut: tx.amount,
+                tokenIn: '—',
+                tokenOut: 'LVAIR',
+                price: null,
+                blockIndex: block.index,
+                timestamp: block.timestamp || Date.now()
+              });
+            } else if (tx.type === 'P2P_TRANSFER' || tx.type === 'TRANSFER') {
+              onChainTxList.push({
+                type: 'transfer',
+                subtype: 'TRANSFER',
+                amountIn: tx.amount,
+                amountOut: tx.amount,
+                tokenIn: tx.token,
+                tokenOut: tx.token,
+                price: null,
+                blockIndex: block.index,
+                timestamp: block.timestamp || Date.now()
+              });
             }
-
-            onChainTxList.push({
-              type: txType,
-              subtype: subType,
-              amountIn: amountIn,
-              amountOut: amountOut,
-              tokenIn: tokenIn,
-              tokenOut: tokenOut,
-              price: tx.metadata ? tx.metadata.price : null,
-              blockIndex: block.index,
-              timestamp: block.timestamp || Date.now()
-            });
           }
         });
       }
     });
   }
 
-  // Deduplicate and merge with session memory
+  if (ammPool && Array.isArray(ammPool.trades)) {
+    ammPool.trades.forEach(t => {
+      const trader = (t.traderAddress || t.user || '').toLowerCase();
+      if (trader !== userAddrNorm) return;
+      onChainTxList.push({
+        type: 'swap',
+        subtype: t.type,
+        amountIn: Number(t.inputAmount),
+        amountOut: Number(t.outputAmount),
+        tokenIn: t.inputToken,
+        tokenOut: t.outputToken,
+        price: Number(t.effectivePrice || t.price || 0),
+        blockIndex: t.blockIndex,
+        timestamp: t.timestamp || Date.now()
+      });
+    });
+  }
+
   const allTxs = [...walletHistory, ...onChainTxList];
   const uniqueTxs = [];
   const seenKeys = new Set();
@@ -347,7 +354,6 @@ export function renderHistory() {
     }
   });
 
-  // Sort descending by block/time
   uniqueTxs.sort((a, b) => (b.blockIndex - a.blockIndex) || (b.timestamp - a.timestamp));
 
   const filterEl = document.getElementById('history-filter');
@@ -414,16 +420,17 @@ export function updateSwapMax() {
 export function renderRecentTrades() {
   const { ammPool } = AppState;
   if (!tradesTableBody || !ammPool) return;
-  const recent = [...ammPool.trades].reverse().slice(0, 8);
+  const recent = [...(ammPool.trades || [])].slice(0, 8);
   tradesTableBody.innerHTML = recent.map(t => {
     const isBuy = t.type === 'BUY_LVAIR';
+    const trader = t.traderAddress || t.user || '';
     return `
       <tr>
         <td><span class="badge ${isBuy ? 'badge-success' : 'badge-danger'}">${isBuy ? 'BUY' : 'SELL'}</span></td>
-        <td>${t.amountIn.toFixed(2)} ${isBuy ? 'USDT' : 'LVAIR'}</td>
-        <td>${t.amountOut.toFixed(2)} ${isBuy ? 'LVAIR' : 'USDT'}</td>
-        <td style="color: #60a5fa; font-weight:700;">$${t.effectivePrice.toFixed(4)}</td>
-        <td title="${sanitizeText(t.traderAddress)}">${sanitizeText(t.traderAddress.substring(0, 6))}...${sanitizeText(t.traderAddress.substring(t.traderAddress.length - 4))}</td>
+        <td>${Number(t.inputAmount).toFixed(2)} ${isBuy ? 'USDT' : 'LVAIR'}</td>
+        <td>${Number(t.outputAmount).toFixed(2)} ${isBuy ? 'LVAIR' : 'USDT'}</td>
+        <td style="color: #60a5fa; font-weight:700;">$${Number(t.effectivePrice || t.price || 0).toFixed(4)}</td>
+        <td title="${sanitizeText(trader)}">${sanitizeText(trader.substring(0, 6))}...${sanitizeText(trader.substring(trader.length - 4))}</td>
         <td>#${t.blockIndex || 1}</td>
       </tr>
     `;
