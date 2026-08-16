@@ -54,12 +54,24 @@ function setupAdminHandlers() {
   const adminPoolUsdtInput = document.getElementById('admin-pool-usdt-input');
 
   const btnClaimProtocolOwner = document.getElementById('btn-claim-protocol-owner');
+  const btnResetOwnerKey = document.getElementById('btn-reset-owner-key');
   const btnToggleBot = document.getElementById('btn-toggle-bot');
   const btnSaveAirdropConfig = document.getElementById('btn-save-airdrop-config');
   const btnResetAirdropList = document.getElementById('btn-reset-airdrop-list');
   const btnUpdatePoolReserves = document.getElementById('btn-update-pool-reserves');
   const btnAdminForceMine = document.getElementById('btn-admin-force-mine');
   const btnAdminExportState = document.getElementById('btn-admin-export-state');
+
+  if (btnResetOwnerKey) {
+    btnResetOwnerKey.addEventListener('click', () => {
+      PROTOCOL_OWNER_CONFIG.ownerAddress = null;
+      PROTOCOL_OWNER_CONFIG.isAdminAuthorized = false;
+      localStorage.removeItem('LVAIR_PROTOCOL_OWNER_ADDR');
+      localStorage.removeItem('LVAIR_ADMIN_AUTH_TOKEN_V1');
+      showToast('Protocol Owner key reset! You can now claim ownership with any wallet.');
+      renderAdminDashboard();
+    });
+  }
 
   if (btnClaimProtocolOwner) {
     btnClaimProtocolOwner.addEventListener('click', async () => {
