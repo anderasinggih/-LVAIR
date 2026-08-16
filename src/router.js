@@ -1,7 +1,6 @@
 import { pageLanding, pageApp } from './dom.js';
 import { renderLandingStats } from './pages/landing.js';
 import { renderChart } from './pages/swap.js';
-import { renderAdminDashboard } from './pages/admin.js';
 import { updateUI } from './state.js';
 import { showToast } from './components/toast.js';
 
@@ -10,8 +9,7 @@ export const ROUTES = {
   HOME: '/',
   SWAP: '/swap',
   TRANSFER: '/transfer',
-  AIRDROP: '/airdrop',
-  ADMIN: '/vault-0x9f4a7c'
+  AIRDROP: '/airdrop'
 };
 
 // Protected routes requiring connected Web3 wallet
@@ -39,7 +37,6 @@ export function handlePathRouting() {
   }
 
   const savedWallet = localStorage.getItem('LVAIR_CONNECTED_WALLET_ADDR');
-  const pageAdmin = document.getElementById('page-admin');
 
   // Strict Security Guard / Authentication Barrier for Transfer & Airdrop
   if (PROTECTED_ROUTES.has(path) && !savedWallet) {
@@ -50,17 +47,6 @@ export function handlePathRouting() {
     // Redirect cleanly to /swap
     window.history.pushState({}, '', ROUTES.SWAP);
     path = ROUTES.SWAP;
-  }
-
-  // Admin Route Handler (Dedicated Secret Vault Route)
-  if (path === ROUTES.ADMIN || path === '/admin') {
-    if (pageLanding) pageLanding.style.display = 'none';
-    if (pageApp) pageApp.style.display = 'none';
-    if (pageAdmin) pageAdmin.style.display = 'block';
-    renderAdminDashboard();
-    return;
-  } else {
-    if (pageAdmin) pageAdmin.style.display = 'none';
   }
 
   if (path.startsWith('/swap') || path.startsWith('/transfer') || path.startsWith('/airdrop') || path === '/app') {

@@ -11,7 +11,6 @@ import { setupLandingPage, renderLandingStats } from './pages/landing.js';
 import { setupSwapPage, renderRecentTrades, renderChart } from './pages/swap.js';
 import { setupTransferPage } from './pages/transfer.js';
 import { setupAirdropPage } from './pages/airdrop.js';
-import { setupAdminPage, renderAdminDashboard } from './pages/admin.js';
 
 /**
  * Main Application Orchestrator
@@ -28,7 +27,6 @@ async function initApp() {
     setupSwapPage();
     setupTransferPage();
     setupAirdropPage();
-    setupAdminPage();
     setupWalletModal();
     setupTabsNavigation();
 
