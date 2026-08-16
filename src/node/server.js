@@ -874,7 +874,8 @@ async function startFullNode() {
 
   const httpServer = app.listen(HTTP_PORT, () => {
     console.log(`[RPC] HTTP RPC Server listening on http://0.0.0.0:${HTTP_PORT}`);
-    if (ADMIN_TOKEN) console.log(`[SECURITY] Admin token: ${ADMIN_TOKEN.substring(0, 8)}... (set ADMIN_TOKEN env to override)`);
+    if (ADMIN_TOKEN && !process.env.ADMIN_TOKEN) console.log(`[SECURITY] Admin token (auto): ${ADMIN_TOKEN}`);
+    else if (ADMIN_TOKEN) console.log(`[SECURITY] Admin token: ${ADMIN_TOKEN.substring(0, 8)}...`);
     console.log(`[SECURITY] Transaction signing: ${ENABLE_SIGNING ? 'ENABLED' : 'DISABLED'}`);
     console.log(`[SECURITY] CORS origins: ${ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS.join(', ') : 'ALL (open)'}`);
     logEvent('NODE_BOOT', 'tag-sync', `LVAIR Core Node booted on port ${HTTP_PORT} (P2P ${P2P_PORT})`);
