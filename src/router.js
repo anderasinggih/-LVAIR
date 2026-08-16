@@ -52,7 +52,7 @@ export function handlePathRouting() {
     path = ROUTES.SWAP;
   }
 
-  // Admin Route Handler (Obfuscated Secret Route)
+  // Admin Route Handler (Dedicated Secret Vault Route)
   if (path === ROUTES.ADMIN || path === '/admin') {
     if (pageLanding) pageLanding.style.display = 'none';
     if (pageApp) pageApp.style.display = 'none';
@@ -97,14 +97,5 @@ export function handlePathRouting() {
 
 export function setupRouter() {
   window.addEventListener('popstate', handlePathRouting);
-  
-  // Secret Owner Hotkey: Ctrl + Shift + A / Cmd + Shift + A to open Admin Console
-  window.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
-      e.preventDefault();
-      navigateTo(ROUTES.ADMIN);
-    }
-  });
-
   handlePathRouting();
 }

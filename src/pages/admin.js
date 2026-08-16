@@ -2,10 +2,6 @@ import { AppState, PROTOCOL_OWNER_CONFIG, updateUI } from '../state.js';
 import { showToast } from '../components/toast.js';
 
 export function setupAdminPage() {
-  const adminOwnerDisplay = document.getElementById('admin-owner-display');
-  const adminBotStatus = document.getElementById('admin-bot-status');
-  const adminTotalClaims = document.getElementById('admin-total-claims');
-  const adminTotalBlocks = document.getElementById('admin-total-blocks');
   const adminAirdropAmountInput = document.getElementById('admin-airdrop-amount-input');
   const adminPoolAirInput = document.getElementById('admin-pool-air-input');
   const adminPoolUsdtInput = document.getElementById('admin-pool-usdt-input');
@@ -24,6 +20,8 @@ export function setupAdminPage() {
       const { currentConnectedAddress } = AppState;
       if (!currentConnectedAddress) {
         showToast('Please connect your Web3 wallet first', 'error');
+        const walletModal = document.getElementById('wallet-modal');
+        if (walletModal) walletModal.style.display = 'flex';
         return;
       }
 
@@ -70,7 +68,7 @@ export function setupAdminPage() {
       if (!botEngine) return;
       if (botEngine.isRunning) {
         botEngine.stop();
-        showToast('Autonomous Liquidity Bot stopped');
+        showToast('Autonomous Liquidity Bot paused');
       } else {
         botEngine.start(4000, () => {
           updateUI();
@@ -172,13 +170,11 @@ export function renderAdminDashboard() {
   const adminControlsPanel = document.getElementById('admin-controls-panel');
   const btnToggleBot = document.getElementById('btn-toggle-bot');
 
-  if (!blockchain || !ammPool) return;
-
   const isOwner = PROTOCOL_OWNER_CONFIG.ownerAddress;
   const isAuth = PROTOCOL_OWNER_CONFIG.isAdminAuthorized;
 
   if (adminOwnerDisplay) {
-    adminOwnerDisplay.innerText = isOwner ? `${isOwner.substring(0, 10)}...${isOwner.substring(isOwner.length - 8)}` : 'Unclaimed (Connect wallet to claim owner)';
+    adminOwnerDisplay.innerText = isOwner ? `${isOwner.substring(0, 8)}...${isOwner.substring(isOwner.length - 6)}` : 'Unclaimed (Genesis Setup)';
   }
 
   if (adminAuthCard && adminControlsPanel) {
@@ -203,13 +199,15 @@ export function renderAdminDashboard() {
     btnToggleBot.className = isRunning ? 'btn-secondary' : 'btn-primary';
   }
 
-  if (adminTotalClaims) adminTotalClaims.innerText = `${blockchain.claimedAddresses.size} Wallets`;
-  if (adminTotalBlocks) adminTotalBlocks.innerText = `#${blockchain.chain.length} Blocks`;
+  if (adminTotalClaims) adminTotalClaims.innerText = blockchain ? `${blockchain.claimedAddresses.size} Wallets` : '0 Wallets';
+  if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${blockchain.chain.length} Blocks` : '#1 Blocks';
 
-  if (adminPoolAirInput && !adminPoolAirInput.matches(':focus')) {
-    adminPoolAirInput.value = ammPool.lvairReserve;
-  }
-  if (adminPoolUsdtInput && !adminPoolUsdtInput.matches(':focus')) {
-    adminPoolUsdtInput.value = ammPool.usdtReserve;
+  if (ammPool) {
+    if (adminPoolAirInput && !adminPoolAirInput.matches(':focus')) {
+      adminPoolAirInput.value = ammPool.lvairReserve;
+    }
+    if (adminPoolUsdtInput && !adminPoolUsdtInput.matches(':focus')) {
+      adminPoolUsdtInput.value = ammPool.usdtReserve;
+    }
   }
 }
