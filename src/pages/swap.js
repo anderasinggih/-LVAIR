@@ -241,7 +241,7 @@ function setupHistoryTab() {
 }
 
 export function renderHistory() {
-  const { currentConnectedAddress } = AppState;
+  const { currentConnectedAddress, blockchain } = AppState;
   const walletNotice = document.getElementById('history-wallet-notice');
   const emptyNotice = document.getElementById('history-empty-notice');
   const tableWrapper = document.getElementById('history-table-wrapper');
@@ -260,9 +260,83 @@ export function renderHistory() {
 
   walletNotice.style.display = 'none';
 
+  // Build combined history from on-chain blocks and local session
+  const userAddrNorm = currentConnectedAddress.toLowerCase();
+  const onChainTxList = [];
+
+  if (blockchain && blockchain.chain) {
+    blockchain.chain.forEach(block => {
+      if (block.transactions) {
+        block.transactions.forEach(tx => {
+          const fromNorm = (tx.fromAddress || '').toLowerCase();
+          const toNorm = (tx.toAddress || '').toLowerCase();
+
+          if (fromNorm === userAddrNorm || toNorm === userAddrNorm) {
+            let txType = 'swap';
+            let subType = tx.type || 'P2P_TRANSFER';
+            let amountIn = 0;
+            let amountOut = tx.amount || 0;
+            let tokenIn = '—';
+            let tokenOut = tx.token || 'LVAIR';
+
+            if (tx.type === 'AIRDROP_CLAIM') {
+              txType = 'airdrop';
+              subType = 'CLAIM';
+              amountIn = 0;
+              amountOut = tx.amount;
+              tokenIn = '—';
+              tokenOut = 'LVAIR';
+            } else if (tx.type === 'P2P_TRANSFER') {
+              txType = 'transfer';
+              subType = 'TRANSFER';
+              amountIn = tx.amount;
+              amountOut = tx.amount;
+              tokenIn = tx.token;
+              tokenOut = tx.token;
+            } else if (tx.type === 'SWAP') {
+              txType = 'swap';
+              subType = (tx.metadata && tx.metadata.tradeType) || 'SWAP';
+              amountIn = (tx.metadata && tx.metadata.amountIn) || tx.amount;
+              amountOut = (tx.metadata && tx.metadata.amountOut) || tx.amount;
+              tokenIn = (tx.metadata && tx.metadata.tokenIn) || (subType === 'BUY_LVAIR' ? 'USDT' : 'LVAIR');
+              tokenOut = (tx.metadata && tx.metadata.tokenOut) || (subType === 'BUY_LVAIR' ? 'LVAIR' : 'USDT');
+            }
+
+            onChainTxList.push({
+              type: txType,
+              subtype: subType,
+              amountIn: amountIn,
+              amountOut: amountOut,
+              tokenIn: tokenIn,
+              tokenOut: tokenOut,
+              price: tx.metadata ? tx.metadata.price : null,
+              blockIndex: block.index,
+              timestamp: block.timestamp || Date.now()
+            });
+          }
+        });
+      }
+    });
+  }
+
+  // Deduplicate and merge with session memory
+  const allTxs = [...walletHistory, ...onChainTxList];
+  const uniqueTxs = [];
+  const seenKeys = new Set();
+  allTxs.forEach(t => {
+    const key = `${t.type}_${t.blockIndex}_${t.amountOut}_${t.tokenOut}`;
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      uniqueTxs.push(t);
+    }
+  });
+
+  // Sort descending by block/time
+  uniqueTxs.sort((a, b) => (b.blockIndex - a.blockIndex) || (b.timestamp - a.timestamp));
+
   const filterEl = document.getElementById('history-filter');
   const filter = filterEl ? filterEl.value : 'all';
-  const filtered = filter === 'all' ? walletHistory : walletHistory.filter(h => h.type === filter);
+  const filtered = filter === 'all' ? uniqueTxs : uniqueTxs.filter(h => h.type === filter);
 
   if (!filtered.length) {
     if (emptyNotice) emptyNotice.style.display = 'block';
