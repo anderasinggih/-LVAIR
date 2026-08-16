@@ -5,21 +5,30 @@ export function detectWalletProviders() {
   const tagMetamask = document.getElementById('tag-metamask');
   const tagPhantom = document.getElementById('tag-phantom');
   const tagBinance = document.getElementById('tag-binance');
+  const tagCoinbase = document.getElementById('tag-coinbase');
 
   if (tagMetamask) {
-    tagMetamask.innerText = window.ethereum ? 'Detected' : 'Not Installed';
-    tagMetamask.className = window.ethereum ? 'badge badge-success' : 'badge badge-neutral';
+    const isMm = typeof window.ethereum !== 'undefined';
+    tagMetamask.innerText = isMm ? 'Ready' : 'Not Installed';
+    tagMetamask.className = isMm ? 'badge badge-success' : 'badge badge-neutral';
   }
 
   if (tagPhantom) {
-    const isPhantom = window.phantom?.solana?.isPhantom || window.solana?.isPhantom || window.solana;
-    tagPhantom.innerText = isPhantom ? 'Detected' : 'Not Installed';
+    const isPhantom = !!(window.phantom?.solana?.isPhantom || window.solana?.isPhantom || window.solana);
+    tagPhantom.innerText = isPhantom ? 'Ready' : 'Not Installed';
     tagPhantom.className = isPhantom ? 'badge badge-success' : 'badge badge-neutral';
   }
 
   if (tagBinance) {
-    tagBinance.innerText = window.BinanceChain ? 'Detected' : 'Not Installed';
-    tagBinance.className = window.BinanceChain ? 'badge badge-success' : 'badge badge-neutral';
+    const isBinance = !!(window.BinanceChain || window.ethereum?.isBinance);
+    tagBinance.innerText = isBinance ? 'Ready' : 'Not Installed';
+    tagBinance.className = isBinance ? 'badge badge-success' : 'badge badge-neutral';
+  }
+
+  if (tagCoinbase) {
+    const isCoinbase = !!(window.coinbaseWalletExtension || window.ethereum?.isCoinbaseWallet);
+    tagCoinbase.innerText = isCoinbase ? 'Ready' : 'EIP-6963';
+    tagCoinbase.className = isCoinbase ? 'badge badge-success' : 'badge badge-neutral';
   }
 }
 
