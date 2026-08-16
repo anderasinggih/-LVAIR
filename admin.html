@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LVAIR Protocol Ops & Governance Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body style="background-color: #000000; color: #ffffff;">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+    <!-- Web3 Wallet Connection Modal -->
+    <div id="wallet-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="font-size: 1.15rem; font-weight: 800;">Authenticate Owner Wallet</h3>
+          <button id="btn-close-modal" style="background: none; border: none; color: #71717a; font-size: 1.4rem; cursor: pointer;">✕</button>
+        </div>
+        <p style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 20px;">
+          Connect the registered Protocol Owner wallet to access cryptographic governance.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="wallet-option-btn btn-secondary" data-provider="MetaMask" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <span>MetaMask (EVM)</span>
+            <span style="font-size: 0.8rem; color: #60a5fa;">Connect →</span>
+          </button>
+          <button class="wallet-option-btn btn-secondary" data-provider="Phantom" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <span>Phantom (Solana)</span>
+            <span style="font-size: 0.8rem; color: #60a5fa;">Connect →</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dedicated Ops Container -->
+    <div class="app-wrapper" style="max-width: 1200px; margin: 0 auto; padding: 40px 24px;">
+      
+      <!-- Top Bar -->
+      <header class="app-header" style="margin-bottom: 32px;">
+        <div class="brand-section">
+          <div class="logo-badge" style="background-color: #ef4444;">OPS PORTAL</div>
+          <div class="brand-title">LVAIR Protocol Governance</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="font-size: 0.8rem; color: #71717a;">
+            Owner: <span id="admin-owner-display" style="font-family: var(--font-mono); color: #ffffff;">Checking...</span>
+          </div>
+          <button id="btn-connect-wallet" class="btn-primary" style="padding: 8px 18px; font-size: 0.85rem; font-family: var(--font-mono);">
+            Connect Wallet
+          </button>
+        </div>
+      </header>
+
+      <!-- Auth Shield Gate -->
+      <div id="admin-auth-card" class="panel" style="max-width: 520px; margin: 80px auto; text-align: center; padding: 40px 30px;">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">🛡️</div>
+        <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 8px;">Protocol Owner Signature Required</h2>
+        <p style="color: #a1a1aa; font-size: 0.88rem; line-height: 1.6; margin-bottom: 24px;">
+          This portal is cryptographically restricted. Connect the Protocol Owner wallet and sign the authorization challenge.
+        </p>
+        <button id="btn-claim-protocol-owner" class="btn-primary" style="width: 100%; padding: 14px;">
+          Verify Owner Signature →
+        </button>
+      </div>
+
+      <!-- Main Admin Dashboard Panel -->
+      <div id="admin-controls-panel" style="display: none;">
+        
+        <!-- Live System Metric Summary -->
+        <div class="stat-grid" style="margin-bottom: 28px;">
+          <div class="stat-box">
+            <div class="stat-label">Market Maker Engine</div>
+            <div style="margin-top: 6px;"><span id="admin-bot-status" class="badge badge-success">Running (4000ms Loop)</span></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Total Airdrop Claims</div>
+            <div class="stat-val" id="admin-total-claims">0 Wallets</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Immutable Block Height</div>
+            <div class="stat-val" id="admin-total-blocks">#1 Blocks</div>
+          </div>
+        </div>
+
+        <!-- Operator Action Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px;">
+          
+          <!-- Box 1: Liquidity & Market Maker Controller -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🤖 Autonomous Market Maker</span>
+            </div>
+            <p style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 18px;">
+              Controls the background automated constant-product market maker on $LVAIR / USDT pool.
+            </p>
+            <button id="btn-toggle-bot" class="btn-secondary" style="width: 100%; padding: 12px;">Pause Market Maker</button>
+          </div>
+
+          <!-- Box 2: Airdrop Quota & Whitelist -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🎁 Genesis Airdrop Allocation</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tokens Per Claim</label>
+              <div class="input-container">
+                <input type="number" id="admin-airdrop-amount-input" class="input-field" value="250" />
+                <div class="token-tag">LVAIR</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button id="btn-save-airdrop-config" class="btn-primary" style="flex: 1; padding: 10px;">Save Quota</button>
+              <button id="btn-reset-airdrop-list" class="btn-secondary" style="flex: 1; padding: 10px; border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">Reset Whitelist</button>
+            </div>
+          </div>
+
+          <!-- Box 3: Pool Liquidity Rebalancer -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">💧 Pool Reserves Rebalancer</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reserve $LVAIR</label>
+              <div class="input-container">
+                <input type="number" id="admin-pool-air-input" class="input-field" value="100000" />
+                <div class="token-tag">LVAIR</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reserve USDT</label>
+              <div class="input-container">
+                <input type="number" id="admin-pool-usdt-input" class="input-field" value="25000" />
+                <div class="token-tag">USDT</div>
+              </div>
+            </div>
+            <button id="btn-update-pool-reserves" class="btn-primary" style="width: 100%; padding: 12px;">Rebalance AMM Reserves</button>
+          </div>
+
+          <!-- Box 4: Ledger Node Operator -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">⛓️ Ledger Diagnostic & Mining</span>
+            </div>
+            <p style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 18px;">
+              Force block inclusion onto ledger and export full cryptographic snapshot.
+            </p>
+            <div style="display: flex; gap: 10px;">
+              <button id="btn-admin-force-mine" class="btn-secondary" style="flex: 1; padding: 10px;">Mine New Block</button>
+              <button id="btn-admin-export-state" class="btn-secondary" style="flex: 1; padding: 10px;">Export JSON</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Ops Footer -->
+      <footer style="margin-top: 60px; text-align: center; color: #71717a; font-size: 0.8rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px;">
+        LVAIR Protocol • Internal Core Governance & Infrastructure
+      </footer>
+
+    </div>
+
+    <script type="module" src="/src/admin.main.js"></script>
+  </body>
+</html>

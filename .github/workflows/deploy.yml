@@ -1,4 +1,4 @@
-name: Deploy LVAIR Protocol to aaPanel VPS
+name: Deploy LVAIR Protocol (Monorepo) to aaPanel VPS
 
 on:
   push:
@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Monorepo Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -22,7 +22,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build Production Website
+      - name: Build Both Applications (Web dApp & Admin Ops)
         run: npm run build
 
       - name: Deploy to VPS aaPanel via SSH
@@ -34,15 +34,20 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            # 1. Masuk ke direktori web di aaPanel
-            cd /www/wwwroot/lvair-app || git clone https://github.com/anderasinggih/-LVAIR.git /www/wwwroot/lvair-app && cd /www/wwwroot/lvair-app
+            echo "Starting LVAIR Monorepo Deploy..."
             
-            # 2. Tarik update terbaru
+            # 1. Update Repository Codebase on VPS
+            cd /www/wwwroot/lvair-app || git clone https://github.com/anderasinggih/-LVAIR.git /www/wwwroot/lvair-app && cd /www/wwwroot/lvair-app
             git fetch origin main
             git reset --hard origin/main
-            
-            # 3. Install dan build langsung di server
             npm install
             npm run build
+
+            # 2. Sync / Mirror Admin Ops Web into dedicated subdomain if directory exists
+            if [ -d "/www/wwwroot/lvair-admin" ]; then
+              mkdir -p /www/wwwroot/lvair-admin/dist
+              cp -r /www/wwwroot/lvair-app/dist/* /www/wwwroot/lvair-admin/dist/
+              echo "Synced Admin Ops Portal to /www/wwwroot/lvair-admin"
+            fi
             
-            echo "LVAIR Protocol successfully deployed to aaPanel VPS!"
+            echo "LVAIR Protocol Monorepo successfully deployed!"
