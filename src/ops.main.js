@@ -108,13 +108,15 @@ function setupAdminHandlers() {
   }
 
   if (btnSaveAirdropConfig) {
-    btnSaveAirdropConfig.addEventListener('click', () => {
+    btnSaveAirdropConfig.addEventListener('click', async () => {
       const { blockchain } = AppState;
       if (!blockchain) return;
       const amount = parseFloat(adminAirdropAmountInput.value);
       if (!amount || amount <= 0) return showToast('Enter a valid airdrop allocation amount', 'error');
       blockchain.airdropClaimAmount = amount;
+      await blockchain.saveState();
       showToast(`Airdrop quota per wallet updated to ${amount} $LVAIR`);
+      renderAdminDashboard();
     });
   }
 

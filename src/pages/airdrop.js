@@ -22,26 +22,28 @@ export function setupAirdropPage() {
     btnClaimAirdrop.innerText = 'Claiming Allocation...';
 
     try {
+      const quota = blockchain.airdropClaimAmount || 250;
       await blockchain.claimAirdrop(currentConnectedAddress);
       addToHistory({
         type: 'airdrop',
         subtype: 'CLAIM',
         amountIn: 0,
-        amountOut: 250,
+        amountOut: quota,
         tokenIn: '—',
         tokenOut: 'LVAIR',
         price: null,
         blockIndex: blockchain.chain.length,
         timestamp: Date.now()
       });
-      showToast(`250 $LVAIR successfully claimed!`);
+      showToast(`${quota} $LVAIR successfully claimed!`);
       updateUI();
       renderLandingStats();
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
       btnClaimAirdrop.disabled = false;
-      btnClaimAirdrop.innerText = 'Claim 250 $LVAIR Airdrop';
+      const quota = blockchain.airdropClaimAmount || 250;
+      btnClaimAirdrop.innerText = `Claim ${quota} $LVAIR Airdrop`;
     }
   });
 }

@@ -48,7 +48,8 @@ export function updateUI() {
     if (btnExecuteSwap) btnExecuteSwap.innerText = 'Execute Swap';
     if (airdropStatusText) {
       const hasClaimed = blockchain.claimedAddresses.has(currentConnectedAddress);
-      airdropStatusText.innerText = hasClaimed ? 'Claimed (250 $LVAIR Allocated)' : 'Eligible for 250 $LVAIR Claim';
+      const quota = blockchain.airdropClaimAmount || 250;
+      airdropStatusText.innerText = hasClaimed ? `Claimed (${quota} $LVAIR Allocated)` : `Eligible for ${quota} $LVAIR Claim`;
       airdropStatusText.style.color = hasClaimed ? 'var(--text-tertiary)' : 'var(--accent-success)';
     }
   } else {
@@ -58,6 +59,17 @@ export function updateUI() {
       airdropStatusText.style.color = 'var(--text-secondary)';
     }
   }
+
+  const btnClaimAirdrop = document.getElementById('btn-claim-airdrop');
+  const airdropHeaderBadge = document.getElementById('airdrop-header-badge');
+  const airdropHeaderDesc = document.getElementById('airdrop-header-desc');
+  const quota = blockchain.airdropClaimAmount || 250;
+
+  if (btnClaimAirdrop && !btnClaimAirdrop.disabled) {
+    btnClaimAirdrop.innerText = `Claim ${quota} $LVAIR Airdrop`;
+  }
+  if (airdropHeaderBadge) airdropHeaderBadge.innerText = `${quota} $LVAIR Free`;
+  if (airdropHeaderDesc) airdropHeaderDesc.innerText = `Claim the initial token allocation for your connected wallet. Each unique address is eligible for ${quota} $LVAIR.`;
 
   const airPrice = ammPool.getCurrentPrice();
   if (statPrice) statPrice.innerText = `$${airPrice.toFixed(4)}`;

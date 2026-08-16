@@ -173,6 +173,7 @@ export class Blockchain {
       const payload = {
         chain: this.chain,
         claimedAddresses: Array.from(this.claimedAddresses),
+        airdropClaimAmount: this.airdropClaimAmount
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     }
@@ -193,6 +194,9 @@ export class Blockchain {
             return block;
           });
           this.claimedAddresses = new Set(parsed.claimedAddresses || []);
+          if (parsed.airdropClaimAmount && parsed.airdropClaimAmount > 0) {
+            this.airdropClaimAmount = parsed.airdropClaimAmount;
+          }
           return true;
         } catch {
           // Corrupt state — start fresh
