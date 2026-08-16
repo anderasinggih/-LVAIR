@@ -51,6 +51,58 @@ export function disconnectWallet() {
   updateUI();
 }
 
+function openAccountDetailsModal() {
+  let accModal = document.getElementById('account-details-modal');
+  if (!accModal) {
+    accModal = document.createElement('div');
+    accModal.id = 'account-details-modal';
+    accModal.className = 'modal-overlay';
+    document.body.appendChild(accModal);
+  }
+
+  const addr = AppState.currentConnectedAddress || '';
+  const prov = AppState.currentConnectedProvider || 'Web3 Wallet';
+
+  accModal.innerHTML = `
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.1rem; font-weight: 800;">Connected Account</h3>
+        <button id="btn-close-account-modal" style="background: none; border: none; color: #71717a; font-size: 1.3rem; cursor: pointer;">✕</button>
+      </div>
+
+      <div style="background-color: #121212; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+        <div style="font-size: 0.75rem; color: #60a5fa; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Provider: ${prov}</div>
+        <div style="font-family: var(--font-mono); font-size: 0.88rem; color: #ffffff; word-break: break-all; margin-bottom: 12px;">${addr}</div>
+        <button id="btn-copy-address" class="btn-secondary" style="width: 100%; padding: 8px; font-size: 0.8rem;">
+          Copy Address
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button id="btn-disconnect-action" class="btn-secondary" style="flex: 1; padding: 10px; border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">
+          Disconnect Wallet
+        </button>
+      </div>
+    </div>
+  `;
+
+  accModal.style.display = 'flex';
+
+  document.getElementById('btn-close-account-modal').onclick = () => {
+    accModal.style.display = 'none';
+  };
+
+  document.getElementById('btn-copy-address').onclick = () => {
+    navigator.clipboard.writeText(addr);
+    showToast('Address copied to clipboard!');
+  };
+
+  document.getElementById('btn-disconnect-action').onclick = () => {
+    accModal.style.display = 'none';
+    disconnectWallet();
+  };
+}
+
 export function setupWalletModal() {
   const modal = document.getElementById('wallet-modal');
   const btnClose = document.getElementById('btn-close-wallet-modal') || document.getElementById('btn-close-modal');
@@ -71,7 +123,7 @@ export function setupWalletModal() {
   connectButtons.forEach(btn => {
     btn.onclick = () => {
       if (AppState.currentConnectedAddress) {
-        disconnectWallet();
+        openAccountDetailsModal();
       } else {
         openModal();
       }
