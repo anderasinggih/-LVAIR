@@ -130,14 +130,15 @@
               <span class="panel-title">On-Chain Protocol Parameters</span>
             </div>
             <p style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 18px;">
-              Immutable network parameters — enforced by consensus across every node. Defined at genesis via <code>SEED_NODES</code> / <code>AIRDROP_AMOUNT</code> env.
+              Network parameters — enforced by consensus across every node. Airdrop quota is runtime-settable per node via this Ops portal.
             </p>
             <div class="form-group">
               <label class="form-label">Airdrop Allocation Per Wallet</label>
               <div class="input-container">
-                <input type="text" id="admin-airdrop-quota-ro" class="input-field" value="—" readonly />
+                <input type="text" id="admin-airdrop-amount-input" class="input-field" value="—" />
                 <div class="token-tag">LVAIR</div>
               </div>
+              <button id="btn-save-airdrop-config" class="btn-secondary" style="width: 100%; padding: 10px; margin-top: 10px;">Update Airdrop Quota</button>
             </div>
             <div class="form-group">
               <label class="form-label">Miner Block Reward</label>

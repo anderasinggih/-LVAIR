@@ -135,9 +135,25 @@ function setupAdminHandlers() {
   const btnAdminForceMine = document.getElementById('btn-admin-force-mine');
   const btnAdminExportState = document.getElementById('btn-admin-export-state');
   const btnRefreshPeers = document.getElementById('btn-admin-refresh-peers');
+  const btnSaveAirdropConfig = document.getElementById('btn-save-airdrop-config');
+  const adminAirdropAmountInput = document.getElementById('admin-airdrop-amount-input');
 
   if (btnRefreshPeers) {
     btnRefreshPeers.addEventListener('click', () => refreshOpsState());
+  }
+
+  if (btnSaveAirdropConfig && adminAirdropAmountInput) {
+    btnSaveAirdropConfig.addEventListener('click', async () => {
+      const amount = parseFloat(adminAirdropAmountInput.value);
+      if (!amount || amount <= 0) return showToast('Enter a valid airdrop allocation amount', 'error');
+      try {
+        await postJson('/api/config/airdrop', { amount });
+        showToast(`Airdrop quota per wallet set to ${amount} $LVAIR on node`);
+      } catch (err) {
+        showToast(`Config error: ${err.message}`, 'error');
+      }
+      await refreshOpsState();
+    });
   }
 
   if (btnResetOwnerKey) {
@@ -286,9 +302,9 @@ function renderAdminDashboard() {
   if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${blockchain.chain.length} Blocks` : '#1 Blocks';
 
   if (blockchain) {
-    const quotaRo = document.getElementById('admin-airdrop-quota-ro');
+    const quotaInput = document.getElementById('admin-airdrop-amount-input');
     const rewardRo = document.getElementById('admin-mining-reward-ro');
-    if (quotaRo) quotaRo.value = String(blockchain.airdropClaimAmount || 250);
+    if (quotaInput && !quotaInput.matches(':focus')) quotaInput.value = String(blockchain.airdropClaimAmount || 250);
     if (rewardRo) rewardRo.value = String(blockchain.miningReward || 10);
   }
 

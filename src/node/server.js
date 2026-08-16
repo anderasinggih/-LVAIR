@@ -297,6 +297,20 @@ async function startFullNode() {
     });
   });
 
+  app.post('/api/config/airdrop', async (req, res) => {
+    try {
+      const amount = Number(req.body && req.body.amount);
+      if (!amount || amount <= 0 || amount > 1000000) {
+        return res.status(400).json({ success: false, error: 'Invalid airdrop amount' });
+      }
+      blockchain.airdropClaimAmount = amount;
+      logEvent('AIRDROP_QUOTA_UPDATED', 'tag-claim', `Airdrop quota updated to ${amount} $LVAIR per wallet (node runtime)`, { amount });
+      res.json({ success: true, airdropClaimAmount: amount });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
   app.get('/api/amm/state', (req, res) => {
     res.json({
       success: true,
