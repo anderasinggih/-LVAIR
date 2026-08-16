@@ -62,11 +62,14 @@ async function signTransaction(txData) {
   try {
     const nonceRes = await rpcGet(`/api/balance/${address}`);
     const nonce = nonceRes.nonce || 0;
-    const message = buildSignableMessage({ ...txData, nonce });
+    const ts = Date.now();
+    const message = buildSignableMessage({ ...txData, nonce, timestamp: ts });
     if (provider === 'Phantom') {
-      return { ...(await signWithPhantom(message)), nonce };
+      const { signature, address: addr, chainType } = await signWithPhantom(message);
+      return { signature, address: addr, chainType, nonce, timestamp: ts };
     }
-    return { ...(await signWithEvmWallet(window, message)), nonce };
+    const { signature, address: addr, chainType } = await signWithEvmWallet(window, message);
+    return { signature, address: addr, chainType, nonce, timestamp: ts };
   } catch (err) {
     console.warn('Signing failed:', err.message);
     return null;
@@ -78,10 +81,7 @@ export async function rpcPostSigned(path, body) {
   let signatureData = null;
 
   if (from && AppState.currentConnectedAddress) {
-    signatureData = await signTransaction({
-      from, to, amount, token, type,
-      timestamp: Date.now()
-    });
+    signatureData = await signTransaction({ from, to, amount, token, type });
   }
 
   return rpcPost(path, { ...body, signature: signatureData });

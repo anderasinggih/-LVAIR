@@ -21,7 +21,7 @@ export async function signWithEvmWallet(window, message) {
   if (!accounts || !accounts.length) throw new Error('EVM wallet not connected');
   const from = accounts[0];
   const signature = await eth.request({ method: 'personal_sign', params: [message, from] });
-  return { signature, address: from, chainType: 'evm' };
+  return { signature, address: from, chainType: 'evm', timestamp: Date.now() };
 }
 
 export async function signWithPhantom(message) {
@@ -31,5 +31,5 @@ export async function signWithPhantom(message) {
   const signed = await phantom.signMessage(encoded, 'utf8');
   const pubkey = phantom.publicKey?.toString();
   const signature = Array.from(signed.signature);
-  return { signature, address: pubkey, chainType: 'solana' };
+  return { signature, address: pubkey, chainType: 'solana', timestamp: Date.now() };
 }

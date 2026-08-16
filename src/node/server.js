@@ -288,21 +288,24 @@ async function startFullNode() {
     if (quote.outputAmount <= 0) throw new Error('Invalid swap output — pool reserves may be depleted');
 
     if (ENABLE_SIGNING && signatureData && userAddress !== blockchain.systemAddress) {
-      const nonce = await getNonce(userAddress);
+      const expectedNonce = await getNonce(userAddress);
+      const sigNonce = signatureData.nonce || 0;
+      if (sigNonce !== expectedNonce) {
+        throw new Error(`Nonce mismatch: expected ${expectedNonce}, got ${sigNonce}`);
+      }
       const txMsg = buildSignableMessage({
         from: userAddress,
         to: blockchain.poolAddress,
         amount: Number(inputAmount),
         token: inputToken,
         type: 'SWAP_IN',
-        nonce,
+        nonce: sigNonce,
         timestamp: signatureData.timestamp
       });
       const valid = verifySignature(txMsg, signatureData.signature, userAddress, signatureData.chainType);
       if (!valid) throw new Error('Transaction signature verification failed');
     }
 
-    const nonce = await getNonce(userAddress);
     const newNonce = await incrementNonce(userAddress);
 
     const inTx = new Transaction(userAddress, blockchain.poolAddress, Number(inputAmount), inputToken, 'SWAP_IN', { quoteRate: quote.executionPrice });
@@ -673,13 +676,17 @@ async function startFullNode() {
         if (!sigData) {
           return res.status(401).json({ success: false, error: 'Transaction signature required' });
         }
-        const nonce = await getNonce(from);
+        const expectedNonce = await getNonce(from);
+        const sigNonce = sigData.nonce || 0;
+        if (sigNonce !== expectedNonce) {
+          return res.status(401).json({ success: false, error: `Nonce mismatch: expected ${expectedNonce}, got ${sigNonce}` });
+        }
         const txMsg = buildSignableMessage({
           from, to, amount: Number(amount),
           token: token || 'LVAIR',
           type: type || 'TRANSFER',
-          nonce,
-          timestamp: sigData.timestamp || Date.now()
+          nonce: sigNonce,
+          timestamp: sigData.timestamp
         });
         const valid = verifySignature(txMsg, sigData.signature, from, sigData.chainType);
         if (!valid) {
