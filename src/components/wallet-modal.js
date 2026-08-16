@@ -63,6 +63,9 @@ function openAccountDetailsModal() {
   const addr = AppState.currentConnectedAddress || '';
   const prov = AppState.currentConnectedProvider || 'Web3 Wallet';
 
+  const userAir = AppState.blockchain && addr ? AppState.blockchain.getBalanceOfAddress(addr, 'LVAIR') : 0;
+  const userUsdt = AppState.blockchain && addr ? AppState.blockchain.getBalanceOfAddress(addr, 'USDT') : 0;
+
   accModal.innerHTML = `
     <div class="modal-card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -70,12 +73,25 @@ function openAccountDetailsModal() {
         <button id="btn-close-account-modal" style="background: none; border: none; color: #71717a; font-size: 1.3rem; cursor: pointer;">✕</button>
       </div>
 
-      <div style="background-color: #121212; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-        <div style="font-size: 0.75rem; color: #60a5fa; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Provider: ${prov}</div>
-        <div style="font-family: var(--font-mono); font-size: 0.88rem; color: #ffffff; word-break: break-all; margin-bottom: 12px;">${addr}</div>
-        <button id="btn-copy-address" class="btn-secondary" style="width: 100%; padding: 8px; font-size: 0.8rem;">
+      <div style="background-color: #121212; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+        <div style="font-size: 0.72rem; color: #60a5fa; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Provider: ${prov}</div>
+        <div style="font-family: var(--font-mono); font-size: 0.84rem; color: #ffffff; word-break: break-all; margin-bottom: 12px;">${addr}</div>
+        <button id="btn-copy-address" class="btn-secondary" style="width: 100%; padding: 7px; font-size: 0.8rem;">
           Copy Address
         </button>
+      </div>
+
+      <!-- Live Wallet Balance Breakdown -->
+      <div style="background-color: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 18px;">
+        <div style="font-size: 0.72rem; color: #71717a; text-transform: uppercase; font-weight: 700; margin-bottom: 10px;">Token Balances</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-weight: 600; font-size: 0.88rem;">$LVAIR Balance</span>
+          <span style="font-family: var(--font-mono); font-weight: 700; color: #ffffff; font-size: 0.95rem;">${userAir.toLocaleString()} LVAIR</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 600; font-size: 0.88rem;">USDT Balance</span>
+          <span style="font-family: var(--font-mono); font-weight: 700; color: #10b981; font-size: 0.95rem;">$${userUsdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
       </div>
 
       <div style="display: flex; gap: 10px;">
