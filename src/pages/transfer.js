@@ -38,7 +38,7 @@ export function setupTransferPage() {
     btnSendTransfer.innerText = 'Settling Transaction...';
 
     try {
-      await rpcPost('/api/tx/send', {
+      const data = await rpcPost('/api/tx/send', {
         from: currentConnectedAddress,
         to: toAddress,
         amount,
@@ -48,7 +48,7 @@ export function setupTransferPage() {
       });
       await refreshNodeState();
 
-      showToast(`Transferred ${amount} ${token} on-chain!`);
+      showToast(`Transfer ${amount} ${token} broadcast to network — menunggu blok berikutnya.`);
       addToHistory({
         type: 'transfer',
         subtype: 'P2P_TRANSFER',
@@ -57,7 +57,7 @@ export function setupTransferPage() {
         tokenIn: token,
         tokenOut: token,
         price: null,
-        blockIndex: AppState.blockchain.chain.length,
+        blockIndex: data.blockIndex || AppState.blockchain.chain.length,
         timestamp: Date.now()
       });
       transferRecipientInput.value = '';

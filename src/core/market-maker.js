@@ -1,9 +1,10 @@
 import { AMMPool } from './amm.js';
 
 export class TradingBotEngine {
-  constructor(blockchain, ammPool) {
+  constructor({ blockchain, ammPool, submitSwap = null }) {
     this.blockchain = blockchain;
     this.ammPool = ammPool;
+    this.submitSwap = submitSwap || (async (wallet, amount, token) => this.ammPool.executeSwap(wallet, amount, token));
     this.botWallet = '0xbot_market_maker_alpha';
     this.isRunning = false;
     this.timer = null;
@@ -54,21 +55,21 @@ export class TradingBotEngine {
         if (rsi < 35) {
           const usdtAmount = Number((Math.random() * 15 + 5).toFixed(2));
           action = { type: 'BUY_LVAIR', inputAmount: usdtAmount, inputToken: 'USDT', reason: `RSI Oversold (${rsi.toFixed(1)})` };
-          result = await this.ammPool.executeSwap(this.botWallet, usdtAmount, 'USDT');
+          result = await this.submitSwap(this.botWallet, usdtAmount, 'USDT');
         } else if (rsi > 65) {
           const lvairAmount = Number((Math.random() * 60 + 20).toFixed(2));
           action = { type: 'SELL_LVAIR', inputAmount: lvairAmount, inputToken: 'LVAIR', reason: `RSI Overbought (${rsi.toFixed(1)})` };
-          result = await this.ammPool.executeSwap(this.botWallet, lvairAmount, 'LVAIR');
+          result = await this.submitSwap(this.botWallet, lvairAmount, 'LVAIR');
         } else {
           const isBuy = Math.random() > 0.5;
           if (isBuy) {
             const usdtAmount = Number((Math.random() * 8 + 2).toFixed(2));
             action = { type: 'BUY_LVAIR', inputAmount: usdtAmount, inputToken: 'USDT', reason: 'Market Making Flow' };
-            result = await this.ammPool.executeSwap(this.botWallet, usdtAmount, 'USDT');
+            result = await this.submitSwap(this.botWallet, usdtAmount, 'USDT');
           } else {
             const lvairAmount = Number((Math.random() * 30 + 10).toFixed(2));
             action = { type: 'SELL_LVAIR', inputAmount: lvairAmount, inputToken: 'LVAIR', reason: 'Market Making Flow' };
-            result = await this.ammPool.executeSwap(this.botWallet, lvairAmount, 'LVAIR');
+            result = await this.submitSwap(this.botWallet, lvairAmount, 'LVAIR');
           }
         }
 

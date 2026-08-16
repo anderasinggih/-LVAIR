@@ -124,44 +124,56 @@
             <button id="btn-toggle-bot" class="btn-secondary" style="width: 100%; padding: 12px;">Pause Market Maker</button>
           </div>
 
-          <!-- Box 2: Airdrop Quota & Whitelist -->
+          <!-- Box 2: On-Chain Protocol Parameters (immutable, chain-derived) -->
           <div class="panel">
             <div class="panel-header">
-              <span class="panel-title">Genesis Airdrop Allocation</span>
+              <span class="panel-title">On-Chain Protocol Parameters</span>
             </div>
+            <p style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 18px;">
+              Immutable network parameters — enforced by consensus across every node. Defined at genesis via <code>SEED_NODES</code> / <code>AIRDROP_AMOUNT</code> env.
+            </p>
             <div class="form-group">
-              <label class="form-label">Tokens Per Claim</label>
+              <label class="form-label">Airdrop Allocation Per Wallet</label>
               <div class="input-container">
-                <input type="number" id="admin-airdrop-amount-input" class="input-field" value="250" />
+                <input type="text" id="admin-airdrop-quota-ro" class="input-field" value="—" readonly />
                 <div class="token-tag">LVAIR</div>
               </div>
             </div>
-            <div style="display: flex; gap: 10px;">
-              <button id="btn-save-airdrop-config" class="btn-primary" style="flex: 1; padding: 10px;">Save Quota</button>
-              <button id="btn-reset-airdrop-list" class="btn-secondary" style="flex: 1; padding: 10px; border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">Reset Whitelist</button>
+            <div class="form-group">
+              <label class="form-label">Miner Block Reward</label>
+              <div class="input-container">
+                <input type="text" id="admin-mining-reward-ro" class="input-field" value="—" readonly />
+                <div class="token-tag">LVAIR</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Genesis Pool Reserves</label>
+              <div class="input-container">
+                <input type="text" id="admin-genesis-reserves-ro" class="input-field" value="100000 / 25000" readonly />
+                <div class="token-tag">LVAIR/USDT</div>
+              </div>
             </div>
           </div>
 
-          <!-- Box 3: Pool Liquidity Rebalancer -->
+          <!-- Box 3: Node Network & Peers -->
           <div class="panel">
             <div class="panel-header">
-              <span class="panel-title">Pool Reserves Rebalancer</span>
+              <span class="panel-title">Node Network & Peers</span>
+            </div>
+            <p style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 18px;">
+              P2P gossip layer (WS :6001). Every node validates, relays and keeps a full copy of the ledger.
+            </p>
+            <div class="form-group">
+              <label class="form-label">Connected Peers</label>
+              <div class="stat-val" id="admin-peer-connected" style="font-size: 1.1rem;">0 Connected</div>
             </div>
             <div class="form-group">
-              <label class="form-label">Reserve $LVAIR</label>
-              <div class="input-container">
-                <input type="number" id="admin-pool-air-input" class="input-field" value="100000" />
-                <div class="token-tag">LVAIR</div>
+              <label class="form-label">Known Peer List</label>
+              <div id="admin-peer-list" style="font-family: var(--font-mono); font-size: 0.78rem; color: #94a3b8; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; min-height: 64px; max-height: 160px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;">
+                Connecting...
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Reserve USDT</label>
-              <div class="input-container">
-                <input type="number" id="admin-pool-usdt-input" class="input-field" value="25000" />
-                <div class="token-tag">USDT</div>
-              </div>
-            </div>
-            <button id="btn-update-pool-reserves" class="btn-primary" style="width: 100%; padding: 12px;">Rebalance AMM Reserves</button>
+            <button id="btn-admin-refresh-peers" class="btn-secondary" style="width: 100%; padding: 10px;">Refresh Peer List</button>
           </div>
 
           <!-- Box 4: Ledger Node Operator -->

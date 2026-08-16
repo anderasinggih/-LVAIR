@@ -18,6 +18,14 @@ export class Transaction {
       `${this.fromAddress}${this.toAddress}${this.amount}${this.token}${this.type}${this.timestamp}${JSON.stringify(this.metadata)}`
     );
   }
+
+  static fromJSON(obj) {
+    const tx = new Transaction(obj.fromAddress, obj.toAddress, obj.amount, obj.token, obj.type, obj.metadata || {});
+    tx.timestamp = obj.timestamp;
+    tx.signature = obj.signature || '';
+    tx.txHash = obj.txHash || '';
+    return tx;
+  }
 }
 
 export class BlockHeader {

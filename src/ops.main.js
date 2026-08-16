@@ -24,10 +24,11 @@ function seedMirrors() {
 async function refreshOpsState() {
   const apiUrl = getApiBaseUrl();
   try {
-    const [statusRes, cfgRes, ammRes] = await Promise.all([
+    const [statusRes, cfgRes, ammRes, peersRes] = await Promise.all([
       fetch(`${apiUrl}/api/node/status`).catch(() => null),
       fetch(`${apiUrl}/api/config`).catch(() => null),
-      fetch(`${apiUrl}/api/amm/state`).catch(() => null)
+      fetch(`${apiUrl}/api/amm/state`).catch(() => null),
+      fetch(`${apiUrl}/api/node/peers`).catch(() => null)
     ]);
 
     if (statusRes && statusRes.ok) {
@@ -51,8 +52,25 @@ async function refreshOpsState() {
       AppState.ammPool.usdtReserve = amm.usdtReserve;
       if (amm.botRunning !== undefined) lastBotRunning = !!amm.botRunning;
     }
+
+    if (peersRes && peersRes.ok) {
+      renderPeers(await peersRes.json());
+    }
   } catch (e) {}
   renderAdminDashboard();
+}
+
+function renderPeers(peers) {
+  const elConnected = document.getElementById('admin-peer-connected');
+  const elList = document.getElementById('admin-peer-list');
+  if (elConnected) elConnected.innerText = `${peers.connected || 0} Connected`;
+  if (!elList) return;
+  const known = peers.known || [];
+  if (!known.length) {
+    elList.innerText = 'No peers discovered yet. Set SEED_NODES on other nodes or check P2P port :6001.';
+    return;
+  }
+  elList.innerText = known.join('\n');
 }
 
 async function postJson(url, body) {
@@ -111,18 +129,16 @@ async function initAdminApp() {
 }
 
 function setupAdminHandlers() {
-  const adminAirdropAmountInput = document.getElementById('admin-airdrop-amount-input');
-  const adminPoolAirInput = document.getElementById('admin-pool-air-input');
-  const adminPoolUsdtInput = document.getElementById('admin-pool-usdt-input');
-
   const btnClaimProtocolOwner = document.getElementById('btn-claim-protocol-owner');
   const btnResetOwnerKey = document.getElementById('btn-reset-owner-key');
   const btnToggleBot = document.getElementById('btn-toggle-bot');
-  const btnSaveAirdropConfig = document.getElementById('btn-save-airdrop-config');
-  const btnResetAirdropList = document.getElementById('btn-reset-airdrop-list');
-  const btnUpdatePoolReserves = document.getElementById('btn-update-pool-reserves');
   const btnAdminForceMine = document.getElementById('btn-admin-force-mine');
   const btnAdminExportState = document.getElementById('btn-admin-export-state');
+  const btnRefreshPeers = document.getElementById('btn-admin-refresh-peers');
+
+  if (btnRefreshPeers) {
+    btnRefreshPeers.addEventListener('click', () => refreshOpsState());
+  }
 
   if (btnResetOwnerKey) {
     btnResetOwnerKey.addEventListener('click', () => {
@@ -176,55 +192,14 @@ function setupAdminHandlers() {
     });
   }
 
-  if (btnSaveAirdropConfig) {
-    btnSaveAirdropConfig.addEventListener('click', async () => {
-      const amount = parseFloat(adminAirdropAmountInput.value);
-      if (!amount || amount <= 0) return showToast('Enter a valid airdrop allocation amount', 'error');
-      try {
-        await postJson('/api/config/airdrop', { amount });
-        showToast(`Airdrop quota per wallet updated to ${amount} $LVAIR`);
-      } catch (err) {
-        showToast(`Config error: ${err.message}`, 'error');
-      }
-      await refreshOpsState();
-    });
-  }
-
-  if (btnResetAirdropList) {
-    btnResetAirdropList.addEventListener('click', async () => {
-      try {
-        await postJson('/api/config/reset-whitelist');
-        showToast('Airdrop claims whitelist has been reset');
-      } catch (err) {
-        showToast(`Reset error: ${err.message}`, 'error');
-      }
-      await refreshOpsState();
-    });
-  }
-
-  if (btnUpdatePoolReserves) {
-    btnUpdatePoolReserves.addEventListener('click', async () => {
-      const air = parseFloat(adminPoolAirInput.value);
-      const usdt = parseFloat(adminPoolUsdtInput.value);
-      if (!air || !usdt || air <= 0 || usdt <= 0) return showToast('Enter valid pool reserves', 'error');
-      try {
-        await postJson('/api/config/reserves', { lvair: air, usdt });
-        showToast(`Pool Reserves updated to ${air.toLocaleString()} LVAIR / $${usdt.toLocaleString()} USDT`);
-      } catch (err) {
-        showToast(`Reserve error: ${err.message}`, 'error');
-      }
-      await refreshOpsState();
-    });
-  }
-
   if (btnAdminForceMine) {
     btnAdminForceMine.addEventListener('click', async () => {
       const { currentConnectedAddress } = AppState;
       btnAdminForceMine.disabled = true;
       btnAdminForceMine.innerText = 'Mining Block...';
       try {
-        await postJson('/api/mine', { minerRewardAddress: currentConnectedAddress || null });
-        showToast('New block mined and appended to the ledger!');
+        const data = await postJson('/api/mine', { minerRewardAddress: currentConnectedAddress || null });
+        showToast(data.blockIndex ? `Block #${data.blockIndex} mined & broadcast to the network!` : 'No pending transactions to mine');
       } catch (err) {
         showToast(`Mining error: ${err.message}`, 'error');
       } finally {
@@ -263,8 +238,6 @@ function renderAdminDashboard() {
   const adminBotStatus = document.getElementById('admin-bot-status');
   const adminTotalClaims = document.getElementById('admin-total-claims');
   const adminTotalBlocks = document.getElementById('admin-total-blocks');
-  const adminPoolAirInput = document.getElementById('admin-pool-air-input');
-  const adminPoolUsdtInput = document.getElementById('admin-pool-usdt-input');
   const adminAuthCard = document.getElementById('admin-auth-card');
   const adminControlsPanel = document.getElementById('admin-controls-panel');
   const btnToggleBot = document.getElementById('btn-toggle-bot');
@@ -313,19 +286,10 @@ function renderAdminDashboard() {
   if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${blockchain.chain.length} Blocks` : '#1 Blocks';
 
   if (blockchain) {
-    const adminAirdropInput = document.getElementById('admin-airdrop-amount-input');
-    if (adminAirdropInput && !adminAirdropInput.matches(':focus')) {
-      adminAirdropInput.value = blockchain.airdropClaimAmount || 250;
-    }
-  }
-
-  if (ammPool) {
-    if (adminPoolAirInput && !adminPoolAirInput.matches(':focus')) {
-      adminPoolAirInput.value = ammPool.lvairReserve;
-    }
-    if (adminPoolUsdtInput && !adminPoolUsdtInput.matches(':focus')) {
-      adminPoolUsdtInput.value = ammPool.usdtReserve;
-    }
+    const quotaRo = document.getElementById('admin-airdrop-quota-ro');
+    const rewardRo = document.getElementById('admin-mining-reward-ro');
+    if (quotaRo) quotaRo.value = String(blockchain.airdropClaimAmount || 250);
+    if (rewardRo) rewardRo.value = String(blockchain.miningReward || 10);
   }
 
   updateUI();

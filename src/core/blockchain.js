@@ -28,6 +28,7 @@ export class Blockchain {
       'COINBASE_GENESIS',
       { memo: 'LVAIR Protocol Genesis Block — Sovereign Decentralized Liquidity Network' }
     );
+    genesisTx.timestamp = 1700000000000;
     genesisTx.txHash = await genesisTx.calculateHash();
 
     const genesisBlock = new Block(0, 1700000000000, [genesisTx], '0x0000000000000000000000000000000000000000000000000000000000000000');
@@ -57,6 +58,9 @@ export class Blockchain {
     }
 
     transaction.txHash = await transaction.calculateHash();
+    if (this.pendingTransactions.some(t => t.txHash === transaction.txHash)) {
+      throw new Error('Duplicate transaction — already in mempool');
+    }
     this.pendingTransactions.push(transaction);
     return transaction;
   }

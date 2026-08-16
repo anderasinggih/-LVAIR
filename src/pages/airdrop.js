@@ -27,7 +27,6 @@ export function setupAirdropPage() {
       const quota = AppState.blockchain.airdropClaimAmount || 250;
 
       const data = await rpcPost('/api/airdrop/claim', { userAddress: currentConnectedAddress });
-      const claimedBlock = data.blockIndex;
 
       await refreshNodeState();
 
@@ -39,11 +38,11 @@ export function setupAirdropPage() {
         tokenIn: '—',
         tokenOut: 'LVAIR',
         price: null,
-        blockIndex: claimedBlock || AppState.blockchain.chain.length,
+        blockIndex: data.blockIndex || AppState.blockchain.chain.length,
         timestamp: Date.now()
       });
 
-      showToast(`${quota} $LVAIR successfully claimed!`);
+      showToast(`Claim broadcast to network — menunggu miner menyertakan ke blok (${quota} $LVAIR).`);
       updateUI();
       renderLandingStats();
     } catch (err) {

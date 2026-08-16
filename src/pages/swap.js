@@ -198,7 +198,7 @@ export function setupSwapPage() {
           timestamp: Date.now()
         });
 
-        showToast(`Swap Settled! Received ${trade.outputAmount.toFixed(2)} ${isBuyingAir ? 'LVAIR' : 'USDT'}`);
+        showToast(`Swap broadcast — menunggu miner: ${trade.outputAmount.toFixed(2)} ${isBuyingAir ? 'LVAIR' : 'USDT'} @ $${trade.effectivePrice}`);
         updateUI();
         renderLandingStats();
       } catch (err) {

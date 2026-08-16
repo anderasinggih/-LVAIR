@@ -70,6 +70,24 @@ export class NodeStorageEngine {
   }
 
   /**
+   * Overwrite the entire blk00000.dat ledger (used on chain reorg / full sync)
+   */
+  async writeRawBlocks(blocks) {
+    const content = blocks.map(b => JSON.stringify(b)).join('\n') + '\n';
+    fs.writeFileSync(this.datFilePath, content, 'utf8');
+
+    for (const b of blocks) {
+      await this.db.put(`block:height:${b.index}`, b.hash);
+      await this.db.put(`block:hash:${b.hash}`, b);
+    }
+    if (blocks.length) {
+      const tip = blocks[blocks.length - 1];
+      await this.db.put('chain:latest_height', tip.index);
+      await this.db.put('chain:latest_hash', tip.hash);
+    }
+  }
+
+  /**
    * Put key-value state to LevelDB
    */
   async putState(key, value) {
