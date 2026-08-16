@@ -3,14 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>LVAIR Protocol - Official Digital Currency & Decentralized Exchange</title>
+    <title>LVAIR Protocol | Sovereign Digital Asset & Autonomous DEX</title>
     <meta name="description" content="Official portal for the $LVAIR token ecosystem. Trade on the decentralized liquidity pool, participate in community rewards, and access non-custodial Web3 finance." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
+    <!-- Zebec-Style Ambient Radial Background Glow -->
+    <div class="zebec-ambient-bg"></div>
+
     <!-- Toast Notification Container -->
     <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; left: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; max-width: 400px; margin-left: auto;"></div>
 
@@ -18,96 +21,96 @@
     <div id="wallet-modal" class="modal-overlay" style="display: none;">
       <div class="modal-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h2 style="font-size: 1.1rem; font-weight: 700;">Connect a Wallet</h2>
+          <h2 style="font-size: 1.15rem; font-weight: 700;">Connect a Wallet</h2>
           <button id="btn-close-wallet-modal" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.2rem; cursor: pointer; padding: 4px;">✕</button>
         </div>
-        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 18px; line-height: 1.4;">
+        <p style="color: var(--text-secondary); font-size: 0.82rem; margin-bottom: 20px; line-height: 1.5;">
           Select your Web3 provider to interact with the $LVAIR liquidity pool and execute on-chain swaps.
         </p>
 
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button id="wallet-opt-metamask" class="btn-secondary" style="padding: 12px 14px; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button id="wallet-opt-metamask" class="btn-secondary" style="padding: 14px 16px; text-align: left; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: 600;">MetaMask</span>
             <span id="tag-metamask" class="badge badge-neutral">Detected</span>
           </button>
 
-          <button id="wallet-opt-phantom" class="btn-secondary" style="padding: 12px 14px; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+          <button id="wallet-opt-phantom" class="btn-secondary" style="padding: 14px 16px; text-align: left; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: 600;">Phantom</span>
             <span id="tag-phantom" class="badge badge-neutral">Ready</span>
           </button>
 
-          <button id="wallet-opt-binance" class="btn-secondary" style="padding: 12px 14px; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+          <button id="wallet-opt-binance" class="btn-secondary" style="padding: 14px 16px; text-align: left; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: 600;">Binance Web3 Wallet</span>
             <span id="tag-binance" class="badge badge-neutral">EIP-1193</span>
           </button>
 
-          <button id="wallet-opt-coinbase" class="btn-secondary" style="padding: 12px 14px; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+          <button id="wallet-opt-coinbase" class="btn-secondary" style="padding: 14px 16px; text-align: left; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: 600;">Coinbase Wallet / Trust Wallet</span>
             <span class="badge badge-neutral">EIP-6963</span>
           </button>
         </div>
 
-        <div style="margin-top: 18px; text-align: center; font-size: 0.75rem; color: var(--text-tertiary);">
+        <div style="margin-top: 20px; text-align: center; font-size: 0.75rem; color: var(--text-tertiary);">
           By connecting, you agree to the LVAIR Protocol decentralized terms.
         </div>
       </div>
     </div>
 
     <!-- ========================================================================= -->
-    <!-- PAGE 1: DEDICATED PUBLIC OFFICIAL LANDING PAGE (DYNAMIC CONTENT)          -->
+    <!-- PAGE 1: DEDICATED PUBLIC OFFICIAL LANDING PAGE (ZEBEC AESTHETIC)          -->
     <!-- ========================================================================= -->
-    <div id="page-landing" style="display: block; min-height: 100vh;">
+    <div id="page-landing" style="display: block; min-height: 100vh; position: relative; z-index: 1;">
       
       <!-- Landing Page Navbar -->
-      <nav class="landing-nav-container" style="border-bottom: 1px solid var(--border-subtle); padding: 16px 24px; background: rgba(18, 18, 21, 0.85); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 50;">
-        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+      <nav class="landing-nav-container">
+        <div style="max-width: 1240px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div class="logo-badge" style="font-size: 0.95rem; padding: 4px 10px;">$LVAIR</div>
-            <span style="font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em;">LVAIR Protocol</span>
+            <div class="logo-badge">$LVAIR</div>
+            <span style="font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em;">LVAIR Protocol</span>
           </div>
 
-          <div class="landing-nav-links" style="display: flex; align-items: center; gap: 24px;">
-            <a href="#about-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 500;">About</a>
-            <a href="#tokenomics-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 500;">Tokenomics</a>
-            <a href="#roadmap-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 500;">Roadmap</a>
-            <a href="#faq-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 500;">FAQ</a>
+          <div class="landing-nav-links" style="display: flex; align-items: center; gap: 28px;">
+            <a href="#about-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 500;">About</a>
+            <a href="#tokenomics-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 500;">Tokenomics</a>
+            <a href="#roadmap-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 500;">Roadmap</a>
+            <a href="#faq-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 500;">FAQ</a>
           </div>
 
           <div>
-            <button id="btn-landing-enter-app" class="btn-primary" style="width: auto; padding: 8px 18px; font-size: 0.84rem; font-weight: 600;">
+            <button id="btn-landing-enter-app" class="btn-primary" style="width: auto; padding: 9px 22px; font-size: 0.86rem; font-weight: 600;">
               Launch App →
             </button>
           </div>
         </div>
       </nav>
 
-      <!-- Hero Banner -->
-      <section style="padding: 60px 20px 50px 20px; text-align: center; max-width: 860px; margin: 0 auto;">
-        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: 20px; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 20px;">
+      <!-- Hero Banner (Zebec Style) -->
+      <section style="padding: 85px 20px 65px 20px; text-align: center; max-width: 900px; margin: 0 auto;">
+        <div class="zebec-pill">
           <span style="display: inline-block; width: 6px; height: 6px; background: var(--accent-success); border-radius: 50%;"></span>
           <span id="hero-badge">Official Mainnet Launch • Verified Liquidity</span>
         </div>
 
-        <h1 id="hero-headline" class="hero-title" style="font-size: 3.2rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 20px; color: var(--text-primary);">
+        <h1 id="hero-headline" class="hero-title gradient-text" style="font-size: 3.6rem; font-weight: 800; line-height: 1.12; letter-spacing: -0.03em; margin-bottom: 24px;">
           Empowering Next-Gen Decentralized Trading & Liquidity.
         </h1>
 
-        <p id="hero-subheadline" class="hero-subheadline" style="font-size: 1.15rem; color: var(--text-secondary); max-width: 680px; margin: 0 auto 32px auto; line-height: 1.6;">
+        <p id="hero-subheadline" class="hero-subheadline" style="font-size: 1.15rem; color: var(--text-secondary); max-width: 680px; margin: 0 auto 36px auto; line-height: 1.6;">
           <strong>$LVAIR</strong> is the native digital currency and utility asset powering the LVAIR decentralized ecosystem.
         </p>
 
         <div class="hero-buttons-container" style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-          <button id="btn-hero-trade-now" class="btn-primary" style="width: auto; padding: 13px 28px; font-size: 0.95rem; font-weight: 600;">
+          <button id="btn-hero-trade-now" class="btn-primary" style="width: auto; padding: 14px 32px; font-size: 0.95rem; font-weight: 600;">
             Launch Trading App →
           </button>
-          <button id="btn-hero-connect" class="btn-secondary" style="padding: 13px 28px; font-size: 0.95rem;">
+          <button id="btn-hero-connect" class="btn-secondary" style="padding: 14px 30px; font-size: 0.95rem;">
             Connect Web3 Wallet
           </button>
         </div>
       </section>
 
       <!-- Real-time Live Market Strip -->
-      <section style="max-width: 1100px; margin: 0 auto 50px auto; padding: 0 16px;">
+      <section style="max-width: 1200px; margin: 0 auto 60px auto; padding: 0 20px;">
         <div class="stat-grid">
           <div class="stat-box">
             <div class="stat-label">Live Spot Price</div>
@@ -129,43 +132,43 @@
       </section>
 
       <!-- Section: Why Choose LVAIR -->
-      <section id="about-sec" style="max-width: 1100px; margin: 0 auto 60px auto; padding: 0 16px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px;">Why Choose $LVAIR?</h2>
-          <p style="color: var(--text-secondary); font-size: 0.9rem;">Built for modern traders who demand speed, security, and true financial sovereignty</p>
+      <section id="about-sec" style="max-width: 1200px; margin: 0 auto 70px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 36px;">
+          <h2 class="gradient-text" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Why Choose $LVAIR?</h2>
+          <p style="color: var(--text-secondary); font-size: 0.92rem;">Built for modern traders who demand speed, security, and true financial sovereignty</p>
         </div>
-        <div id="dynamic-value-props" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;"></div>
+        <div id="dynamic-value-props" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;"></div>
       </section>
 
       <!-- Section: Tokenomics -->
-      <section id="tokenomics-sec" style="max-width: 1100px; margin: 0 auto 60px auto; padding: 0 16px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px;">Tokenomics & Distribution</h2>
-          <p style="color: var(--text-secondary); font-size: 0.9rem;">Transparent, predictable, and fair allocation structure</p>
+      <section id="tokenomics-sec" style="max-width: 1200px; margin: 0 auto 70px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 36px;">
+          <h2 class="gradient-text" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Tokenomics & Distribution</h2>
+          <p style="color: var(--text-secondary); font-size: 0.92rem;">Transparent, predictable, and fair allocation structure</p>
         </div>
-        <div id="dynamic-tokenomics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;"></div>
+        <div id="dynamic-tokenomics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px;"></div>
       </section>
 
       <!-- Section: Roadmap -->
-      <section id="roadmap-sec" style="max-width: 1100px; margin: 0 auto 60px auto; padding: 0 16px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px;">Development Roadmap</h2>
-          <p style="color: var(--text-secondary); font-size: 0.9rem;">Milestones and expansion plans for the $LVAIR ecosystem</p>
+      <section id="roadmap-sec" style="max-width: 1200px; margin: 0 auto 70px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 36px;">
+          <h2 class="gradient-text" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Development Roadmap</h2>
+          <p style="color: var(--text-secondary); font-size: 0.92rem;">Milestones and expansion plans for the $LVAIR ecosystem</p>
         </div>
-        <div id="dynamic-roadmap" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;"></div>
+        <div id="dynamic-roadmap" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;"></div>
       </section>
 
       <!-- Section: FAQ -->
-      <section id="faq-sec" style="max-width: 800px; margin: 0 auto 70px auto; padding: 0 16px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px;">Frequently Asked Questions</h2>
-          <p style="color: var(--text-secondary); font-size: 0.9rem;">Everything you need to know before getting started</p>
+      <section id="faq-sec" style="max-width: 860px; margin: 0 auto 80px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 36px;">
+          <h2 class="gradient-text" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Frequently Asked Questions</h2>
+          <p style="color: var(--text-secondary); font-size: 0.92rem;">Everything you need to know before getting started</p>
         </div>
-        <div id="dynamic-faqs" style="display: flex; flex-direction: column; gap: 12px;"></div>
+        <div id="dynamic-faqs" style="display: flex; flex-direction: column; gap: 14px;"></div>
       </section>
 
       <!-- Footer -->
-      <footer style="border-top: 1px solid var(--border-subtle); padding: 24px 16px; text-align: center; color: var(--text-tertiary); font-size: 0.8rem;">
+      <footer style="border-top: 1px solid var(--border-subtle); padding: 32px 20px; text-align: center; color: var(--text-tertiary); font-size: 0.82rem;">
         <div>LVAIR Protocol © 2026 • Official Digital Asset Network • All Rights Reserved</div>
       </footer>
     </div>
@@ -173,7 +176,7 @@
     <!-- ========================================================================= -->
     <!-- PAGE 2: DEDICATED TRADING dAPP                                            -->
     <!-- ========================================================================= -->
-    <div id="page-app" class="app-wrapper" style="display: none;">
+    <div id="page-app" class="app-wrapper" style="display: none; position: relative; z-index: 1;">
       
       <!-- dApp Header -->
       <header class="app-header">
@@ -191,7 +194,7 @@
         </nav>
 
         <div class="header-right">
-          <button id="btn-connect-wallet" class="btn-primary" style="width: auto; padding: 7px 16px; font-size: 0.82rem; font-family: var(--font-mono);">
+          <button id="btn-connect-wallet" class="btn-primary" style="width: auto; padding: 8px 18px; font-size: 0.84rem; font-family: var(--font-mono);">
             Connect Wallet
           </button>
         </div>
@@ -234,7 +237,7 @@
               </div>
             </div>
             
-            <div style="height: 200px; width: 100%; position: relative; margin-bottom: 16px;">
+            <div style="height: 220px; width: 100%; position: relative; margin-bottom: 16px;">
               <canvas id="price-chart" style="width: 100%; height: 100%;"></canvas>
             </div>
 
@@ -275,8 +278,8 @@
               </div>
             </div>
 
-            <div style="text-align: center; margin: 6px 0;">
-              <button id="btn-toggle-pair" class="btn-secondary" style="padding: 3px 10px; font-size: 0.75rem;">Switch Pair</button>
+            <div style="text-align: center; margin: 8px 0;">
+              <button id="btn-toggle-pair" class="btn-secondary" style="padding: 4px 12px; font-size: 0.75rem;">Switch Pair</button>
             </div>
 
             <div class="form-group">
@@ -287,7 +290,7 @@
               </div>
             </div>
 
-            <div style="margin-bottom: 16px; font-size: 0.78rem; color: var(--text-secondary); background: var(--bg-surface-elevated); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 4px;">
+            <div style="margin-bottom: 18px; font-size: 0.8rem; color: var(--text-secondary); background: var(--bg-surface-elevated); padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 5px;">
               <div style="display:flex; justify-content:space-between;">
                 <span>Price Impact:</span>
                 <span id="swap-price-impact" style="font-family: var(--font-mono); color: var(--accent-success);">0.0%</span>
@@ -318,7 +321,7 @@
             <div class="panel-header">
               <span class="panel-title">Direct On-Chain Transfer</span>
             </div>
-            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 14px;">
+            <p style="color: var(--text-secondary); font-size: 0.82rem; margin-bottom: 14px;">
               Send tokens from your connected wallet directly to any destination address.
             </p>
 
@@ -331,7 +334,7 @@
 
             <div class="form-group">
               <label class="form-label">Select Token</label>
-              <select id="transfer-token-select" style="width: 100%; background: var(--bg-app); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 8px 10px; border-radius: 6px; font-family: var(--font-sans); font-size: 0.85rem;">
+              <select id="transfer-token-select" style="width: 100%; background: var(--bg-app); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 10px 12px; border-radius: 8px; font-family: var(--font-sans); font-size: 0.85rem;">
                 <option value="LVAIR">$LVAIR Token</option>
                 <option value="USDT">USDT Stablecoin</option>
               </select>
@@ -351,7 +354,7 @@
             <div class="panel-header">
               <span class="panel-title">Settlement Verification</span>
             </div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 2;">
+            <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 2.2;">
               <div>• Hash Signature: Cryptographically Signed</div>
               <div>• Proof of Inclusion: Binary Merkle Verified</div>
               <div>• Consensus: On-Chain Settled</div>
@@ -369,23 +372,23 @@
               <span class="panel-title">Community Airdrop</span>
               <span class="badge badge-success">250 $LVAIR Free</span>
             </div>
-            <p style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.6; margin-bottom: 14px;">
+            <p style="color: var(--text-secondary); font-size: 0.82rem; line-height: 1.6; margin-bottom: 16px;">
               Claim the initial token allocation for your connected wallet. Each unique address is eligible for 250 $LVAIR.
             </p>
 
-            <div style="background: var(--bg-surface-elevated); padding: 10px 12px; border-radius: 6px; margin-bottom: 14px; border: 1px solid var(--border-subtle);">
-              <div style="font-size: 0.72rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 2px;">Eligibility Status</div>
-              <div id="airdrop-status-text" style="font-weight: 600; color: var(--accent-success); font-size: 0.85rem;">Connect Wallet to Check</div>
+            <div style="background: var(--bg-surface-elevated); padding: 12px 14px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-subtle);">
+              <div style="font-size: 0.72rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 4px;">Eligibility Status</div>
+              <div id="airdrop-status-text" style="font-weight: 600; color: var(--accent-success); font-size: 0.88rem;">Connect Wallet to Check</div>
             </div>
 
-            <button class="btn-primary" id="btn-claim-airdrop" style="width: auto; padding: 7px 16px;">Claim 250 $LVAIR Airdrop</button>
+            <button class="btn-primary" id="btn-claim-airdrop" style="width: auto; padding: 9px 20px;">Claim 250 $LVAIR Airdrop</button>
           </div>
 
           <div class="panel">
             <div class="panel-header">
               <span class="panel-title">Token Distribution</span>
             </div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 2;">
+            <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 2.2;">
               <div>• Total Supply: 10,000,000 $LVAIR</div>
               <div>• Pool Liquidity: 100,000 $LVAIR</div>
               <div>• Community Allocation: 2,000,000 $LVAIR</div>
@@ -401,8 +404,8 @@
           <div class="panel-header">
             <span class="panel-title">Block Explorer & Ledger State</span>
             <div style="display: flex; gap: 6px;">
-              <button id="btn-export-chain" class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">Export JSON</button>
-              <button id="btn-validate-chain" class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">Verify Chain</button>
+              <button id="btn-export-chain" class="btn-secondary" style="padding: 6px 12px; font-size: 0.75rem;">Export JSON</button>
+              <button id="btn-validate-chain" class="btn-secondary" style="padding: 6px 12px; font-size: 0.75rem;">Verify Chain</button>
             </div>
           </div>
 
@@ -426,7 +429,7 @@
       </div>
 
       <!-- dApp Footer -->
-      <footer style="border-top: 1px solid var(--border-subtle); padding: 24px 0; margin-top: 40px; text-align: center; color: var(--text-tertiary); font-size: 0.78rem;">
+      <footer style="border-top: 1px solid var(--border-subtle); padding: 28px 0; margin-top: 40px; text-align: center; color: var(--text-tertiary); font-size: 0.8rem;">
         <div>LVAIR Protocol © 2026 • Sovereign Decentralized Liquidity Network</div>
       </footer>
 
