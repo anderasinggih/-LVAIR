@@ -59,104 +59,119 @@ export function disconnectWallet() {
 }
 
 export function setupWalletModal() {
+  const modal = document.getElementById('wallet-modal');
+  const btnClose = document.getElementById('btn-close-wallet-modal') || document.getElementById('btn-close-modal');
+  const btnConnect = document.getElementById('btn-connect-wallet');
+  const optMetaMask = document.getElementById('wallet-opt-metamask');
+  const optPhantom = document.getElementById('wallet-opt-phantom');
+  const optBinance = document.getElementById('wallet-opt-binance');
+  const optCoinbase = document.getElementById('wallet-opt-coinbase');
+
   const openModal = () => {
     detectWalletProviders();
-    if (walletModal) walletModal.style.display = 'flex';
+    if (modal) modal.style.display = 'flex';
   };
   const closeModal = () => {
-    if (walletModal) walletModal.style.display = 'none';
+    if (modal) modal.style.display = 'none';
   };
 
-  if (btnConnectWallet) {
-    btnConnectWallet.addEventListener('click', () => {
+  if (btnConnect) {
+    btnConnect.onclick = () => {
       if (AppState.currentConnectedAddress) {
         disconnectWallet();
       } else {
         openModal();
       }
-    });
+    };
   }
 
-  if (btnCloseWalletModal) btnCloseWalletModal.addEventListener('click', closeModal);
+  if (btnClose) btnClose.onclick = closeModal;
 
-  if (walletOptMetamask) {
-    walletOptMetamask.addEventListener('click', async () => {
+  if (optMetaMask) {
+    optMetaMask.onclick = async () => {
       closeModal();
-      if (!window.ethereum) {
-        showToast('MetaMask not detected. Opening download page...', 'error');
-        window.open('https://metamask.io/download/', '_blank');
-        return;
-      }
-      try {
-        showToast('Requesting connection from MetaMask...');
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        if (accounts && accounts.length > 0) {
-          setConnectedWallet(accounts[0], 'MetaMask');
-        }
-      } catch (err) {
-        if (err.code === 4001) showToast('Connection rejected by user');
-        else showToast(`MetaMask Error: ${err.message}`, 'error');
-      }
-    });
-  }
-
-  if (walletOptPhantom) {
-    walletOptPhantom.addEventListener('click', async () => {
-      closeModal();
-      const provider = window.phantom?.solana || window.solana;
-      if (!provider || !provider.isPhantom) {
-        showToast('Phantom wallet not detected. Opening download page...', 'error');
-        window.open('https://phantom.app/', '_blank');
-        return;
-      }
-      try {
-        showToast('Requesting connection from Phantom...');
-        const resp = await provider.connect();
-        setConnectedWallet(resp.publicKey.toString(), 'Phantom');
-      } catch (err) {
-        if (err.code === 4001) showToast('Connection rejected by user');
-        else showToast(`Phantom Error: ${err.message || err}`, 'error');
-      }
-    });
-  }
-
-  if (walletOptBinance) {
-    walletOptBinance.addEventListener('click', async () => {
-      closeModal();
-      if (!window.BinanceChain) {
-        showToast('Binance Web3 Wallet not detected. Opening download page...', 'error');
-        window.open('https://www.binance.com/en/web3wallet', '_blank');
-        return;
-      }
-      try {
-        showToast('Requesting Binance Web3 Wallet...');
-        const accounts = await window.BinanceChain.request({ method: 'eth_requestAccounts' });
-        if (accounts && accounts.length > 0) {
-          setConnectedWallet(accounts[0], 'Binance Wallet');
-        }
-      } catch (err) {
-        showToast(`Binance Wallet Error: ${err.message || err}`, 'error');
-      }
-    });
-  }
-
-  if (walletOptCoinbase) {
-    walletOptCoinbase.addEventListener('click', async () => {
-      closeModal();
-      if (window.ethereum?.isCoinbaseWallet || window.coinbaseWalletExtension) {
+      if (typeof window.ethereum !== 'undefined') {
         try {
+          showToast('Connecting MetaMask...');
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          if (accounts && accounts[0]) {
-            setConnectedWallet(accounts[0], 'Coinbase Wallet');
-            return;
+          if (accounts && accounts.length > 0) {
+            setConnectedWallet(accounts[0], 'MetaMask');
           }
         } catch (err) {
-          showToast(`Coinbase Error: ${err.message}`, 'error');
-          return;
+          if (err.code === 4001) showToast('Connection rejected by user');
+          else showToast(`MetaMask Error: ${err.message}`, 'error');
         }
+      } else {
+        showToast('MetaMask not detected. Opening download page...', 'error');
+        window.open('https://metamask.io/download/', '_blank');
       }
-      showToast('Coinbase Wallet not found. Opening download page...', 'error');
-      window.open('https://www.coinbase.com/wallet', '_blank');
-    });
+    };
+  }
+
+  if (optPhantom) {
+    optPhantom.onclick = async () => {
+      closeModal();
+      const phantom = window.phantom?.solana || window.solana;
+      if (phantom && phantom.isPhantom) {
+        try {
+          showToast('Connecting Phantom...');
+          const resp = await phantom.connect();
+          setConnectedWallet(resp.publicKey.toString(), 'Phantom');
+        } catch (err) {
+          if (err.code === 4001) showToast('Connection rejected by user');
+          else showToast(`Phantom Error: ${err.message || err}`, 'error');
+        }
+      } else {
+        showToast('Phantom wallet not detected. Opening download page...', 'error');
+        window.open('https://phantom.app/', '_blank');
+      }
+    };
+  }
+
+  if (optBinance) {
+    optBinance.onclick = async () => {
+      closeModal();
+      if (window.BinanceChain) {
+        try {
+          showToast('Connecting Binance Wallet...');
+          const accounts = await window.BinanceChain.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            setConnectedWallet(accounts[0], 'Binance');
+          }
+        } catch (err) {
+          showToast(`Binance Error: ${err.message}`, 'error');
+        }
+      } else if (typeof window.ethereum !== 'undefined') {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            setConnectedWallet(accounts[0], 'Web3 Wallet');
+          }
+        } catch (err) {
+          showToast(`Wallet Error: ${err.message}`, 'error');
+        }
+      } else {
+        showToast('Binance Web3 Wallet not detected. Opening download page...', 'error');
+        window.open('https://www.binance.com/en/web3wallet', '_blank');
+      }
+    };
+  }
+
+  if (optCoinbase) {
+    optCoinbase.onclick = async () => {
+      closeModal();
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            setConnectedWallet(accounts[0], 'Coinbase');
+          }
+        } catch (err) {
+          showToast(`Wallet Error: ${err.message}`, 'error');
+        }
+      } else {
+        showToast('Web3 Wallet not detected', 'error');
+      }
+    };
   }
 }
