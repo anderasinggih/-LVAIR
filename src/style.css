@@ -1,22 +1,22 @@
 :root {
-  --bg-app: #05030a;
-  --bg-surface: #0c0817;
-  --bg-surface-elevated: #150f26;
-  --bg-surface-subtle: #23193d;
+  --bg-app: #03040c;
+  --bg-surface: #090c19;
+  --bg-surface-elevated: #111528;
+  --bg-surface-subtle: #1c223c;
   
-  --border-subtle: rgba(168, 85, 247, 0.12);
-  --border-muted: rgba(192, 132, 252, 0.22);
-  --border-glow: rgba(168, 85, 247, 0.4);
+  --border-subtle: rgba(129, 140, 248, 0.12);
+  --border-muted: rgba(167, 139, 250, 0.22);
+  --border-glow: rgba(99, 102, 241, 0.4);
   
-  --text-primary: #faf5ff;
-  --text-secondary: #c084fc;
-  --text-tertiary: #9333ea;
+  --text-primary: #f8fafc;
+  --text-secondary: #c7d2fe;
+  --text-tertiary: #818cf8;
   
-  /* Electric Purple Theme (Zebec Style Electric Violet & Indigo) */
-  --accent-primary: #a855f7;
-  --accent-primary-hover: #9333ea;
-  --accent-cyan: #c084fc;
-  --accent-purple: #7e22ce;
+  /* Electric Indigo / Blurple Theme (Zebec-Style Hyper-Futuristic Violet-Blue) */
+  --accent-primary: #6366f1;
+  --accent-primary-hover: #4f46e5;
+  --accent-cyan: #38bdf8;
+  --accent-purple: #8b5cf6;
   --accent-success: #10b981;
   --accent-danger: #ef4444;
 
@@ -42,23 +42,23 @@ html, body {
   width: 100%;
 }
 
-/* Zebec-Style Ambient Radial Background Glow (Electric Purple Glow) */
+/* Ambient Radial Background Glow (Blurple / Indigo-Violet Glow) */
 .zebec-ambient-bg {
   position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 1200px;
-  height: 650px;
-  background: radial-gradient(circle at 50% 20%, rgba(168, 85, 247, 0.16) 0%, rgba(126, 34, 206, 0.06) 45%, transparent 70%);
+  max-width: 1240px;
+  height: 680px;
+  background: radial-gradient(circle at 50% 18%, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.1) 35%, rgba(56, 189, 248, 0.03) 65%, transparent 75%);
   pointer-events: none;
   z-index: 0;
 }
 
 /* Toast Notifications */
 .toast-msg {
-  background: rgba(21, 15, 38, 0.94);
+  background: rgba(17, 21, 40, 0.94);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-muted);
   color: var(--text-primary);
@@ -87,7 +87,7 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(5, 3, 10, 0.88);
+  background: rgba(3, 4, 12, 0.88);
   backdrop-filter: blur(10px);
   z-index: 999;
   display: flex;
@@ -106,11 +106,11 @@ html, body {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
 }
 
-/* Header Navbar (Zebec Floating Glass Nav) */
+/* Header Navbar (Floating Glass Nav) */
 .landing-nav-container {
   border-bottom: 1px solid var(--border-subtle);
   padding: 16px 28px;
-  background: rgba(5, 3, 10, 0.8);
+  background: rgba(3, 4, 12, 0.8);
   backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
@@ -143,14 +143,14 @@ header.app-header {
 }
 
 .logo-badge {
-  background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #38bdf8 100%);
   color: #ffffff;
   font-weight: 800;
   font-size: 0.85rem;
   padding: 4px 10px;
   border-radius: 6px;
   letter-spacing: 0.02em;
-  box-shadow: 0 2px 12px rgba(168, 85, 247, 0.45);
+  box-shadow: 0 2px 14px rgba(99, 102, 241, 0.45);
 }
 
 .brand-title {
@@ -173,7 +173,7 @@ header.app-header {
 .tab-btn {
   background: transparent;
   border: none;
-  color: #d8b4fe;
+  color: #c7d2fe;
   padding: 7px 14px;
   border-radius: 8px;
   font-size: 0.82rem;
@@ -191,21 +191,22 @@ header.app-header {
   background: var(--bg-surface-elevated);
   color: var(--text-primary);
   border: 1px solid var(--border-muted);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
 }
 
-/* Zebec Glassmorphism Cards */
+/* Glassmorphism Cards */
 .panel {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 22px;
   min-width: 0;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .panel:hover {
   border-color: var(--border-muted);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.12);
 }
 
 .panel-header {
@@ -225,9 +226,9 @@ header.app-header {
   letter-spacing: -0.01em;
 }
 
-/* Zebec Gradient Text & Pill Badges (Electric Purple Gradient) */
+/* Gradient Text & Pill Badges (Indigo-Violet Blurple Gradient) */
 .gradient-text {
-  background: linear-gradient(135deg, #ffffff 30%, #e9d5ff 70%, #c084fc 100%);
+  background: linear-gradient(135deg, #ffffff 30%, #e0e7ff 65%, #a5b4fc 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -237,11 +238,11 @@ header.app-header {
   align-items: center;
   gap: 8px;
   padding: 6px 16px;
-  background: rgba(168, 85, 247, 0.1);
-  border: 1px solid rgba(192, 132, 252, 0.3);
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(165, 180, 252, 0.3);
   border-radius: 30px;
   font-size: 0.8rem;
-  color: #e9d5ff;
+  color: #c7d2fe;
   margin-bottom: 24px;
 }
 
@@ -262,7 +263,7 @@ header.app-header {
 
 .stat-label {
   font-size: 0.72rem;
-  color: #a855f7;
+  color: #818cf8;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -279,11 +280,11 @@ header.app-header {
   white-space: nowrap;
 }
 
-/* Buttons (Electric Purple Glow Buttons) */
+/* Buttons (Indigo-Purple Blurple Glow Buttons) */
 .btn-primary {
   width: 100%;
   padding: 11px 20px;
-  background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #7c3aed 100%);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   color: #ffffff;
@@ -291,13 +292,13 @@ header.app-header {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 22px rgba(168, 85, 247, 0.6);
-  background: linear-gradient(135deg, #c084fc 0%, #9333ea 100%);
+  box-shadow: 0 6px 24px rgba(99, 102, 241, 0.6);
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #8b5cf6 100%);
 }
 
 .btn-primary:disabled {
@@ -308,7 +309,7 @@ header.app-header {
 }
 
 .btn-secondary {
-  background: rgba(168, 85, 247, 0.08);
+  background: rgba(99, 102, 241, 0.08);
   border: 1px solid var(--border-muted);
   color: var(--text-primary);
   padding: 11px 20px;
@@ -320,8 +321,8 @@ header.app-header {
 }
 
 .btn-secondary:hover {
-  background: rgba(168, 85, 247, 0.18);
-  border-color: rgba(192, 132, 252, 0.45);
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(165, 180, 252, 0.45);
 }
 
 /* Forms & Inputs */
@@ -334,7 +335,7 @@ header.app-header {
   justify-content: space-between;
   align-items: center;
   font-size: 0.8rem;
-  color: #d8b4fe;
+  color: #c7d2fe;
   margin-bottom: 6px;
 }
 
@@ -399,7 +400,7 @@ header.app-header {
   padding: 10px 12px;
   font-size: 0.72rem;
   text-transform: uppercase;
-  color: #a855f7;
+  color: #818cf8;
   font-weight: 600;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-surface);
@@ -410,7 +411,7 @@ header.app-header {
   border-bottom: 1px solid var(--border-subtle);
   font-family: var(--font-mono);
   font-size: 0.8rem;
-  color: #e9d5ff;
+  color: #e0e7ff;
 }
 
 .data-table tr:hover td {
@@ -430,7 +431,7 @@ header.app-header {
 
 .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3); }
 .badge-danger  { background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-.badge-neutral { background: var(--bg-surface-elevated); color: #d8b4fe; border: 1px solid var(--border-subtle); }
+.badge-neutral { background: var(--bg-surface-elevated); color: #c7d2fe; border: 1px solid var(--border-subtle); }
 
 /* ========================================================================= */
 /* RESPONSIVE MEDIA QUERIES (Mobile / Tablet)                                */
