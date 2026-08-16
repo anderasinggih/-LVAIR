@@ -512,13 +512,19 @@ async function ensureChartData() {
   }
 }
 
+const LIVE_WINDOW_MS = 15 * 60 * 1000;
+
 function isNarrowChart() {
   return typeof window !== 'undefined' && window.innerWidth < 640;
 }
 
 function limitLiveSeries(history) {
-  if (!isNarrowChart() || history.length <= 60) return history;
-  return history.slice(-60);
+  const now = Date.now();
+  let filtered = history.filter(h => (h.timestamp || 0) > now - LIVE_WINDOW_MS);
+  if (isNarrowChart() && filtered.length > 60) {
+    filtered = filtered.slice(-60);
+  }
+  return filtered;
 }
 
 function buildLiveCandles() {
@@ -644,6 +650,23 @@ function updateChartHeader() {
   if (capEl) capEl.innerText = formatUsdCompact(ammPool.marketCap);
   if (volEl) volEl.innerText = formatUsdCompact(ammPool.volume24h);
   if (supplyEl) supplyEl.innerText = `${formatSupplyCompact(ammPool.circulatingSupply)} LVAIR`;
+
+  const oracleBar = document.getElementById('oracle-bar');
+  const oracle = ammPool.oracle;
+  if (oracleBar && oracle) {
+    const usdtInfo = oracle.prices?.USDT;
+    if (usdtInfo) {
+      oracleBar.style.display = 'flex';
+      const usdtRate = Number(usdtInfo.usd);
+      const realUsd = price * usdtRate;
+      document.getElementById('oracle-usdt-rate').innerText = `1 USDT = $${usdtRate.toFixed(4)}`;
+      document.getElementById('oracle-lvair-usd').innerText = `LVAIR ≈ $${realUsd.toFixed(4)} (real USD)`;
+      const ago = oracle.lastUpdated ? Math.round((Date.now() - oracle.lastUpdated) / 1000) : null;
+      document.getElementById('oracle-updated').innerText = ago !== null ? `updated ${ago}s ago` : '';
+    } else {
+      oracleBar.style.display = 'none';
+    }
+  }
 }
 
 export async function renderChart() {

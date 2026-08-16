@@ -9,6 +9,7 @@ import { TradingBotEngine } from '../core/market-maker.js';
 import { NodeStorageEngine } from './storage.js';
 import { Transaction, Block } from '../core/block.js';
 import { P2PNetwork } from './p2p.js';
+import { oracle } from './oracle.js';
 import {
   rebuildPoolState, rebuildClaimedAddresses, applyBlockToPool,
   validateBlock, chainIsValid, sameChain
@@ -267,6 +268,8 @@ async function startFullNode() {
     }
   }
 
+  oracle.start(60000);
+
   async function submitTxAndBroadcast(tx) {
     tx.txHash = await tx.calculateHash();
     await blockchain.addTransaction(tx);
@@ -382,6 +385,7 @@ async function startFullNode() {
 
   app.get('/api/amm/state', (req, res) => {
     const metrics = computeMarketMetrics();
+    const oracleSnap = oracle.getSnapshot();
     res.json({
       success: true,
       lvairReserve: ammPool.lvairReserve,
@@ -395,7 +399,8 @@ async function startFullNode() {
       mempoolSize: blockchain.pendingTransactions.length,
       marketCap: metrics.marketCap,
       volume24h: metrics.volume24h,
-      circulatingSupply: metrics.circulatingSupply
+      circulatingSupply: metrics.circulatingSupply,
+      oracle: oracleSnap
     });
   });
 
@@ -639,6 +644,10 @@ async function startFullNode() {
 
   app.get('/api/blocks', (req, res) => {
     res.json(blockchain.chain);
+  });
+
+  app.get('/api/oracle/prices', (req, res) => {
+    res.json({ success: true, ...oracle.getSnapshot() });
   });
 
   app.get('/api/balance/:address', (req, res) => {
