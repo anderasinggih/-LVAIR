@@ -138,8 +138,16 @@ export function setupWalletModal() {
           }
         }
       } else {
-        showToast('Phantom extension not detected in browser. Opening download page...', 'error');
-        window.open('https://phantom.app/', '_blank');
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+          showToast('Redirecting into Phantom In-App DApp Browser...');
+          const currentUrl = encodeURIComponent(window.location.href);
+          const phantomDeeplink = `https://phantom.app/ul/browse/${currentUrl}?ref=${encodeURIComponent(window.location.origin)}`;
+          window.location.href = phantomDeeplink;
+        } else {
+          showToast('Phantom extension not detected. Opening download page...', 'error');
+          window.open('https://phantom.app/', '_blank');
+        }
       }
     };
   }
