@@ -185,32 +185,63 @@ function renderDynamicContent() {
   }
 }
 
-function setupNavigationRouting() {
-  const showLanding = () => {
-    pageLanding.style.display = 'block';
-    pageApp.style.display = 'none';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    updateLandingLiveStats();
-  };
+function navigateTo(hash) {
+  if (window.location.hash !== hash) {
+    window.location.hash = hash;
+  } else {
+    handleHashRouting();
+  }
+}
 
-  const showApp = () => {
+function handleHashRouting() {
+  const hash = window.location.hash || '#/';
+  
+  if (hash.startsWith('#/swap') || hash.startsWith('#/transfer') || hash.startsWith('#/airdrop') || hash.startsWith('#/explorer') || hash === '#/app') {
     pageLanding.style.display = 'none';
     pageApp.style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    renderChart();
-    updateUI();
-  };
 
-  btnLandingEnterApp.addEventListener('click', showApp);
-  btnHeroTradeNow.addEventListener('click', showApp);
-  if (btnTerminalEnterApp) btnTerminalEnterApp.addEventListener('click', showApp);
+    let targetTab = 'trading';
+    if (hash === '#/transfer') targetTab = 'transfer';
+    else if (hash === '#/airdrop') targetTab = 'airdrop';
+    else if (hash === '#/explorer') targetTab = 'explorer';
+
+    const tabs = document.querySelectorAll('#page-app .tab-btn');
+    tabs.forEach(tab => {
+      if (tab.getAttribute('data-tab') === targetTab) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    document.querySelectorAll('#page-app .tab-content').forEach(content => {
+      content.style.display = content.id === `tab-${targetTab}` ? 'block' : 'none';
+    });
+
+    if (targetTab === 'trading') renderChart();
+    updateUI();
+  } else {
+    pageLanding.style.display = 'block';
+    pageApp.style.display = 'none';
+    updateLandingLiveStats();
+  }
+}
+
+function setupNavigationRouting() {
+  btnLandingEnterApp.addEventListener('click', () => navigateTo('#/swap'));
+  btnHeroTradeNow.addEventListener('click', () => navigateTo('#/swap'));
+  if (btnTerminalEnterApp) btnTerminalEnterApp.addEventListener('click', () => navigateTo('#/swap'));
+  
   btnHeroConnect.addEventListener('click', () => {
     walletModal.style.display = 'flex';
   });
 
   if (appBrandHomeLink) {
-    appBrandHomeLink.addEventListener('click', showLanding);
+    appBrandHomeLink.addEventListener('click', () => navigateTo('#/'));
   }
+
+  window.addEventListener('hashchange', handleHashRouting);
+  handleHashRouting();
 }
 
 function updateLandingLiveStats() {
@@ -383,15 +414,11 @@ function setupTabs() {
   const tabs = document.querySelectorAll('#page-app .tab-btn');
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
       const target = tab.getAttribute('data-tab');
-      document.querySelectorAll('#page-app .tab-content').forEach(content => {
-        content.style.display = content.id === `tab-${target}` ? 'block' : 'none';
-      });
-
-      if (target === 'trading') renderChart();
+      if (target === 'trading') navigateTo('#/swap');
+      else if (target === 'transfer') navigateTo('#/transfer');
+      else if (target === 'airdrop') navigateTo('#/airdrop');
+      else if (target === 'explorer') navigateTo('#/explorer');
     });
   });
 }
