@@ -44,6 +44,21 @@ export function setupAirdropPage() {
       // Execute on client state
       await blockchain.claimAirdrop(currentConnectedAddress);
 
+      if (!serverClaimSuccess) {
+        try {
+          await fetch(`${apiUrl}/api/telemetry/event`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'AIRDROP_CLAIMED',
+              tag: 'tag-claim',
+              message: `Wallet ${currentConnectedAddress.substring(0, 8)}... claimed ${quota} $LVAIR airdrop`,
+              data: { userAddress: currentConnectedAddress, quota }
+            })
+          });
+        } catch (e) {}
+      }
+
       addToHistory({
         type: 'airdrop',
         subtype: 'CLAIM',

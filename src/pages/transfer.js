@@ -51,13 +51,18 @@ export function setupTransferPage() {
       await blockchain.addTransaction(tx);
       await blockchain.minePendingTransactions(currentConnectedAddress);
 
-      // Notify server so monitor picks it up
+      // Report to server monitor log (no re-execution, just telemetry)
       try {
         const apiUrl = getApiBaseUrl();
-        await fetch(`${apiUrl}/api/tx/send`, {
+        await fetch(`${apiUrl}/api/telemetry/event`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ from: currentConnectedAddress, to: toAddress, amount, token, type: 'P2P_TRANSFER', metadata: { memo: 'On-Chain Transfer' } })
+          body: JSON.stringify({
+            type: 'TRANSFER_EXECUTED',
+            tag: 'tag-block',
+            message: `Transfer ${amount} ${token} from ${currentConnectedAddress.substring(0,8)}... to ${toAddress.substring(0,8)}...`,
+            data: { from: currentConnectedAddress, to: toAddress, amount, token }
+          })
         });
       } catch (e) {}
 

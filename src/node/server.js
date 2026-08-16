@@ -91,6 +91,18 @@ async function startFullNode() {
     res.json(broadcastLogs);
   });
 
+  // Lightweight event reporter — no chain execution, just logs for monitor
+  app.post('/api/telemetry/event', (req, res) => {
+    try {
+      const { type, tag, message, data } = req.body;
+      if (!type || !message) return res.status(400).json({ error: 'Missing type or message' });
+      logEvent(type, tag || 'tag-block', message, data || {});
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post('/api/config/airdrop', (req, res) => {
     try {
       const { amount } = req.body;

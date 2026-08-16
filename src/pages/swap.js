@@ -178,16 +178,17 @@ export function setupSwapPage() {
           currentSlippage / 100
         );
 
-        // Notify server RPC so monitor picks it up
+        // Report to server monitor log (no re-execution, just telemetry)
         try {
           const apiUrl = getApiBaseUrl();
-          await fetch(`${apiUrl}/api/swap`, {
+          await fetch(`${apiUrl}/api/telemetry/event`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              userAddress: currentConnectedAddress,
-              inputAmount: amountIn,
-              inputToken: currentInputToken
+              type: isBuyingAir ? 'BUY_LVAIR' : 'SELL_LVAIR',
+              tag: 'tag-swap',
+              message: `Swap ${amountIn} ${currentInputToken} by ${currentConnectedAddress.substring(0,8)}... => ${trade.amountOut.toFixed(4)} ${isBuyingAir ? 'LVAIR' : 'USDT'} @ $${trade.effectivePrice.toFixed(4)}`,
+              data: { userAddress: currentConnectedAddress, amountIn, amountOut: trade.amountOut, inputToken: currentInputToken }
             })
           });
         } catch (e) {}
