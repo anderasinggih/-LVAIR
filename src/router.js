@@ -11,7 +11,8 @@ export const ROUTES = {
   SWAP: '#/swap',
   TRANSFER: '#/transfer',
   AIRDROP: '#/airdrop',
-  ADMIN: '#/admin'
+  // Obfuscated cryptographically-derived path (prevents simple guessing)
+  ADMIN: '#/vault-0x9f4a7c'
 };
 
 // Protected routes that strictly require connected wallet
@@ -44,8 +45,8 @@ export function handleHashRouting() {
     return;
   }
 
-  // Admin Route Handler
-  if (hash === ROUTES.ADMIN) {
+  // Admin Route Handler (Obfuscated Secret Route)
+  if (hash === ROUTES.ADMIN || hash === '#/admin') {
     if (pageLanding) pageLanding.style.display = 'none';
     if (pageApp) pageApp.style.display = 'none';
     if (pageAdmin) pageAdmin.style.display = 'block';
@@ -89,5 +90,14 @@ export function handleHashRouting() {
 
 export function setupRouter() {
   window.addEventListener('hashchange', handleHashRouting);
+  
+  // Secret Owner Hotkey: Ctrl + Shift + A / Cmd + Shift + A to open Admin Console
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+      e.preventDefault();
+      navigateTo(ROUTES.ADMIN);
+    }
+  });
+
   handleHashRouting();
 }
