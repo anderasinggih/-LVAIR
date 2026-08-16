@@ -12,7 +12,7 @@
   --text-secondary: #86efac;
   --text-tertiary: #34d399;
   
-  /* Zebec-Inspired Signature Cyber Emerald & Mint Green Theme */
+  /* Zebec-Inspired Solid Cyber Emerald Green Theme */
   --accent-primary: #10b981;
   --accent-primary-hover: #059669;
   --accent-mint: #34d399;
@@ -148,14 +148,14 @@ header.app-header {
 }
 
 .logo-badge {
-  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #06b6d4 100%);
-  color: #ffffff;
+  background: #10b981;
+  color: #030806;
   font-weight: 800;
   font-size: 0.85rem;
   padding: 5px 12px;
   border-radius: 8px;
   letter-spacing: 0.03em;
-  box-shadow: 0 2px 16px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 2px 14px rgba(16, 185, 129, 0.4);
 }
 
 .brand-title {
@@ -368,28 +368,38 @@ header.app-header {
   white-space: nowrap;
 }
 
-/* Buttons (Zebec-Style Cyber Emerald Glowing Buttons) */
+/* ========================================================================= */
+/* BUTTONS — SOLID CLEAN MATTE CYBER EMERALD (NO GRADIENT)                   */
+/* ========================================================================= */
 .btn-primary {
   width: 100%;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: #10b981;
+  border: 1px solid #10b981;
   border-radius: 10px;
-  color: #ffffff;
+  color: #030806;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45);
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
 }
 
 .btn-primary:hover {
+  background-color: #34d399;
+  border-color: #34d399;
   transform: translateY(-1px);
-  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.65);
-  background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #059669 100%);
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.55);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
 }
 
 .btn-primary:disabled {
+  background-color: #064e3b;
+  border-color: #064e3b;
+  color: #6ee7b7;
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -397,7 +407,7 @@ header.app-header {
 }
 
 .btn-secondary {
-  background: rgba(16, 185, 129, 0.08);
+  background-color: rgba(16, 185, 129, 0.06);
   border: 1px solid var(--border-muted);
   color: var(--text-primary);
   padding: 12px 24px;
@@ -409,8 +419,8 @@ header.app-header {
 }
 
 .btn-secondary:hover {
-  background: rgba(16, 185, 129, 0.18);
-  border-color: rgba(52, 211, 153, 0.45);
+  background-color: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
 }
 
 /* Forms & Inputs */
