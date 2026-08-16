@@ -259,27 +259,23 @@ export function setupWalletModal() {
   if (optBinance) {
     optBinance.onclick = async () => {
       closeModal();
-      if (window.BinanceChain) {
+      let binanceProvider = window.BinanceChain;
+      if (!binanceProvider && window.ethereum?.isBinance) {
+        binanceProvider = window.ethereum;
+      }
+
+      if (binanceProvider) {
         try {
-          showToast('Connecting Binance Wallet...');
-          const accounts = await window.BinanceChain.request({ method: 'eth_requestAccounts' });
+          showToast('Connecting Binance Web3 Wallet...');
+          const accounts = await binanceProvider.request({ method: 'eth_requestAccounts' });
           if (accounts && accounts.length > 0) {
             setConnectedWallet(accounts[0], 'Binance');
           }
         } catch (err) {
           showToast(`Binance Error: ${err.message}`, 'error');
         }
-      } else if (typeof window.ethereum !== 'undefined') {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          if (accounts && accounts.length > 0) {
-            setConnectedWallet(accounts[0], 'Web3 Wallet');
-          }
-        } catch (err) {
-          showToast(`Wallet Error: ${err.message}`, 'error');
-        }
       } else {
-        showToast('Binance Web3 Wallet not detected. Opening download page...', 'error');
+        showToast('Binance Web3 Wallet extension not installed. Opening download page...', 'error');
         window.open('https://www.binance.com/en/web3wallet', '_blank');
       }
     };
@@ -288,9 +284,19 @@ export function setupWalletModal() {
   if (optCoinbase) {
     optCoinbase.onclick = async () => {
       closeModal();
-      if (typeof window.ethereum !== 'undefined') {
+      let cbProvider = window.coinbaseWalletExtension;
+      if (!cbProvider && window.trustwallet) {
+        cbProvider = window.trustwallet;
+      } else if (!cbProvider && window.ethereum?.isCoinbaseWallet) {
+        cbProvider = window.ethereum;
+      } else if (!cbProvider && window.ethereum?.isTrust) {
+        cbProvider = window.ethereum;
+      }
+
+      if (cbProvider) {
         try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          showToast('Connecting Coinbase / Trust Wallet...');
+          const accounts = await cbProvider.request({ method: 'eth_requestAccounts' });
           if (accounts && accounts.length > 0) {
             setConnectedWallet(accounts[0], 'Coinbase');
           }
@@ -298,7 +304,8 @@ export function setupWalletModal() {
           showToast(`Wallet Error: ${err.message}`, 'error');
         }
       } else {
-        showToast('Web3 Wallet not detected', 'error');
+        showToast('Coinbase / Trust Wallet extension not installed. Opening download page...', 'error');
+        window.open('https://www.coinbase.com/wallet', '_blank');
       }
     };
   }
