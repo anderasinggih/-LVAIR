@@ -115,24 +115,38 @@ function setupAdminHandlers() {
       if (!amount || amount <= 0) return showToast('Enter a valid airdrop allocation amount', 'error');
       blockchain.airdropClaimAmount = amount;
       await blockchain.saveState();
+
+      try {
+        await fetch('/api/config/airdrop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount })
+        });
+      } catch (e) {}
+
       showToast(`Airdrop quota per wallet updated to ${amount} $LVAIR`);
       renderAdminDashboard();
     });
   }
 
   if (btnResetAirdropList) {
-    btnResetAirdropList.addEventListener('click', () => {
+    btnResetAirdropList.addEventListener('click', async () => {
       const { blockchain } = AppState;
       if (!blockchain) return;
       blockchain.claimedAddresses.clear();
-      blockchain.saveState();
+      await blockchain.saveState();
+
+      try {
+        await fetch('/api/config/reset-whitelist', { method: 'POST' });
+      } catch (e) {}
+
       showToast('Airdrop claims whitelist has been reset');
       renderAdminDashboard();
     });
   }
 
   if (btnUpdatePoolReserves) {
-    btnUpdatePoolReserves.addEventListener('click', () => {
+    btnUpdatePoolReserves.addEventListener('click', async () => {
       const { ammPool } = AppState;
       if (!ammPool) return;
       const air = parseFloat(adminPoolAirInput.value);
@@ -141,6 +155,15 @@ function setupAdminHandlers() {
       ammPool.lvairReserve = air;
       ammPool.usdtReserve = usdt;
       ammPool.k = air * usdt;
+
+      try {
+        await fetch('/api/config/reserves', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lvair: air, usdt })
+        });
+      } catch (e) {}
+
       showToast(`Pool Reserves updated to ${air.toLocaleString()} LVAIR / $${usdt.toLocaleString()} USDT`);
       renderAdminDashboard();
     });
@@ -235,6 +258,13 @@ function renderAdminDashboard() {
 
   if (adminTotalClaims) adminTotalClaims.innerText = blockchain ? `${blockchain.claimedAddresses.size} Wallets` : '0 Wallets';
   if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${blockchain.chain.length} Blocks` : '#1 Blocks';
+
+  if (blockchain) {
+    const adminAirdropInput = document.getElementById('admin-airdrop-amount-input');
+    if (adminAirdropInput && !adminAirdropInput.matches(':focus')) {
+      adminAirdropInput.value = blockchain.airdropClaimAmount || 250;
+    }
+  }
 
   if (ammPool) {
     if (adminPoolAirInput && !adminPoolAirInput.matches(':focus')) {

@@ -26,6 +26,15 @@ async function initApp() {
 
     AppState.blockchain = new Blockchain(2);
     await AppState.blockchain.init();
+
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        const cfg = await res.json();
+        if (cfg.airdropClaimAmount) AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
+      }
+    } catch (e) {}
+
     AppState.ammPool = new AMMPool(AppState.blockchain, 100000, 25000);
 
     AppState.botEngine = new TradingBotEngine(AppState.blockchain, AppState.ammPool);

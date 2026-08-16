@@ -15,6 +15,12 @@ const DATA_DIR = path.resolve(__dirname, '../../data');
 const HTTP_PORT = process.env.HTTP_PORT || 3001;
 const P2P_PORT = process.env.P2P_PORT || 6001;
 
+let protocolConfig = {
+  airdropClaimAmount: 250,
+  miningReward: 10,
+  ownerAddress: null
+};
+
 async function startFullNode() {
   console.log('===================================================');
   console.log('  LVAIR PROTOCOL FULL-NODE (L1 ENGINE)');
@@ -32,7 +38,7 @@ async function startFullNode() {
       if (b.transactions) {
         b.transactions.forEach(t => {
           if (t.type === 'AIRDROP_CLAIM' && t.toAddress) {
-            blockchain.claimedAddresses.add(t.toAddress);
+            blockchain.claimedAddresses.add(t.toAddress.toLowerCase());
           }
         });
       }
@@ -50,6 +56,70 @@ async function startFullNode() {
   app.use(cors());
   app.use(express.json());
 
+  app.get('/api/config', (req, res) => {
+    res.json({
+      success: true,
+      airdropClaimAmount: protocolConfig.airdropClaimAmount || blockchain.airdropClaimAmount,
+      miningReward: protocolConfig.miningReward || blockchain.miningReward,
+      ownerAddress: protocolConfig.ownerAddress,
+      claimedCount: blockchain.claimedAddresses.size,
+      poolReserves: {
+        lvair: ammPool.lvairReserve,
+        usdt: ammPool.usdtReserve,
+        price: ammPool.getCurrentPrice()
+      }
+    });
+  });
+
+  app.post('/api/config/airdrop', (req, res) => {
+    try {
+      const { amount } = req.body;
+      const parsed = parseFloat(amount);
+      if (!parsed || parsed <= 0) throw new Error('Invalid airdrop amount');
+      
+      protocolConfig.airdropClaimAmount = parsed;
+      blockchain.airdropClaimAmount = parsed;
+      blockchain.saveState();
+
+      broadcast({ type: 'CONFIG_UPDATED', config: protocolConfig });
+
+      res.json({ success: true, airdropClaimAmount: parsed });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/config/reset-whitelist', (req, res) => {
+    try {
+      blockchain.claimedAddresses.clear();
+      blockchain.saveState();
+
+      broadcast({ type: 'WHITELIST_RESET' });
+
+      res.json({ success: true, message: 'Airdrop whitelist reset successfully' });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/config/reserves', (req, res) => {
+    try {
+      const { lvair, usdt } = req.body;
+      const airNum = parseFloat(lvair);
+      const usdtNum = parseFloat(usdt);
+      if (!airNum || !usdtNum || airNum <= 0 || usdtNum <= 0) throw new Error('Invalid reserves');
+      
+      ammPool.lvairReserve = airNum;
+      ammPool.usdtReserve = usdtNum;
+
+      broadcast({ type: 'RESERVES_UPDATED', reserves: { lvair: airNum, usdt: usdtNum, price: ammPool.getCurrentPrice() } });
+
+      res.json({ success: true, reserves: { lvair: airNum, usdt: usdtNum, price: ammPool.getCurrentPrice() } });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
   app.get('/api/node/status', async (req, res) => {
     res.json({
       network: 'LVAIR Mainnet L1',
@@ -60,6 +130,7 @@ async function startFullNode() {
       difficulty: blockchain.difficulty,
       p2pPeers: sockets.length,
       spotPrice: ammPool.getCurrentPrice(),
+      airdropClaimAmount: blockchain.airdropClaimAmount,
       reserves: {
         lvair: ammPool.lvairReserve,
         usdt: ammPool.usdtReserve,
@@ -81,7 +152,8 @@ async function startFullNode() {
       address,
       lvair: blockchain.getBalanceOfAddress(address, 'LVAIR'),
       usdt: blockchain.getBalanceOfAddress(address, 'USDT'),
-      hasClaimedAirdrop: isClaimed
+      hasClaimedAirdrop: isClaimed,
+      currentAirdropQuota: blockchain.airdropClaimAmount
     });
   });
 
