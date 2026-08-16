@@ -18,6 +18,9 @@ const LOG_FILE = path.resolve(LOGS_DIR, 'node.log');
 
 const HTTP_PORT = process.env.HTTP_PORT || 3001;
 const P2P_PORT = process.env.P2P_PORT || 6001;
+const DIST_DIR = path.resolve(__dirname, '../../dist');
+
+const sockets = [];
 
 let protocolConfig = {
   airdropClaimAmount: 250,
@@ -53,6 +56,7 @@ async function startFullNode() {
   console.log('===================================================');
 
   const storage = new NodeStorageEngine(DATA_DIR);
+  await storage.open();
   console.log(`Database storage initialized at: ${DATA_DIR}`);
   console.log(`Telemetry ledger: ${LOG_FILE}`);
 
@@ -115,6 +119,7 @@ async function startFullNode() {
   const app = express();
   app.use(cors());
   app.use(express.json());
+  app.use(express.static(DIST_DIR));
 
   const botEngine = new TradingBotEngine(blockchain, ammPool);
 
@@ -355,7 +360,6 @@ async function startFullNode() {
     logEvent('NODE_BOOT', 'tag-sync', `LVAIR Core Node booted on port ${HTTP_PORT}`);
   });
 
-  const sockets = [];
   const p2pServer = new WebSocketServer({ port: P2P_PORT });
 
   p2pServer.on('connection', (ws) => {

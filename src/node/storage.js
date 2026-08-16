@@ -28,6 +28,17 @@ export class NodeStorageEngine {
     if (!fs.existsSync(this.datFilePath)) fs.writeFileSync(this.datFilePath, '', 'utf8');
   }
 
+  async open() {
+    try {
+      await this.db.open();
+    } catch (err) {
+      if (err.code === 'LEVEL_LOCKED') {
+        throw new Error('Database locked: another LVAIR node instance is already running. Stop it first (pm2 stop lvair-node or kill the old process) before starting a new one.');
+      }
+      throw err;
+    }
+  }
+
   /**
    * Append raw block to blk00000.dat file
    */
