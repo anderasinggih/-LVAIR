@@ -44,6 +44,21 @@ async function initApp() {
       renderRecentTrades();
     });
 
+    setInterval(async () => {
+      try {
+        const res = await fetch('/api/config');
+        if (res.ok) {
+          const cfg = await res.json();
+          if (cfg.airdropClaimAmount && AppState.blockchain) {
+            if (AppState.blockchain.airdropClaimAmount !== cfg.airdropClaimAmount) {
+              AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
+              updateUI();
+            }
+          }
+        }
+      } catch (e) {}
+    }, 3000);
+
     updateUI();
     renderLandingStats();
     renderRecentTrades();
