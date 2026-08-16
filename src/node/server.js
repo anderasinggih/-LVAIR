@@ -141,6 +141,14 @@ async function startFullNode() {
   ammPool.trades = pool.trades;
   blockchain.claimedAddresses = rebuildClaimedAddresses(blockchain.chain);
 
+  const txIndex = new Map();
+  for (const block of blockchain.chain) {
+    for (const tx of (block.transactions || [])) {
+      if (tx.txHash) txIndex.set(tx.txHash, { tx, blockIndex: block.index, blockHash: block.hash, blockTs: block.timestamp });
+    }
+  }
+  console.log(`[EXPLORER] Indexed ${txIndex.size} transactions from ${blockchain.chain.length} blocks`);
+
   const savedMempool = await storage.loadMempool();
   if (savedMempool.length > 0) {
     const validPending = [];
@@ -197,6 +205,9 @@ async function startFullNode() {
       }
       const block = await blockchain.minePendingTransactions(minerAddress);
       await storage.appendRawBlock(block);
+      for (const tx of (block.transactions || [])) {
+        if (tx.txHash) txIndex.set(tx.txHash, { tx, blockIndex: block.index, blockHash: block.hash, blockTs: block.timestamp });
+      }
       await applyBlockEffects(block);
       seenBlocks.add(block.hash);
       p2p.broadcastBlock(block);
@@ -210,6 +221,7 @@ async function startFullNode() {
     advertisedUrl: advertisedP2P,
     seedNodes: Array.from(seedSet),
     getChain: () => blockchain.chain,
+    dataDir: DATA_DIR,
     log: (tag, msg) => console.log(`[${tag}] ${msg}`),
     onTx: (tx) => {
       withLock(async () => {
@@ -238,6 +250,9 @@ async function startFullNode() {
         await storage.appendRawBlock(block);
         seenBlocks.add(block.hash);
         blockchain.chain.push(block);
+        for (const tx of (block.transactions || [])) {
+          if (tx.txHash) txIndex.set(tx.txHash, { tx, blockIndex: block.index, blockHash: block.hash, blockTs: block.timestamp });
+        }
         await applyBlockEffects(block);
         p2p.broadcastBlock(block);
         logEvent('BLOCK_RECEIVED', 'tag-block', `Block #${block.index} received from peer and appended (${block.transactions.length} txs)`);
@@ -261,6 +276,12 @@ async function startFullNode() {
         }
 
         blockchain.chain = candidate;
+        txIndex.clear();
+        for (const b of candidate) {
+          for (const tx of (b.transactions || [])) {
+            if (tx.txHash) txIndex.set(tx.txHash, { tx, blockIndex: b.index, blockHash: b.hash, blockTs: b.timestamp });
+          }
+        }
         const p = rebuildPoolState(candidate);
         ammPool.lvairReserve = p.lvairReserve;
         ammPool.usdtReserve = p.usdtReserve;
@@ -811,7 +832,49 @@ async function startFullNode() {
   });
 
   app.get('/api/blocks', (req, res) => {
-    res.json(blockchain.chain);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const chain = blockchain.chain;
+    const total = chain.length;
+    const totalPages = Math.ceil(total / limit);
+    const start = (page - 1) * limit;
+    const blocks = chain.slice().reverse().slice(start, start + limit);
+    res.json({ blocks, page, limit, total, totalPages });
+  });
+
+  app.get('/api/block/:height', (req, res) => {
+    const height = parseInt(req.params.height);
+    if (isNaN(height) || height < 0 || height >= blockchain.chain.length) {
+      return res.status(404).json({ error: 'Block not found' });
+    }
+    const block = blockchain.chain[height];
+    res.json({ block });
+  });
+
+  app.get('/api/tx/:hash', (req, res) => {
+    const entry = txIndex.get(req.params.hash);
+    if (!entry) return res.status(404).json({ error: 'Transaction not found' });
+    res.json({ tx: entry.tx, blockIndex: entry.blockIndex, blockHash: entry.blockHash, blockTimestamp: entry.blockTs });
+  });
+
+  app.get('/api/txs', (req, res) => {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const all = Array.from(txIndex.values()).sort((a, b) => (b.blockIndex || 0) - (a.blockIndex || 0));
+    const total = all.length;
+    const totalPages = Math.ceil(total / limit);
+    const start = (page - 1) * limit;
+    const txs = all.slice(start, start + limit).map(e => ({
+      txHash: e.tx.txHash,
+      type: e.tx.type,
+      from: e.tx.fromAddress,
+      to: e.tx.toAddress,
+      amount: e.tx.amount,
+      token: e.tx.token,
+      blockIndex: e.blockIndex,
+      timestamp: e.blockTs
+    }));
+    res.json({ txs, page, limit, total, totalPages });
   });
 
   app.get('/api/oracle/prices', (req, res) => {

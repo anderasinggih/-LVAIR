@@ -1,5 +1,11 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import crypto from 'crypto';
+import https from 'https';
+import http from 'http';
+import tls from 'tls';
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
 
 const RECONNECT_MS = 5000;
 const HANDSHAKE_TIMEOUT_MS = 10000;
@@ -13,8 +19,39 @@ function hmacChallenge(secret, nonce) {
   return crypto.createHmac('sha256', secret).update(nonce).digest('hex');
 }
 
+function ensureSelfSignedCert(dataDir) {
+  const envCert = process.env.P2P_TLS_CERT;
+  const envKey = process.env.P2P_TLS_KEY;
+  if (envCert && envKey) {
+    try {
+      return { cert: fs.readFileSync(envCert), key: fs.readFileSync(envKey) };
+    } catch (e) { /* fall through to self-signed */ }
+  }
+
+  const certDir = path.join(dataDir, 'tls');
+  const certFile = path.join(certDir, 'p2p-cert.pem');
+  const keyFile = path.join(certDir, 'p2p-key.pem');
+
+  if (fs.existsSync(certFile) && fs.existsSync(keyFile)) {
+    return { cert: fs.readFileSync(certFile), key: fs.readFileSync(keyFile) };
+  }
+
+  try {
+    fs.mkdirSync(certDir, { recursive: true });
+    execSync(
+      `openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 ` +
+      `-nodes -keyout "${keyFile}" -out "${certFile}" ` +
+      `-days 365 -subj "/CN=lvair-p2p-node/O=LVAIR Protocol"`,
+      { stdio: 'pipe' }
+    );
+    return { cert: fs.readFileSync(certFile), key: fs.readFileSync(keyFile) };
+  } catch (e) {
+    return null;
+  }
+}
+
 export class P2PNetwork {
-  constructor({ p2pPort, advertisedUrl = '', seedNodes = [], onTx, onBlock, onChainReceived, getChain, log = () => {} }) {
+  constructor({ p2pPort, advertisedUrl = '', seedNodes = [], onTx, onBlock, onChainReceived, getChain, dataDir = './data', log = () => {} }) {
     this.p2pPort = p2pPort;
     this.advertisedUrl = advertisedUrl;
     this.seedNodes = seedNodes;
@@ -23,6 +60,7 @@ export class P2PNetwork {
     this.onChainReceived = onChainReceived;
     this.getChain = getChain;
     this.log = log;
+    this.dataDir = dataDir;
 
     this.sockets = new Set();
     this.known = new Set();
@@ -32,7 +70,17 @@ export class P2PNetwork {
   }
 
   async start() {
-    this.server = new WebSocketServer({ port: this.p2pPort });
+    const tlsCerts = ensureSelfSignedCert(this.dataDir);
+    const protocol = tlsCerts ? 'wss' : 'ws';
+
+    if (tlsCerts) {
+      const httpsServer = https.createServer({ cert: tlsCerts.cert, key: tlsCerts.key });
+      this.server = new WebSocketServer({ server: httpsServer });
+      httpsServer.listen(this.p2pPort);
+    } else {
+      this.server = new WebSocketServer({ port: this.p2pPort });
+    }
+
     this.server.on('connection', ws => this._attach(ws, true));
 
     for (const seed of this.seedNodes) {
@@ -40,7 +88,7 @@ export class P2PNetwork {
     }
 
     this.discoveryTimer = setInterval(() => this._requestPeers(), 30000);
-    this.log('P2P', 'Gossip server listening on ws://0.0.0.0:' + this.p2pPort);
+    this.log('P2P', `Gossip server listening on ${protocol}://0.0.0.0:${this.p2pPort}` + (tlsCerts ? ' [TLS enabled]' : ' [plaintext]'));
   }
 
   stop() {
@@ -213,7 +261,9 @@ export class P2PNetwork {
     if (this.outbound.has(url)) return;
     let ws;
     try {
-      ws = new WebSocket(url);
+      const isTls = url.startsWith('wss://');
+      const wsOpts = isTls ? { rejectUnauthorized: false } : {};
+      ws = new WebSocket(url, wsOpts);
     } catch (e) {
       return;
     }
