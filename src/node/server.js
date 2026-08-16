@@ -138,6 +138,22 @@ async function startFullNode() {
   ammPool.trades = pool.trades;
   blockchain.claimedAddresses = rebuildClaimedAddresses(blockchain.chain);
 
+  const savedMempool = await storage.loadMempool();
+  if (savedMempool.length > 0) {
+    const validPending = [];
+    for (const txData of savedMempool) {
+      try {
+        const tx = Transaction.fromJSON(txData);
+        const inChain = blockchain.chain.some(b => (b.transactions || []).some(t => t.txHash === tx.txHash));
+        if (!inChain) {
+          await blockchain.addTransaction(tx);
+          validPending.push(txData);
+        }
+      } catch (e) {}
+    }
+    console.log(`Restored ${validPending.length} pending transactions from mempool`);
+  }
+
   const seedSet = new Set([...seedNodes, ...loadPeersFile()]);
   const seenBlocks = new Set(blockchain.chain.map(b => b.hash));
 
@@ -155,10 +171,11 @@ async function startFullNode() {
     return run;
   }
 
-  function applyBlockEffects(block) {
+  async function applyBlockEffects(block) {
     blockchain.pendingTransactions = blockchain.pendingTransactions.filter(
       t => !(block.transactions || []).some(b => b.txHash === t.txHash)
     );
+    await storage.saveMempool(blockchain.pendingTransactions);
     applyBlockToPool(ammPool, block);
     for (const tx of block.transactions || []) {
       if (tx.type === 'AIRDROP_CLAIM' && tx.toAddress) {
@@ -172,7 +189,7 @@ async function startFullNode() {
       if (!blockchain.pendingTransactions.length) return null;
       const block = await blockchain.minePendingTransactions(minerAddress);
       await storage.appendRawBlock(block);
-      applyBlockEffects(block);
+      await applyBlockEffects(block);
       seenBlocks.add(block.hash);
       p2p.broadcastBlock(block);
       logEvent('BLOCK_MINED', 'tag-block', `Block #${block.index} mined with ${block.transactions.length} transactions`, { block: block.index, txs: block.transactions.length });
@@ -213,7 +230,7 @@ async function startFullNode() {
         await storage.appendRawBlock(block);
         seenBlocks.add(block.hash);
         blockchain.chain.push(block);
-        applyBlockEffects(block);
+        await applyBlockEffects(block);
         p2p.broadcastBlock(block);
         logEvent('BLOCK_RECEIVED', 'tag-block', `Block #${block.index} received from peer and appended (${block.transactions.length} txs)`);
       });
@@ -279,6 +296,7 @@ async function startFullNode() {
   async function submitTxAndBroadcast(tx) {
     tx.txHash = await tx.calculateHash();
     await blockchain.addTransaction(tx);
+    await storage.saveMempool(blockchain.pendingTransactions);
     p2p.broadcastTx(tx);
     return tx;
   }
@@ -849,6 +867,8 @@ async function startFullNode() {
     console.log(`\n[${signal}] Shutting down gracefully...`);
     oracle.stop();
     if (botEngine && botEngine.isRunning) botEngine.stop();
+    await storage.saveMempool(blockchain.pendingTransactions);
+    console.log(`[SHUTDOWN] Mempool saved (${blockchain.pendingTransactions.length} pending txs)`);
     p2p.stop();
     httpServer.close();
     try { await storage.close(); } catch (e) {}

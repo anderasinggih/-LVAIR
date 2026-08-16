@@ -152,6 +152,31 @@ export class NodeStorageEngine {
   }
 
   /**
+   * Save mempool (pending transactions) to LevelDB
+   */
+  async saveMempool(transactions) {
+    const key = 'mempool:pending';
+    if (!transactions || transactions.length === 0) {
+      try { await this.db.del(key); } catch (e) {}
+      return;
+    }
+    await this.db.put(key, transactions);
+  }
+
+  /**
+   * Load mempool (pending transactions) from LevelDB
+   */
+  async loadMempool() {
+    try {
+      const txs = await this.db.get('mempool:pending');
+      return Array.isArray(txs) ? txs : [];
+    } catch (e) {
+      if (e.code === 'LEVEL_NOT_FOUND') return [];
+      return [];
+    }
+  }
+
+  /**
    * Close database gracefully
    */
   async close() {
