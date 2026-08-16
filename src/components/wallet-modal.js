@@ -95,8 +95,16 @@ export function setupWalletModal() {
           else showToast(`MetaMask Error: ${err.message}`, 'error');
         }
       } else {
-        showToast('MetaMask extension not found. Opening download page...', 'error');
-        window.open('https://metamask.io/download/', '_blank');
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+          showToast('Redirecting into MetaMask In-App Browser...');
+          const cleanHost = window.location.host + window.location.pathname + window.location.search;
+          const metamaskDeeplink = `https://metamask.app.link/dapp/${cleanHost}`;
+          window.location.href = metamaskDeeplink;
+        } else {
+          showToast('MetaMask extension not found in browser. Opening download page...', 'error');
+          window.open('https://metamask.io/download/', '_blank');
+        }
       }
     };
   }
