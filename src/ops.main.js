@@ -2,6 +2,7 @@ import { AppState, updateUI, PROTOCOL_OWNER_CONFIG } from './state.js';
 import { setupWalletModal, restoreSavedWallet, setConnectedWallet, disconnectWallet } from './components/wallet-modal.js';
 import { showToast } from './components/toast.js';
 import { getApiBaseUrl } from './api.js';
+import { formatBlockNumber } from './format.js';
 
 let lastBotRunning = null;
 let lastP2PPeers = 0;
@@ -249,7 +250,7 @@ function setupAdminHandlers() {
       btnLiquidityProvision.innerText = 'Provisioning...';
       try {
         const data = await postJson('/api/liquidity/provision', { lvairAmount, usdtAmount, operatorAddress });
-        showToast(`Liquidity provided — block #${data.blockIndex || 'pending'} | Reserves: ${data.lvairReserve.toLocaleString()} LVAIR / ${data.usdtReserve.toLocaleString()} USDT`);
+        showToast(`Liquidity provided — block #${data.blockIndex ? formatBlockNumber(data.blockIndex) : 'pending'} | Reserves: ${data.lvairReserve.toLocaleString()} LVAIR / ${data.usdtReserve.toLocaleString()} USDT`);
       } catch (err) {
         showToast(`Liquidity error: ${err.message}`, 'error');
       } finally {
@@ -281,7 +282,7 @@ function setupAdminHandlers() {
       btnLiquidityWithdrawal.innerText = 'Withdrawing...';
       try {
         const data = await postJson('/api/liquidity/withdrawal', { lvairAmount, usdtAmount, operatorAddress });
-        showToast(`Liquidity withdrawn — block #${data.blockIndex || 'pending'} | Reserves: ${data.lvairReserve.toLocaleString()} LVAIR / ${data.usdtReserve.toLocaleString()} USDT`);
+        showToast(`Liquidity withdrawn — block #${data.blockIndex ? formatBlockNumber(data.blockIndex) : 'pending'} | Reserves: ${data.lvairReserve.toLocaleString()} LVAIR / ${data.usdtReserve.toLocaleString()} USDT`);
       } catch (err) {
         showToast(`Withdrawal error: ${err.message}`, 'error');
       } finally {
@@ -299,7 +300,7 @@ function setupAdminHandlers() {
       btnAdminForceMine.innerText = 'Mining Block...';
       try {
         const data = await postJson('/api/mine', { minerRewardAddress: currentConnectedAddress || null });
-        showToast(data.blockIndex ? `Block #${data.blockIndex} mined & broadcast to the network!` : 'No pending transactions to mine');
+        showToast(data.blockIndex ? `Block #${formatBlockNumber(data.blockIndex)} mined & broadcast to the network!` : 'No pending transactions to mine');
       } catch (err) {
         showToast(`Mining error: ${err.message}`, 'error');
       } finally {
@@ -383,7 +384,7 @@ function renderAdminDashboard() {
   }
 
   if (adminTotalClaims) adminTotalClaims.innerText = blockchain && blockchain.claimedAddresses ? `${blockchain.claimedAddresses.size} Wallets` : '0 Wallets';
-  if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${blockchain.chain.length} Blocks` : '#1 Blocks';
+  if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${formatBlockNumber(blockchain.chain.length)} Blocks` : '#1 Blocks';
 
   const opsQuota = document.getElementById('ops-airdrop-quota');
   const opsPeers = document.getElementById('ops-p2p-peers');

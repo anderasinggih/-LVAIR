@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from './api.js';
+import { formatBlockNumber } from './format.js';
 
 let seenLogIds = new Set();
 
@@ -89,7 +90,7 @@ function renderBlocksTable(blocks) {
 
     return `
       <tr>
-        <td style="color: #60a5fa; font-weight: 700;">#${b.index}</td>
+        <td style="color: #60a5fa; font-weight: 700;">#${formatBlockNumber(b.index)}</td>
         <td title="${b.hash}">${shortHash}</td>
         <td><span class="badge ${txCount > 0 ? 'badge-success' : 'badge-neutral'}">${txCount} txs</span></td>
         <td style="color: #9ca3af;" title="${b.merkleRoot}">${shortMerkle}</td>

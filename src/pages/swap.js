@@ -18,6 +18,7 @@ import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
 import { rpcPost } from '../api.js';
 import { refreshNodeState } from '../node-sync.js';
+import { formatBlockNumber } from '../format.js';
 
 let currentSlippage = 0.5;
 let lastSwapTimestamp = 0;
@@ -378,7 +379,7 @@ export function renderHistory() {
       <td style="font-family:var(--font-mono);">${h.amountIn.toFixed(4)} ${sanitizeText(h.tokenIn)}</td>
       <td style="font-family:var(--font-mono); color:#10b981;">${h.amountOut.toFixed(4)} ${sanitizeText(h.tokenOut)}</td>
       <td style="font-family:var(--font-mono); color:#60a5fa;">${priceStr}</td>
-      <td style="font-family:var(--font-mono);">#${h.blockIndex}</td>
+      <td style="font-family:var(--font-mono);">#${formatBlockNumber(h.blockIndex)}</td>
       <td style="color:var(--text-tertiary); font-size:0.78rem;">${dateStr} ${timeStr}</td>
       <td><span class="badge badge-success">Settled</span></td>
     </tr>`;
@@ -420,7 +421,7 @@ export function renderRecentTrades() {
         <td>${Number(t.outputAmount).toFixed(2)} ${isBuy ? 'LVAIR' : 'USDT'}</td>
         <td style="color: #60a5fa; font-weight:700;">$${Number(t.effectivePrice || t.price || 0).toFixed(4)}</td>
         <td title="${sanitizeText(trader)}">${sanitizeText(trader.substring(0, 6))}...${sanitizeText(trader.substring(trader.length - 4))}</td>
-        <td>#${t.blockIndex || 1}</td>
+        <td>#${formatBlockNumber(t.blockIndex || 1)}</td>
       </tr>
     `;
   }).join('');

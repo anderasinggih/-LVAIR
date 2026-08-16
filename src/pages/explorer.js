@@ -5,6 +5,7 @@ import {
 } from '../dom.js';
 import { AppState } from '../state.js';
 import { showToast } from '../components/toast.js';
+import { formatBlockNumber } from '../format.js';
 
 export function setupExplorerPage() {
   if (btnValidateChain) {
@@ -42,7 +43,7 @@ export function renderExplorerBlocks() {
   const blocks = [...blockchain.chain].reverse().slice(0, 10);
   explorerBlocksBody.innerHTML = blocks.map(b => `
     <tr>
-      <td><strong>#${b.index}</strong></td>
+      <td><strong>#${formatBlockNumber(b.index)}</strong></td>
       <td title="${b.hash}">${b.hash.substring(0, 14)}...</td>
       <td title="${b.previousHash}">${b.previousHash.substring(0, 10)}...</td>
       <td title="${b.merkleRoot || ''}">${(b.merkleRoot || '').substring(0, 10)}...</td>

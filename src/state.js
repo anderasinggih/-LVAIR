@@ -7,6 +7,7 @@ import {
   btnExecuteSwap,
   airdropStatusText
 } from './dom.js';
+import { formatBlockNumber } from './format.js';
 
 export const CONNECTED_WALLET_KEY = 'LVAIR_CONNECTED_WALLET_ADDR';
 export const CONNECTED_PROVIDER_KEY = 'LVAIR_CONNECTED_WALLET_PROV';
@@ -87,7 +88,7 @@ export function updateUI() {
   const airPrice = ammPool.getCurrentPrice();
   if (statPrice) statPrice.innerText = `$${airPrice.toFixed(4)}`;
   if (statPoolReserves) statPoolReserves.innerText = `${Math.round(ammPool.lvairReserve).toLocaleString()} / $${Math.round(ammPool.usdtReserve).toLocaleString()}`;
-  if (statBlockHeight) statBlockHeight.innerText = `#${blockchain.chain.length}`;
+  if (statBlockHeight) statBlockHeight.innerText = `#${formatBlockNumber(blockchain.chain.length)}`;
 
   const userAir = currentConnectedAddress ? blockchain.getBalanceOfAddress(currentConnectedAddress, 'LVAIR') : 0;
   const userUsdt = currentConnectedAddress ? blockchain.getBalanceOfAddress(currentConnectedAddress, 'USDT') : 0;
