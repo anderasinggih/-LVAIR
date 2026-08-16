@@ -642,6 +642,26 @@ header.app-header {
     width: 100%;
   }
 
+  .header-right {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+  }
+
+  #network-indicator {
+    padding: 6px 8px !important;
+    font-size: 0.72rem !important;
+  }
+
+  #btn-connect-wallet {
+    padding: 7px 14px !important;
+    font-size: 0.78rem !important;
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+
   .nav-tabs {
     width: 100%;
     display: flex;
@@ -651,8 +671,8 @@ header.app-header {
   .tab-btn {
     flex: 1;
     text-align: center;
-    padding: 7px 6px;
-    font-size: 0.76rem;
+    padding: 7px 4px;
+    font-size: 0.74rem;
   }
 
   .stat-grid {
@@ -694,8 +714,8 @@ header.app-header {
 
 @media (max-width: 480px) {
   .bento-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
   
   .hero-main-title {
@@ -703,6 +723,17 @@ header.app-header {
   }
 
   .stat-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .impact-strip-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

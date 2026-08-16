@@ -277,7 +277,7 @@
           <div id="network-indicator" style="display: flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 0.75rem; color: #10b981;" title="LVAIR Protocol Network">
             <span style="display: inline-block; width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></span>
             <span id="network-name">LVAIR Mainnet</span>
-            <span style="color: rgba(16,185,129,0.6); font-size: 0.65rem;">▼</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <button id="btn-connect-wallet" class="btn-primary" style="padding: 9px 20px; font-size: 0.85rem; font-family: var(--font-mono);">
             Connect Wallet
@@ -389,8 +389,11 @@
                 <span>Price Impact:</span>
                 <span id="swap-price-impact" style="font-family: var(--font-mono); color: var(--accent-success); font-weight:700;">0.0%</span>
               </div>
-              <div id="price-impact-warning" style="display:none; background: rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:8px 10px; color:#fca5a5; font-size:0.78rem;">
-                ⚠️ <strong>High Price Impact!</strong> This swap moves the market significantly. Consider splitting into smaller trades.
+              <div id="price-impact-warning" style="display:none; background: rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:8px 12px; color:#fca5a5; font-size:0.78rem;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  <span><strong>High Price Impact</strong> — This swap moves market price significantly.</span>
+                </div>
               </div>
               <div style="display:flex; justify-content:space-between;">
                 <span>Est. Gas Fee:</span>
@@ -512,13 +515,17 @@
           </div>
 
           <div id="history-wallet-notice" style="text-align: center; padding: 40px 0; color: var(--text-tertiary); font-size: 0.88rem;">
-            <div style="font-size: 2rem; margin-bottom: 12px;">🔗</div>
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px auto;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </div>
             <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Connect Wallet to View History</div>
             <div>Your on-chain activity will appear here after connecting your wallet.</div>
           </div>
 
           <div id="history-empty-notice" style="display: none; text-align: center; padding: 40px 0; color: var(--text-tertiary); font-size: 0.88rem;">
-            <div style="font-size: 2rem; margin-bottom: 12px;">📭</div>
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px auto;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
+            </div>
             <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">No Transactions Yet</div>
             <div>Execute a swap, transfer, or claim an airdrop to see activity here.</div>
           </div>
@@ -569,7 +576,8 @@
             </div>
             <p style="max-width:220px; line-height:1.6; font-size:0.8rem;">Non-custodial constant-product AMM DEX. Deterministic settlement. Zero counterparty risk.</p>
             <div style="display:flex; align-items:center; gap:8px; margin-top:12px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); padding:7px 12px; border-radius:8px; font-size:0.74rem; color:#10b981;">
-              <span>🔒</span> <span>Codebase Open Source • Community Audited</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <span>Codebase Open Source • Community Audited</span>
             </div>
           </div>
           <div>

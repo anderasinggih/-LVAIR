@@ -84,9 +84,9 @@ function recalculateQuote() {
   if (impactWarning) {
     impactWarning.style.display = impact > 5 ? 'block' : 'none';
     if (impact > 15) {
-      impactWarning.innerHTML = `<strong>⛔ Extreme Price Impact (${impact.toFixed(1)}%)!</strong> This swap will severely move the market price. Strongly consider splitting.`;
+      impactWarning.innerHTML = `<div style="display:flex; align-items:center; gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg><div><strong style="color:#f87171;">Extreme Price Impact (${impact.toFixed(1)}%)</strong> — This swap will severely move pool price. Consider smaller order size.</div></div>`;
     } else {
-      impactWarning.innerHTML = `<strong>⚠️ High Price Impact (${impact.toFixed(1)}%)!</strong> This swap moves the market significantly. Consider splitting into smaller trades.`;
+      impactWarning.innerHTML = `<div style="display:flex; align-items:center; gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><div><strong style="color:#fbbf24;">High Price Impact (${impact.toFixed(1)}%)</strong> — This trade moves the market significantly.</div></div>`;
     }
   }
 
