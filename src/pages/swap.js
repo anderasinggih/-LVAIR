@@ -16,6 +16,7 @@ import {
 import { AppState, updateUI } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
+import { getApiBaseUrl } from '../api.js';
 
 let currentSlippage = 0.5;
 let lastSwapTimestamp = 0;
@@ -176,6 +177,20 @@ export function setupSwapPage() {
           amountIn,
           currentSlippage / 100
         );
+
+        // Notify server RPC so monitor picks it up
+        try {
+          const apiUrl = getApiBaseUrl();
+          await fetch(`${apiUrl}/api/swap`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userAddress: currentConnectedAddress,
+              inputAmount: amountIn,
+              inputToken: currentInputToken
+            })
+          });
+        } catch (e) {}
 
         addToHistory({
           type: 'swap',

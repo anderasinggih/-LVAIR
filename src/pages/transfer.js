@@ -10,6 +10,7 @@ import { Transaction } from '../core/block.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
 import { addToHistory } from './swap.js';
+import { getApiBaseUrl } from '../api.js';
 
 export function setupTransferPage() {
   if (!btnSendTransfer) return;
@@ -49,6 +50,16 @@ export function setupTransferPage() {
       tx.txHash = await tx.calculateHash();
       await blockchain.addTransaction(tx);
       await blockchain.minePendingTransactions(currentConnectedAddress);
+
+      // Notify server so monitor picks it up
+      try {
+        const apiUrl = getApiBaseUrl();
+        await fetch(`${apiUrl}/api/tx/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: currentConnectedAddress, to: toAddress, amount, token, type: 'P2P_TRANSFER', metadata: { memo: 'On-Chain Transfer' } })
+        });
+      } catch (e) {}
 
       showToast(`Transferred ${amount} ${token} on-chain!`);
       addToHistory({
