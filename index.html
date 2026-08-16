@@ -11,9 +11,6 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- Fullscreen Ambient Grid & Spotlight Glow -->
-    <div class="fullscreen-bg"></div>
-
     <!-- Toast Container -->
     <div id="toast-container" style="position: fixed; bottom: 24px; right: 24px; left: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; max-width: 400px; margin-left: auto;"></div>
 
@@ -51,11 +48,11 @@
         </div>
       </div>
     </div>
-
-    <!-- ========================================================================= -->
     <!-- PAGE 1: DEDICATED FULLSCREEN SPLIT VIEW LANDING PAGE                      -->
     <!-- ========================================================================= -->
     <div id="page-landing" style="display: block; min-height: 100vh; position: relative; z-index: 1;">
+      <!-- Ambient Grid & Spotlight Backdrop (Landing Page Only) -->
+      <div class="fullscreen-bg"></div>
       
       <!-- Full-Width Navbar -->
       <nav class="landing-nav-container">
