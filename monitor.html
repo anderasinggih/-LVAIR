@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LVAIR Protocol • Live Network & Block Broadcast Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+  <style>
+    body {
+      background-color: #090a0f;
+      color: #f3f4f6;
+      font-family: 'Inter', -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .monitor-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    .monitor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .live-pulse {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #10b981;
+      animation: pulse 1.8s infinite;
+      margin-right: 8px;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: #12141c;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .stat-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: #ffffff;
+    }
+    .log-stream {
+      background: #0d0f17;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      max-height: 480px;
+      overflow-y: auto;
+      line-height: 1.7;
+    }
+    .log-row {
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .log-row:last-child {
+      border-bottom: none;
+    }
+    .log-time {
+      color: #6b7280;
+      flex-shrink: 0;
+      font-size: 0.75rem;
+    }
+    .log-tag {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .tag-block { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .tag-claim { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .tag-swap { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .tag-peer { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+    .tag-sync { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+    .blocks-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      text-align: left;
+    }
+    .blocks-table th {
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      color: #9ca3af;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .blocks-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="monitor-container">
+    
+    <!-- Header -->
+    <div class="monitor-header">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <span class="live-pulse"></span>
+          <span style="font-size: 1.25rem; font-weight: 700;">LVAIR Consensus & Block Broadcast Monitor</span>
+        </div>
+        <div style="color: #9ca3af; font-size: 0.82rem;">Real-time Node RPC & P2P Gossip Broadcast Observer (Public Diagnostic)</div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span id="node-status-badge" class="badge badge-success">Node Online</span>
+        <button id="btn-refresh-monitor" class="btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;">Auto-Syncing (1s)</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Global Block Height</div>
+        <div class="stat-val" id="mon-block-height">#—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Airdrop Quota</div>
+        <div class="stat-val" id="mon-airdrop-quota" style="color: #60a5fa;">— LVAIR</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Claimed Wallets</div>
+        <div class="stat-val" id="mon-claimed-count" style="color: #34d399;">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">P2P Network Peers</div>
+        <div class="stat-val" id="mon-p2p-peers" style="color: #c084fc;">— Nodes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">AMM Spot Price</div>
+        <div class="stat-val" id="mon-spot-price" style="color: #fbbf24;">$—</div>
+      </div>
+    </div>
+
+    <!-- Two Columns: Live Broadcast Stream & Recent Verified Blocks -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 24px;">
+      
+      <!-- Box 1: Live Broadcast Event Stream -->
+      <div>
+        <div style="font-weight: 700; font-size: 0.92rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
+          <span>Live P2P Broadcast Stream</span>
+          <span style="font-size: 0.75rem; color: #6b7280;">WebSocket & RPC Events</span>
+        </div>
+        <div class="log-stream" id="log-stream-container">
+          <div class="log-row">
+            <span class="log-time">[Init]</span>
+            <span class="log-tag tag-sync">SYSTEM</span>
+            <span style="color: #9ca3af;">Connecting to LVAIR Core Node Broadcast Stream...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 2: Recent Blocks Ledger -->
+      <div>
+        <div style="font-weight: 700; font-size: 0.92rem; margin-bottom: 12px; display: flex; justify-content: space-between;">
+          <span>Physical Ledger Blocks (blk00000.dat)</span>
+          <span style="font-size: 0.75rem; color: #6b7280;">LevelDB State</span>
+        </div>
+        <div style="background: #12141c; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; overflow: hidden; max-height: 480px; overflow-y: auto;">
+          <table class="blocks-table">
+            <thead>
+              <tr>
+                <th>Block</th>
+                <th>Hash</th>
+                <th>Txs</th>
+                <th>Merkle Root</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="mon-blocks-tbody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: #6b7280; padding: 24px;">Loading blocks from LevelDB...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <footer style="margin-top: 50px; text-align: center; color: #6b7280; font-size: 0.78rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 20px;">
+      LVAIR Protocol • Independent Consensus & Broadcast Telemetry Engine
+    </footer>
+
+  </div>
+
+  <script type="module" src="/src/monitor.main.js"></script>
+</body>
+</html>

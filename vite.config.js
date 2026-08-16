@@ -8,6 +8,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         ops: resolve(__dirname, 'ops.html'),
+        monitor: resolve(__dirname, 'monitor.html'),
       },
     },
   },
