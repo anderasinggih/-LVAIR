@@ -20,14 +20,29 @@ async function initAdminApp() {
     });
 
     restoreSavedWallet();
+    const savedAdminToken = localStorage.getItem(ADMIN_AUTH_TOKEN_KEY);
+    if (savedAdminToken && AppState.currentConnectedAddress && PROTOCOL_OWNER_CONFIG.ownerAddress) {
+      if (savedAdminToken === AppState.currentConnectedAddress.toLowerCase() && AppState.currentConnectedAddress.toLowerCase() === PROTOCOL_OWNER_CONFIG.ownerAddress.toLowerCase()) {
+        PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
+      }
+    }
     renderAdminDashboard();
 
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts) => {
         if (accounts && accounts.length > 0) {
           setConnectedWallet(accounts[0], 'MetaMask');
+          if (PROTOCOL_OWNER_CONFIG.ownerAddress && accounts[0].toLowerCase() === PROTOCOL_OWNER_CONFIG.ownerAddress.toLowerCase()) {
+            PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
+            localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, accounts[0].toLowerCase());
+          } else {
+            PROTOCOL_OWNER_CONFIG.isAdminAuthorized = false;
+            localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
+          }
         } else {
           disconnectWallet();
+          PROTOCOL_OWNER_CONFIG.isAdminAuthorized = false;
+          localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
         }
         renderAdminDashboard();
       });
@@ -64,6 +79,7 @@ function setupAdminHandlers() {
         PROTOCOL_OWNER_CONFIG.ownerAddress = currentConnectedAddress;
         localStorage.setItem('LVAIR_PROTOCOL_OWNER_ADDR', currentConnectedAddress);
         PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
+        localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, currentConnectedAddress.toLowerCase());
         showToast(`Protocol Ownership Claimed by ${currentConnectedAddress.substring(0, 6)}...${currentConnectedAddress.substring(currentConnectedAddress.length - 4)}!`);
         renderAdminDashboard();
         return;
@@ -78,6 +94,7 @@ function setupAdminHandlers() {
               params: [challenge, currentConnectedAddress]
             });
             PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
+            localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, currentConnectedAddress.toLowerCase());
             showToast('Cryptographic signature verified. Admin access granted!');
             renderAdminDashboard();
           } catch (err) {
@@ -85,6 +102,7 @@ function setupAdminHandlers() {
           }
         } else {
           PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
+          localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, currentConnectedAddress.toLowerCase());
           showToast('Owner address verified!');
           renderAdminDashboard();
         }
