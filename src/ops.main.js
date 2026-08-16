@@ -5,6 +5,8 @@ import { getApiBaseUrl } from './api.js';
 
 let lastBotRunning = null;
 let lastP2PPeers = 0;
+let lastBotMode = 'balanced';
+let lastMinPoolReserves = { lvair: 5000, usdt: 1250 };
 
 function seedMirrors() {
   AppState.blockchain = {
@@ -53,6 +55,8 @@ async function refreshOpsState() {
       AppState.ammPool.lvairReserve = amm.lvairReserve;
       AppState.ammPool.usdtReserve = amm.usdtReserve;
       if (amm.botRunning !== undefined) lastBotRunning = !!amm.botRunning;
+      if (amm.botMode !== undefined) lastBotMode = amm.botMode;
+      if (amm.minPoolReserves !== undefined) lastMinPoolReserves = amm.minPoolReserves;
     }
 
     if (peersRes && peersRes.ok) {
@@ -85,7 +89,7 @@ async function postJson(url, body) {
       body: JSON.stringify(body || {})
     });
   } catch (err) {
-    throw new Error('Full-node offline. Jalankan `npm run node` lalu muat ulang halaman.');
+    throw new Error('Node offline. Start the full node and reload the page.');
   }
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}));
@@ -139,6 +143,12 @@ function setupAdminHandlers() {
   const btnRefreshPeers = document.getElementById('btn-admin-refresh-peers');
   const btnSaveAirdropConfig = document.getElementById('btn-save-airdrop-config');
   const adminAirdropAmountInput = document.getElementById('admin-airdrop-amount-input');
+  const btnSaveBotMode = document.getElementById('btn-save-bot-mode');
+  const botModeSelect = document.getElementById('admin-bot-mode-select');
+  const btnLiquidityProvision = document.getElementById('btn-liquidity-provision');
+  const btnLiquidityWithdrawal = document.getElementById('btn-liquidity-withdrawal');
+  const lpLvairInput = document.getElementById('admin-lp-lvair-input');
+  const lpUsdtInput = document.getElementById('admin-lp-usdt-input');
 
   if (btnRefreshPeers) {
     btnRefreshPeers.addEventListener('click', () => refreshOpsState());
@@ -205,6 +215,78 @@ function setupAdminHandlers() {
         showToast(data.running ? 'Autonomous Market Maker started on node' : 'Autonomous Market Maker paused on node');
       } catch (err) {
         showToast(`Bot control error: ${err.message}`, 'error');
+      }
+      await refreshOpsState();
+    });
+  }
+
+  if (btnSaveBotMode && botModeSelect) {
+    btnSaveBotMode.addEventListener('click', async () => {
+      try {
+        const data = await postJson('/api/bot/mode', { mode: botModeSelect.value });
+        showToast(`Market Maker strategy set to ${data.mode} on node`);
+      } catch (err) {
+        showToast(`Strategy error: ${err.message}`, 'error');
+      }
+      await refreshOpsState();
+    });
+  }
+
+  if (btnLiquidityProvision) {
+    btnLiquidityProvision.addEventListener('click', async () => {
+      const operatorAddress = AppState.currentConnectedAddress;
+      if (!operatorAddress) {
+        showToast('Connect the Protocol Owner wallet first', 'error');
+        return;
+      }
+      const lvairAmount = parseFloat(lpLvairInput ? lpLvairInput.value : 0) || 0;
+      const usdtAmount = parseFloat(lpUsdtInput ? lpUsdtInput.value : 0) || 0;
+      if (!(lvairAmount > 0) && !(usdtAmount > 0)) {
+        showToast('Enter an amount for LVAIR and/or USDT', 'error');
+        return;
+      }
+      btnLiquidityProvision.disabled = true;
+      btnLiquidityProvision.innerText = 'Provisioning...';
+      try {
+        const data = await postJson('/api/liquidity/provision', { lvairAmount, usdtAmount, operatorAddress });
+        showToast(`Liquidity provided — block #${data.blockIndex || 'pending'} | Reserves: ${data.lvairReserve.toLocaleString()} LVAIR / ${data.usdtReserve.toLocaleString()} USDT`);
+      } catch (err) {
+        showToast(`Liquidity error: ${err.message}`, 'error');
+      } finally {
+        btnLiquidityProvision.disabled = false;
+        btnLiquidityProvision.innerText = 'Provide Liquidity';
+      }
+      await refreshOpsState();
+    });
+  }
+
+  if (btnLiquidityWithdrawal) {
+    btnLiquidityWithdrawal.addEventListener('click', async () => {
+      const operatorAddress = AppState.currentConnectedAddress;
+      if (!operatorAddress) {
+        showToast('Connect the Protocol Owner wallet first', 'error');
+        return;
+      }
+      const lvairAmount = parseFloat(lpLvairInput ? lpLvairInput.value : 0) || 0;
+      const usdtAmount = parseFloat(lpUsdtInput ? lpUsdtInput.value : 0) || 0;
+      if (!(lvairAmount > 0) && !(usdtAmount > 0)) {
+        showToast('Enter an amount for LVAIR and/or USDT', 'error');
+        return;
+      }
+      const confirmed = window.confirm(
+        `Withdraw ${lvairAmount} LVAIR / ${usdtAmount} USDT from the liquidity pool?\n\nThis reduces trading depth permanently. The protocol minimum reserve requirement is enforced.`
+      );
+      if (!confirmed) return;
+      btnLiquidityWithdrawal.disabled = true;
+      btnLiquidityWithdrawal.innerText = 'Withdrawing...';
+      try {
+        const data = await postJson('/api/liquidity/withdrawal', { lvairAmount, usdtAmount, operatorAddress });
+        showToast(`Liquidity withdrawn — block #${data.blockIndex || 'pending'} | Reserves: ${data.lvairReserve.toLocaleString()} LVAIR / ${data.usdtReserve.toLocaleString()} USDT`);
+      } catch (err) {
+        showToast(`Withdrawal error: ${err.message}`, 'error');
+      } finally {
+        btnLiquidityWithdrawal.disabled = false;
+        btnLiquidityWithdrawal.innerText = 'Withdraw Liquidity';
       }
       await refreshOpsState();
     });
@@ -309,6 +391,13 @@ function renderAdminDashboard() {
   if (opsQuota) opsQuota.innerText = `${(blockchain && blockchain.airdropClaimAmount) || 250} LVAIR`;
   if (opsPeers) opsPeers.innerText = `${lastP2PPeers || 0} Connected`;
   if (opsPrice && ammPool) opsPrice.innerText = `$${ammPool.getCurrentPrice().toFixed(4)}`;
+
+  const poolReserves = document.getElementById('admin-pool-reserves');
+  if (poolReserves && ammPool) {
+    poolReserves.innerText = `${ammPool.lvairReserve.toLocaleString()} LVAIR / ${ammPool.usdtReserve.toLocaleString()} USDT @ $${ammPool.getCurrentPrice().toFixed(4)}`;
+  }
+  const botModeSel = document.getElementById('admin-bot-mode-select');
+  if (botModeSel && !botModeSel.matches(':focus')) botModeSel.value = lastBotMode || 'balanced';
 
   if (blockchain) {
     const quotaInput = document.getElementById('admin-airdrop-amount-input');

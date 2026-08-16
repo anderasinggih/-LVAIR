@@ -9,6 +9,15 @@ export class TradingBotEngine {
     this.isRunning = false;
     this.timer = null;
     this.rsiHistory = [];
+    this.mode = 'balanced';
+  }
+
+  setMode(mode) {
+    if (['balanced', 'accumulate', 'distribute'].includes(mode)) this.mode = mode;
+  }
+
+  getMode() {
+    return this.mode;
   }
 
   calculateRSI(prices, period = 14) {
@@ -61,14 +70,17 @@ export class TradingBotEngine {
           action = { type: 'SELL_LVAIR', inputAmount: lvairAmount, inputToken: 'LVAIR', reason: `RSI Overbought (${rsi.toFixed(1)})` };
           result = await this.submitSwap(this.botWallet, lvairAmount, 'LVAIR');
         } else {
-          const isBuy = Math.random() > 0.5;
+          const bias = this.mode === 'accumulate' ? 0.85 : this.mode === 'distribute' ? 0.15 : 0.5;
+          const isBuy = Math.random() < bias;
           if (isBuy) {
             const usdtAmount = Number((Math.random() * 8 + 2).toFixed(2));
-            action = { type: 'BUY_LVAIR', inputAmount: usdtAmount, inputToken: 'USDT', reason: 'Market Making Flow' };
+            const reason = this.mode === 'accumulate' ? 'Accumulation Strategy' : 'Market Making Flow';
+            action = { type: 'BUY_LVAIR', inputAmount: usdtAmount, inputToken: 'USDT', reason };
             result = await this.submitSwap(this.botWallet, usdtAmount, 'USDT');
           } else {
             const lvairAmount = Number((Math.random() * 30 + 10).toFixed(2));
-            action = { type: 'SELL_LVAIR', inputAmount: lvairAmount, inputToken: 'LVAIR', reason: 'Market Making Flow' };
+            const reason = this.mode === 'distribute' ? 'Distribution Strategy' : 'Market Making Flow';
+            action = { type: 'SELL_LVAIR', inputAmount: lvairAmount, inputToken: 'LVAIR', reason };
             result = await this.submitSwap(this.botWallet, lvairAmount, 'LVAIR');
           }
         }

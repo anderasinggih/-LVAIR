@@ -29,6 +29,10 @@ const AIRDROP_AMOUNT = Number(process.env.AIRDROP_AMOUNT) || 250;
 const MINING_REWARD = Number(process.env.MINING_REWARD) || 10;
 const ENABLE_BOT = process.env.ENABLE_BOT !== '0';
 const MINER_INTERVAL = Number(process.env.MINER_INTERVAL) || 2000;
+const MIN_POOL_RESERVES = {
+  lvair: Number(process.env.MIN_POOL_RESERVES_LVAIR) || 5000,
+  usdt: Number(process.env.MIN_POOL_RESERVES_USDT) || 1250
+};
 
 const rawHost = process.env.NODE_HOST || '';
 const advertisedP2P = rawHost
@@ -40,6 +44,7 @@ const seedNodes = (process.env.SEED_NODES || '')
   .filter(Boolean);
 
 let botEngine = null;
+let botStrategyMode = 'balanced';
 
 if (!fs.existsSync(LOGS_DIR)) fs.mkdirSync(LOGS_DIR, { recursive: true });
 
@@ -320,8 +325,74 @@ async function startFullNode() {
       priceHistory: ammPool.priceHistory,
       trades: ammPool.trades,
       botRunning: botEngine ? botEngine.isRunning : false,
+      botMode: botEngine ? botEngine.getMode() : botStrategyMode,
+      minPoolReserves: MIN_POOL_RESERVES,
       mempoolSize: blockchain.pendingTransactions.length
     });
+  });
+
+  app.post('/api/liquidity/provision', async (req, res) => {
+    try {
+      const { lvairAmount, usdtAmount, operatorAddress } = req.body || {};
+      const lv = Number(lvairAmount);
+      const us = Number(usdtAmount);
+      if (!operatorAddress) throw new Error('operatorAddress is required');
+      if (!(lv > 0) && !(us > 0)) throw new Error('Provide at least one token amount');
+
+      for (const [amt, tok] of [[lv, 'LVAIR'], [us, 'USDT']]) {
+        if (amt > 0) {
+          const bal = blockchain.getBalanceOfAddress(operatorAddress, tok);
+          if (bal < amt) throw new Error(`Insufficient ${tok} balance. Available: ${bal} ${tok}`);
+        }
+      }
+
+      const lvTx = lv > 0
+        ? new Transaction(operatorAddress, blockchain.poolAddress, lv, 'LVAIR', 'LP_PROVISION', { operation: 'PROVISION' })
+        : null;
+      const usTx = us > 0
+        ? new Transaction(operatorAddress, blockchain.poolAddress, us, 'USDT', 'LP_PROVISION', { operation: 'PROVISION' })
+        : null;
+
+      for (const tx of [lvTx, usTx]) if (tx) await submitTxAndBroadcast(tx);
+      const block = await minePending(null);
+
+      logEvent('LIQUIDITY_PROVISIONED', 'tag-pool', `Liquidity provisioned: ${lv > 0 ? lv + ' LVAIR' : ''}${lv > 0 && us > 0 ? ' + ' : ''}${us > 0 ? us + ' USDT' : ''}`, { lvairAmount: lv, usdtAmount: us, block: block ? block.index : null });
+      res.json({ success: true, blockIndex: block ? block.index : null, lvairReserve: ammPool.lvairReserve, usdtReserve: ammPool.usdtReserve, price: ammPool.getCurrentPrice() });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/liquidity/withdrawal', async (req, res) => {
+    try {
+      const { lvairAmount, usdtAmount, operatorAddress } = req.body || {};
+      const lv = Number(lvairAmount);
+      const us = Number(usdtAmount);
+      if (!operatorAddress) throw new Error('operatorAddress is required');
+      if (!(lv > 0) && !(us > 0)) throw new Error('Specify an amount to withdraw');
+
+      if (ammPool.lvairReserve - lv < MIN_POOL_RESERVES.lvair) {
+        throw new Error(`Withdrawal would breach the minimum reserve requirement of ${MIN_POOL_RESERVES.lvair} LVAIR`);
+      }
+      if (ammPool.usdtReserve - us < MIN_POOL_RESERVES.usdt) {
+        throw new Error(`Withdrawal would breach the minimum reserve requirement of ${MIN_POOL_RESERVES.usdt} USDT`);
+      }
+
+      const lvTx = lv > 0
+        ? new Transaction(blockchain.poolAddress, operatorAddress, lv, 'LVAIR', 'LP_WITHDRAWAL', { operation: 'WITHDRAWAL' })
+        : null;
+      const usTx = us > 0
+        ? new Transaction(blockchain.poolAddress, operatorAddress, us, 'USDT', 'LP_WITHDRAWAL', { operation: 'WITHDRAWAL' })
+        : null;
+
+      for (const tx of [lvTx, usTx]) if (tx) await submitTxAndBroadcast(tx);
+      const block = await minePending(null);
+
+      logEvent('LIQUIDITY_WITHDRAWN', 'tag-pool', `Liquidity withdrawn: ${lv > 0 ? lv + ' LVAIR' : ''}${lv > 0 && us > 0 ? ' + ' : ''}${us > 0 ? us + ' USDT' : ''}`, { lvairAmount: lv, usdtAmount: us, block: block ? block.index : null });
+      res.json({ success: true, blockIndex: block ? block.index : null, lvairReserve: ammPool.lvairReserve, usdtReserve: ammPool.usdtReserve, price: ammPool.getCurrentPrice() });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
   });
 
   app.get('/api/telemetry/logs', (req, res) => {
@@ -425,7 +496,7 @@ async function startFullNode() {
     const tip = blockchain.getLatestBlock();
     res.json({
       network: 'LVAIR Mainnet L1',
-      version: '1.1.0',
+      version: '1.2.0',
       blockHeight: blockchain.chain.length,
       latestBlockHash: tip.hash,
       merkleRoot: tip.merkleRoot,
@@ -475,12 +546,28 @@ async function startFullNode() {
           blockchain, ammPool,
           submitSwap: async (wallet, amount, token) => submitSwap(wallet, amount, token)
         });
+        botEngine.setMode(botStrategyMode);
         botEngine.start(4000, ({ action, price }) => {
           logEvent('BOT_TRADE_SUBMITTED', 'tag-swap', `Market Maker ${action.type} ${action.inputAmount} ${action.inputToken} @ $${price.toFixed(4)} (${action.reason})`);
         });
         logEvent('BOT_STARTED', 'tag-sync', 'Autonomous Market Maker started');
       }
       res.json({ success: true, running: botEngine ? botEngine.isRunning : false });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/bot/mode', async (req, res) => {
+    try {
+      const { mode } = req.body || {};
+      if (!['balanced', 'accumulate', 'distribute'].includes(mode)) {
+        return res.status(400).json({ success: false, error: 'Invalid strategy mode' });
+      }
+      botStrategyMode = mode;
+      if (botEngine) botEngine.setMode(mode);
+      logEvent('BOT_MODE_UPDATED', 'tag-sync', `Market Maker strategy set to ${mode}`);
+      res.json({ success: true, mode });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }

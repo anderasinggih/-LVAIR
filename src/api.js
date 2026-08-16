@@ -16,7 +16,7 @@ export async function rpcPost(path, body) {
       body: JSON.stringify(body || {})
     });
   } catch (err) {
-    throw new Error('Full-node offline. Jalankan `npm run node` lalu muat ulang halaman.');
+    throw new Error('Node offline. Start the full node and reload the page.');
   }
   if (!res.ok) {
     const raw = await res.text().catch(() => '');

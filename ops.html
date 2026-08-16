@@ -131,9 +131,46 @@
               <span class="panel-title">Autonomous Market Maker</span>
             </div>
             <p style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 18px;">
-              Controls the background automated constant-product market maker on $LVAIR / USDT pool.
+              Automated constant-product market making on the $LVAIR / USDT pool with directional strategy control.
             </p>
             <button id="btn-toggle-bot" class="btn-secondary" style="width: 100%; padding: 12px;">Pause Market Maker</button>
+
+            <div class="form-group">
+              <label class="form-label">Market Maker Strategy</label>
+              <select id="admin-bot-mode-select" class="input-field" style="width: 100%;">
+                <option value="balanced">Balanced — Two-Way Flow</option>
+                <option value="accumulate">Accumulation — Net Buy Bias</option>
+                <option value="distribute">Distribution — Net Sell Bias</option>
+              </select>
+              <button id="btn-save-bot-mode" class="btn-secondary" style="width: 100%; padding: 10px; margin-top: 10px;">Apply Strategy</button>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 18px 0;" />
+
+            <p style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 12px;">
+              Liquidity management — adjust trading depth on-chain. Withdrawals are governed by the protocol minimum reserve requirement.
+            </p>
+            <div class="form-group">
+              <label class="form-label">Current Pool Reserves</label>
+              <div class="stat-val" id="admin-pool-reserves" style="font-size: 1rem;">—</div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <label class="form-label">LVAIR</label>
+                <input type="text" id="admin-lp-lvair-input" class="input-field" value="0" />
+              </div>
+              <div>
+                <label class="form-label">USDT</label>
+                <input type="text" id="admin-lp-usdt-input" class="input-field" value="0" />
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button id="btn-liquidity-provision" class="btn-secondary" style="flex: 1; padding: 10px;">Provide Liquidity</button>
+              <button id="btn-liquidity-withdrawal" class="btn-secondary" style="flex: 1; padding: 10px; border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">Withdraw Liquidity</button>
+            </div>
+            <p style="color: #71717a; font-size: 0.72rem; margin-top: 10px;">
+              Liquidity operations are recorded on-chain as protocol transactions and enforced by consensus across every node. Minimum reserve: 5,000 LVAIR / 1,250 USDT.
+            </p>
           </div>
 
           <!-- Box 2: On-Chain Protocol Parameters (immutable, chain-derived) -->

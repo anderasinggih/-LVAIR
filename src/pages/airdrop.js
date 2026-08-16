@@ -42,7 +42,7 @@ export function setupAirdropPage() {
         timestamp: Date.now()
       });
 
-      showToast(`Claim broadcast to network — menunggu miner menyertakan ke blok (${quota} $LVAIR).`);
+      showToast(`Airdrop claim submitted — pending network confirmation (${quota} $LVAIR).`);
       updateUI();
       renderLandingStats();
     } catch (err) {

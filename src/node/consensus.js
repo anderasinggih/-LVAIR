@@ -13,6 +13,25 @@ export function createEmptyPool() {
 
 export function applyBlockToPool(pool, block) {
   const txs = block.transactions || [];
+
+  const lpOps = txs.filter(t => t.type === 'LP_PROVISION' || t.type === 'LP_WITHDRAWAL');
+  if (lpOps.length) {
+    for (const tx of lpOps) {
+      const s = tx.type === 'LP_PROVISION' ? 1 : -1;
+      if (tx.token === 'LVAIR') pool.lvairReserve = Math.max(0, pool.lvairReserve + s * Number(tx.amount));
+      if (tx.token === 'USDT') pool.usdtReserve = Math.max(0, pool.usdtReserve + s * Number(tx.amount));
+    }
+    const price = pool.usdtReserve / pool.lvairReserve;
+    pool.priceHistory.push({
+      timestamp: txs[0].timestamp || Date.now(),
+      price,
+      lvairReserve: pool.lvairReserve,
+      usdtReserve: pool.usdtReserve
+    });
+    if (pool.priceHistory.length > 100) pool.priceHistory.shift();
+    return;
+  }
+
   const inTx = txs.find(t => t.type === 'SWAP_IN');
   const outTx = txs.find(t => t.type === 'SWAP_OUT');
   if (!inTx || !outTx) return;

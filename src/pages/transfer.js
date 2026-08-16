@@ -48,7 +48,7 @@ export function setupTransferPage() {
       });
       await refreshNodeState();
 
-      showToast(`Transfer ${amount} ${token} broadcast to network — menunggu blok berikutnya.`);
+      showToast(`Transfer submitted — pending network confirmation (${amount} ${token}).`);
       addToHistory({
         type: 'transfer',
         subtype: 'P2P_TRANSFER',
