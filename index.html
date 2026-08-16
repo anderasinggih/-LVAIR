@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>LVAIR Protocol - Official Digital Currency & Decentralized Exchange</title>
     <meta name="description" content="Official portal for the $LVAIR token ecosystem. Trade on the decentralized liquidity pool, participate in community rewards, and access non-custodial Web3 finance." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
   </head>
   <body>
     <!-- Toast Notification Container -->
-    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 8px;"></div>
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; left: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; max-width: 400px; margin-left: auto;"></div>
 
     <!-- Official Web3 Wallet Connect Modal -->
     <div id="wallet-modal" class="modal-overlay" style="display: none;">
@@ -59,18 +59,21 @@
     <div id="page-landing" style="display: block; min-height: 100vh;">
       
       <!-- Landing Page Navbar -->
-      <nav style="border-bottom: 1px solid var(--border-subtle); padding: 18px 24px; background: rgba(18, 18, 21, 0.85); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 50;">
+      <nav class="landing-nav-container" style="border-bottom: 1px solid var(--border-subtle); padding: 16px 24px; background: rgba(18, 18, 21, 0.85); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 50;">
         <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 10px;">
             <div class="logo-badge" style="font-size: 0.95rem; padding: 4px 10px;">$LVAIR</div>
             <span style="font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em;">LVAIR Protocol</span>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 24px;">
+          <div class="landing-nav-links" style="display: flex; align-items: center; gap: 24px;">
             <a href="#about-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 500;">About</a>
             <a href="#tokenomics-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 500;">Tokenomics</a>
             <a href="#roadmap-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 500;">Roadmap</a>
             <a href="#faq-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.85rem; font-weight: 500;">FAQ</a>
+          </div>
+
+          <div>
             <button id="btn-landing-enter-app" class="btn-primary" style="width: auto; padding: 8px 18px; font-size: 0.84rem; font-weight: 600;">
               Launch App →
             </button>
@@ -78,22 +81,22 @@
         </div>
       </nav>
 
-      <!-- Hero Banner (Populated Dynamically) -->
-      <section style="padding: 90px 20px 70px 20px; text-align: center; max-width: 860px; margin: 0 auto;">
-        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: 20px; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 24px;">
+      <!-- Hero Banner -->
+      <section style="padding: 60px 20px 50px 20px; text-align: center; max-width: 860px; margin: 0 auto;">
+        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: 20px; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 20px;">
           <span style="display: inline-block; width: 6px; height: 6px; background: var(--accent-success); border-radius: 50%;"></span>
           <span id="hero-badge">Official Mainnet Launch • Verified Liquidity</span>
         </div>
 
-        <h1 id="hero-headline" style="font-size: 3.2rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 20px; color: var(--text-primary);">
+        <h1 id="hero-headline" class="hero-title" style="font-size: 3.2rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 20px; color: var(--text-primary);">
           Empowering Next-Gen Decentralized Trading & Liquidity.
         </h1>
 
-        <p id="hero-subheadline" style="font-size: 1.15rem; color: var(--text-secondary); max-width: 680px; margin: 0 auto 36px auto; line-height: 1.6;">
+        <p id="hero-subheadline" class="hero-subheadline" style="font-size: 1.15rem; color: var(--text-secondary); max-width: 680px; margin: 0 auto 32px auto; line-height: 1.6;">
           <strong>$LVAIR</strong> is the native digital currency and utility asset powering the LVAIR decentralized ecosystem.
         </p>
 
-        <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+        <div class="hero-buttons-container" style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
           <button id="btn-hero-trade-now" class="btn-primary" style="width: auto; padding: 13px 28px; font-size: 0.95rem; font-weight: 600;">
             Launch Trading App →
           </button>
@@ -104,15 +107,15 @@
       </section>
 
       <!-- Real-time Live Market Strip -->
-      <section style="max-width: 1100px; margin: 0 auto 70px auto; padding: 0 20px;">
-        <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <section style="max-width: 1100px; margin: 0 auto 50px auto; padding: 0 16px;">
+        <div class="stat-grid">
           <div class="stat-box">
             <div class="stat-label">Live Spot Price</div>
             <div class="stat-val" id="landing-price-val">$0.2500</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Total Pool Liquidity</div>
-            <div class="stat-val" id="landing-reserves-val" style="font-size: 0.95rem;">100k / $25k</div>
+            <div class="stat-val" id="landing-reserves-val">100k / $25k</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Total Genesis Supply</div>
@@ -125,36 +128,36 @@
         </div>
       </section>
 
-      <!-- Section: Why Choose LVAIR (Dynamic Value Props) -->
-      <section id="about-sec" style="max-width: 1100px; margin: 0 auto 80px auto; padding: 0 20px;">
-        <div style="text-align: center; margin-bottom: 40px;">
+      <!-- Section: Why Choose LVAIR -->
+      <section id="about-sec" style="max-width: 1100px; margin: 0 auto 60px auto; padding: 0 16px;">
+        <div style="text-align: center; margin-bottom: 30px;">
           <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px;">Why Choose $LVAIR?</h2>
           <p style="color: var(--text-secondary); font-size: 0.9rem;">Built for modern traders who demand speed, security, and true financial sovereignty</p>
         </div>
-        <div id="dynamic-value-props" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;"></div>
+        <div id="dynamic-value-props" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;"></div>
       </section>
 
-      <!-- Section: Tokenomics (Dynamic Grid) -->
-      <section id="tokenomics-sec" style="max-width: 1100px; margin: 0 auto 80px auto; padding: 0 20px;">
-        <div style="text-align: center; margin-bottom: 36px;">
+      <!-- Section: Tokenomics -->
+      <section id="tokenomics-sec" style="max-width: 1100px; margin: 0 auto 60px auto; padding: 0 16px;">
+        <div style="text-align: center; margin-bottom: 30px;">
           <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px;">Tokenomics & Distribution</h2>
           <p style="color: var(--text-secondary); font-size: 0.9rem;">Transparent, predictable, and fair allocation structure</p>
         </div>
         <div id="dynamic-tokenomics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;"></div>
       </section>
 
-      <!-- Section: Roadmap (Dynamic) -->
-      <section id="roadmap-sec" style="max-width: 1100px; margin: 0 auto 80px auto; padding: 0 20px;">
-        <div style="text-align: center; margin-bottom: 36px;">
+      <!-- Section: Roadmap -->
+      <section id="roadmap-sec" style="max-width: 1100px; margin: 0 auto 60px auto; padding: 0 16px;">
+        <div style="text-align: center; margin-bottom: 30px;">
           <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px;">Development Roadmap</h2>
           <p style="color: var(--text-secondary); font-size: 0.9rem;">Milestones and expansion plans for the $LVAIR ecosystem</p>
         </div>
         <div id="dynamic-roadmap" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;"></div>
       </section>
 
-      <!-- Section: FAQ (Dynamic) -->
-      <section id="faq-sec" style="max-width: 800px; margin: 0 auto 90px auto; padding: 0 20px;">
-        <div style="text-align: center; margin-bottom: 36px;">
+      <!-- Section: FAQ -->
+      <section id="faq-sec" style="max-width: 800px; margin: 0 auto 70px auto; padding: 0 16px;">
+        <div style="text-align: center; margin-bottom: 30px;">
           <h2 style="font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px;">Frequently Asked Questions</h2>
           <p style="color: var(--text-secondary); font-size: 0.9rem;">Everything you need to know before getting started</p>
         </div>
@@ -162,13 +165,13 @@
       </section>
 
       <!-- Footer -->
-      <footer style="border-top: 1px solid var(--border-subtle); padding: 30px 20px; text-align: center; color: var(--text-tertiary); font-size: 0.8rem;">
+      <footer style="border-top: 1px solid var(--border-subtle); padding: 24px 16px; text-align: center; color: var(--text-tertiary); font-size: 0.8rem;">
         <div>LVAIR Protocol © 2026 • Official Digital Asset Network • All Rights Reserved</div>
       </footer>
     </div>
 
     <!-- ========================================================================= -->
-    <!-- PAGE 2: DEDICATED TRADING dAPP (PROPER USER / TRADER INTERFACE)           -->
+    <!-- PAGE 2: DEDICATED TRADING dAPP                                            -->
     <!-- ========================================================================= -->
     <div id="page-app" class="app-wrapper" style="display: none;">
       
@@ -180,7 +183,6 @@
           <span class="badge badge-neutral" style="font-size: 0.7rem;">← Home</span>
         </div>
 
-        <!-- Official Public User Tabs: Swap, Transfer, Airdrop, Explorer -->
         <nav class="nav-tabs">
           <button class="tab-btn active" data-tab="trading">Swap</button>
           <button class="tab-btn" data-tab="transfer">Transfer</button>
@@ -188,7 +190,6 @@
           <button class="tab-btn" data-tab="explorer">Explorer</button>
         </nav>
 
-        <!-- Official Single Connect Wallet Button -->
         <div class="header-right">
           <button id="btn-connect-wallet" class="btn-primary" style="width: auto; padding: 7px 16px; font-size: 0.82rem; font-family: var(--font-mono);">
             Connect Wallet
@@ -204,7 +205,7 @@
         </div>
         <div class="stat-box">
           <div class="stat-label">Pool Liquidity ($LVAIR / USDT)</div>
-          <div class="stat-val" id="stat-pool-reserves" style="font-size: 0.95rem;">100,000 / $25,000</div>
+          <div class="stat-val" id="stat-pool-reserves">100,000 / $25,000</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">Your $LVAIR Balance</div>
@@ -233,7 +234,7 @@
               </div>
             </div>
             
-            <div style="height: 220px; width: 100%; position: relative; margin-bottom: 16px;">
+            <div style="height: 200px; width: 100%; position: relative; margin-bottom: 16px;">
               <canvas id="price-chart" style="width: 100%; height: 100%;"></canvas>
             </div>
 
