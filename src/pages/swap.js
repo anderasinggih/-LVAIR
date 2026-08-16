@@ -16,7 +16,7 @@ import {
 import { AppState, updateUI } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
-import { rpcPost, getApiBaseUrl } from '../api.js';
+import { rpcPost, rpcPostSigned, getApiBaseUrl } from '../api.js';
 import { refreshNodeState } from '../node-sync.js';
 import { formatBlockNumber } from '../format.js';
 
@@ -177,7 +177,7 @@ export function setupSwapPage() {
       btnExecuteSwap.innerText = 'Executing On-Chain Swap...';
 
       try {
-        const data = await rpcPost('/api/swap', {
+        const data = await rpcPostSigned('/api/swap', {
           userAddress: currentConnectedAddress,
           inputAmount: amountIn,
           inputToken: currentInputToken

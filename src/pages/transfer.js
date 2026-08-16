@@ -8,7 +8,7 @@ import {
 import { AppState } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { addToHistory } from './swap.js';
-import { rpcPost } from '../api.js';
+import { rpcPost, rpcPostSigned } from '../api.js';
 import { refreshNodeState } from '../node-sync.js';
 
 export function setupTransferPage() {
@@ -38,7 +38,7 @@ export function setupTransferPage() {
     btnSendTransfer.innerText = 'Settling Transaction...';
 
     try {
-      const data = await rpcPost('/api/tx/send', {
+      const data = await rpcPostSigned('/api/tx/send', {
         from: currentConnectedAddress,
         to: toAddress,
         amount,

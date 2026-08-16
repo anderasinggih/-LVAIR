@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
@@ -9,11 +10,12 @@ import { TradingBotEngine } from '../core/market-maker.js';
 import { NodeStorageEngine } from './storage.js';
 import { Transaction, Block } from '../core/block.js';
 import { P2PNetwork } from './p2p.js';
-import { oracle } from './oracle.js';
 import {
   rebuildPoolState, rebuildClaimedAddresses, applyBlockToPool,
   validateBlock, chainIsValid, sameChain
 } from './consensus.js';
+import { buildSignableMessage, verifySignature } from '../core/verify.js';
+import { oracle } from './oracle.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +45,10 @@ const seedNodes = (process.env.SEED_NODES || '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
+
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || crypto.randomBytes(32).toString('hex');
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+const ENABLE_SIGNING = process.env.DISABLE_SIGNING !== '1';
 
 let botEngine = null;
 let botStrategyMode = 'balanced';
@@ -277,11 +283,35 @@ async function startFullNode() {
     return tx;
   }
 
-  async function submitSwap(userAddress, inputAmount, inputToken) {
+  async function submitSwap(userAddress, inputAmount, inputToken, signatureData = null) {
     const quote = ammPool.getQuote(inputAmount, inputToken);
     if (quote.outputAmount <= 0) throw new Error('Invalid swap output — pool reserves may be depleted');
 
+    if (ENABLE_SIGNING && signatureData && userAddress !== blockchain.systemAddress) {
+      const nonce = await getNonce(userAddress);
+      const txMsg = buildSignableMessage({
+        from: userAddress,
+        to: blockchain.poolAddress,
+        amount: Number(inputAmount),
+        token: inputToken,
+        type: 'SWAP_IN',
+        nonce,
+        timestamp: signatureData.timestamp
+      });
+      const valid = verifySignature(txMsg, signatureData.signature, userAddress, signatureData.chainType);
+      if (!valid) throw new Error('Transaction signature verification failed');
+    }
+
+    const nonce = await getNonce(userAddress);
+    const newNonce = await incrementNonce(userAddress);
+
     const inTx = new Transaction(userAddress, blockchain.poolAddress, Number(inputAmount), inputToken, 'SWAP_IN', { quoteRate: quote.executionPrice });
+    inTx.nonce = newNonce;
+    if (signatureData) {
+      inTx.signature = typeof signatureData.signature === 'string' ? signatureData.signature : JSON.stringify(signatureData.signature);
+      inTx.signerPublicKey = signatureData.address || userAddress;
+      inTx.chainType = signatureData.chainType || '';
+    }
     const outTx = new Transaction(blockchain.poolAddress, userAddress, Number(quote.outputAmount.toFixed(4)), quote.outputToken, 'SWAP_OUT', {
       received: Number(quote.outputAmount.toFixed(4)),
       priceImpact: `${quote.priceImpact}%`
@@ -310,9 +340,68 @@ async function startFullNode() {
   }
 
   const app = express();
-  app.use(cors());
-  app.use(express.json());
+  app.use(cors({
+    origin: ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS : '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }));
+  app.use(express.json({ limit: '1mb' }));
   app.use(express.static(DIST_DIR));
+
+  const rateLimitStore = new Map();
+  function rateLimit(windowMs = 10000, max = 20) {
+    return (req, res, next) => {
+      const ip = req.ip || req.connection.remoteAddress;
+      const now = Date.now();
+      const entry = rateLimitStore.get(ip);
+      if (!entry || now - entry.start > windowMs) {
+        rateLimitStore.set(ip, { start: now, count: 1 });
+        return next();
+      }
+      entry.count++;
+      if (entry.count > max) {
+        return res.status(429).json({ success: false, error: 'Rate limit exceeded. Slow down.' });
+      }
+      next();
+    };
+  }
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of rateLimitStore) {
+      if (now - entry.start > 120000) rateLimitStore.delete(ip);
+    }
+  }, 60000);
+
+  function requireAdmin(req, res, next) {
+    const auth = req.headers.authorization || '';
+    const token = auth.replace(/^Bearer\s+/i, '');
+    if (token !== ADMIN_TOKEN) {
+      return res.status(401).json({ success: false, error: 'Unauthorized — valid admin token required' });
+    }
+    next();
+  }
+
+  const nonceTracker = new Map();
+  async function getNonce(address) {
+    const key = (address || '').toLowerCase();
+    if (nonceTracker.has(key)) return nonceTracker.get(key);
+    let maxNonce = 0;
+    for (const block of blockchain.chain) {
+      for (const tx of block.transactions || []) {
+        if ((tx.fromAddress || '').toLowerCase() === key && (tx.nonce || 0) > maxNonce) {
+          maxNonce = tx.nonce;
+        }
+      }
+    }
+    nonceTracker.set(key, maxNonce);
+    return maxNonce;
+  }
+  async function incrementNonce(address) {
+    const key = (address || '').toLowerCase();
+    const current = await getNonce(address);
+    nonceTracker.set(key, current + 1);
+    return current + 1;
+  }
 
   app.get('/api/config', (req, res) => {
     res.json({
@@ -331,7 +420,7 @@ async function startFullNode() {
     });
   });
 
-  app.post('/api/config/airdrop', async (req, res) => {
+  app.post('/api/config/airdrop', requireAdmin, async (req, res) => {
     try {
       const amount = Number(req.body && req.body.amount);
       if (!amount || amount <= 0 || amount > 1000000) {
@@ -455,7 +544,7 @@ async function startFullNode() {
     res.json({ success: true, tf, candles: buildCandles(ammPool.priceHistory, tf), points: null });
   });
 
-  app.post('/api/liquidity/provision', async (req, res) => {
+  app.post('/api/liquidity/provision', rateLimit(10000, 3), requireAdmin, async (req, res) => {
     try {
       const { lvairAmount, usdtAmount, operatorAddress } = req.body || {};
       const lv = Number(lvairAmount);
@@ -487,7 +576,7 @@ async function startFullNode() {
     }
   });
 
-  app.post('/api/liquidity/withdrawal', async (req, res) => {
+  app.post('/api/liquidity/withdrawal', rateLimit(10000, 3), requireAdmin, async (req, res) => {
     try {
       const { lvairAmount, usdtAmount, operatorAddress } = req.body || {};
       const lv = Number(lvairAmount);
@@ -534,7 +623,7 @@ async function startFullNode() {
     }
   });
 
-  app.post('/api/airdrop/claim', async (req, res) => {
+  app.post('/api/airdrop/claim', rateLimit(30000, 3), async (req, res) => {
     try {
       const { userAddress } = req.body;
       if (!userAddress) throw new Error('userAddress is required');
@@ -572,10 +661,43 @@ async function startFullNode() {
     }
   });
 
-  app.post('/api/tx/send', async (req, res) => {
+  app.post('/api/tx/send', rateLimit(5000, 5), async (req, res) => {
     try {
-      const { from, to, amount, token, type, metadata } = req.body;
+      const { from, to, amount, token, type, metadata, signature, signatureData } = req.body;
+      if (!from || !to || !amount) {
+        return res.status(400).json({ success: false, error: 'Missing required fields' });
+      }
+
+      if (ENABLE_SIGNING && from !== blockchain.systemAddress && !from.startsWith('0xbot_')) {
+        const sigData = signature || signatureData;
+        if (!sigData) {
+          return res.status(401).json({ success: false, error: 'Transaction signature required' });
+        }
+        const nonce = await getNonce(from);
+        const txMsg = buildSignableMessage({
+          from, to, amount: Number(amount),
+          token: token || 'LVAIR',
+          type: type || 'TRANSFER',
+          nonce,
+          timestamp: sigData.timestamp || Date.now()
+        });
+        const valid = verifySignature(txMsg, sigData.signature, from, sigData.chainType);
+        if (!valid) {
+          return res.status(401).json({ success: false, error: 'Transaction signature verification failed' });
+        }
+      }
+
+      const newNonce = from !== blockchain.systemAddress && !from.startsWith('0xbot_')
+        ? await incrementNonce(from) : 0;
+
       const tx = new Transaction(from, to, amount, token || 'LVAIR', type || 'TRANSFER', metadata || {});
+      tx.nonce = newNonce;
+      if (signature || signatureData) {
+        const sd = signature || signatureData;
+        tx.signature = typeof sd.signature === 'string' ? sd.signature : JSON.stringify(sd.signature);
+        tx.signerPublicKey = sd.address || from;
+        tx.chainType = sd.chainType || '';
+      }
       await submitTxAndBroadcast(tx);
 
       logEvent('TRANSFER_SUBMITTED', 'tag-block', `Transfer ${amount} ${token} from ${from.substring(0, 6)}... to ${to.substring(0, 6)}... (pending)`, { tx: tx.txHash });
@@ -590,10 +712,14 @@ async function startFullNode() {
     }
   });
 
-  app.post('/api/swap', async (req, res) => {
+  app.post('/api/swap', rateLimit(5000, 5), async (req, res) => {
     try {
-      const { userAddress, inputAmount, inputToken } = req.body;
-      const result = await submitSwap(userAddress, inputAmount, inputToken);
+      const { userAddress, inputAmount, inputToken, signature, signatureData } = req.body;
+      if (!userAddress || !inputAmount || !inputToken) {
+        return res.status(400).json({ success: false, error: 'Missing required fields' });
+      }
+      const sigData = signature || signatureData || null;
+      const result = await submitSwap(userAddress, inputAmount, inputToken, sigData);
 
       logEvent('SWAP_SUBMITTED', 'tag-swap', `Swap broadcast: ${inputAmount} ${inputToken} by ${userAddress.substring(0, 6)}... (pending)`, { tx: result.trade.id });
       res.json({ success: true, pending: true, result });
@@ -602,7 +728,7 @@ async function startFullNode() {
     }
   });
 
-  app.post('/api/mine', async (req, res) => {
+  app.post('/api/mine', requireAdmin, async (req, res) => {
     try {
       const { minerRewardAddress } = req.body || {};
       const block = await minePending(minerRewardAddress || null);
@@ -660,11 +786,12 @@ async function startFullNode() {
       lvair: blockchain.getBalanceOfAddress(address, 'LVAIR'),
       usdt: blockchain.getBalanceOfAddress(address, 'USDT'),
       hasClaimedAirdrop: isClaimed,
-      currentAirdropQuota: blockchain.airdropClaimAmount
+      currentAirdropQuota: blockchain.airdropClaimAmount,
+      nonce: nonceTracker.get(address.toLowerCase()) || 0
     });
   });
 
-  app.post('/api/bot/toggle', async (req, res) => {
+  app.post('/api/bot/toggle', requireAdmin, async (req, res) => {
     try {
       if (botEngine && botEngine.isRunning) {
         botEngine.stop();
@@ -687,7 +814,7 @@ async function startFullNode() {
     }
   });
 
-  app.post('/api/bot/mode', async (req, res) => {
+  app.post('/api/bot/mode', requireAdmin, async (req, res) => {
     try {
       const { mode } = req.body || {};
       if (!['balanced', 'accumulate', 'distribute'].includes(mode)) {
@@ -703,10 +830,26 @@ async function startFullNode() {
     }
   });
 
-  app.listen(HTTP_PORT, () => {
+  const httpServer = app.listen(HTTP_PORT, () => {
     console.log(`[RPC] HTTP RPC Server listening on http://0.0.0.0:${HTTP_PORT}`);
+    if (ADMIN_TOKEN) console.log(`[SECURITY] Admin token: ${ADMIN_TOKEN.substring(0, 8)}... (set ADMIN_TOKEN env to override)`);
+    console.log(`[SECURITY] Transaction signing: ${ENABLE_SIGNING ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`[SECURITY] CORS origins: ${ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS.join(', ') : 'ALL (open)'}`);
     logEvent('NODE_BOOT', 'tag-sync', `LVAIR Core Node booted on port ${HTTP_PORT} (P2P ${P2P_PORT})`);
   });
+
+  async function gracefulShutdown(signal) {
+    console.log(`\n[${signal}] Shutting down gracefully...`);
+    oracle.stop();
+    if (botEngine && botEngine.isRunning) botEngine.stop();
+    p2p.stop();
+    httpServer.close();
+    try { await storage.close(); } catch (e) {}
+    console.log('[SHUTDOWN] Clean exit.');
+    process.exit(0);
+  }
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
 startFullNode().catch(err => {

@@ -10,12 +10,15 @@ export class Transaction {
     this.timestamp = Date.now();
     this.metadata = metadata;
     this.signature = '';
+    this.signerPublicKey = '';
+    this.chainType = '';
+    this.nonce = 0;
     this.txHash = '';
   }
 
   async calculateHash() {
     return await CryptoEngine.sha256(
-      `${this.fromAddress}${this.toAddress}${this.amount}${this.token}${this.type}${this.timestamp}${JSON.stringify(this.metadata)}`
+      `${this.fromAddress}${this.toAddress}${this.amount}${this.token}${this.type}${this.timestamp}${this.nonce}${JSON.stringify(this.metadata)}`
     );
   }
 
@@ -23,6 +26,9 @@ export class Transaction {
     const tx = new Transaction(obj.fromAddress, obj.toAddress, obj.amount, obj.token, obj.type, obj.metadata || {});
     tx.timestamp = obj.timestamp;
     tx.signature = obj.signature || '';
+    tx.signerPublicKey = obj.signerPublicKey || '';
+    tx.chainType = obj.chainType || '';
+    tx.nonce = obj.nonce || 0;
     tx.txHash = obj.txHash || '';
     return tx;
   }

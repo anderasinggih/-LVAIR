@@ -82,15 +82,19 @@ function renderPeers(peers) {
 
 async function postJson(url, body) {
   const apiUrl = getApiBaseUrl();
+  const token = localStorage.getItem('LVAIR_ADMIN_AUTH_TOKEN_V1') || '';
   let res;
   try {
     res = await fetch(`${apiUrl}${url}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(body || {})
     });
   } catch (err) {
-    throw new Error('Node offline. Start the full node and reload the page.');
+    throw new Error('Node offline. Start a full node and reload the page.');
   }
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}));
