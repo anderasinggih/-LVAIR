@@ -206,7 +206,7 @@
         <div style="margin-bottom: 36px;">
           <div class="section-tagline">Architecture</div>
           <h2 class="section-title" style="color: #ffffff;">Institutional-Grade Decentralized Architecture</h2>
-          <p style="color: var(--text-secondary); font-size: 1rem; max-width: 650px;">High-throughput automated market maker engineered for deterministic price discovery and zero counterparty risk.</p>
+          <p style="color: var(--text-secondary); font-size: 1rem; max-width: 650px;">High-throughput liquidity engine engineered for deterministic price discovery and zero counterparty risk.</p>
         </div>
         <div id="dynamic-value-props" class="bento-grid"></div>
       </section>
@@ -315,15 +315,24 @@
           <!-- Price Chart & Dynamic Orderflow -->
           <div class="panel">
             <div class="panel-header">
-              <span class="panel-title">$LVAIR / USDT Automated Market Pool</span>
+              <span class="panel-title">$LVAIR / USDT Liquidity Pool</span>
               <div style="display: flex; gap: 8px; align-items: center;">
                 <span id="chart-timeframe" style="font-size: 0.72rem; color: var(--text-tertiary);">Real-time Ledger Feed</span>
                 <span class="badge badge-success">Pool Active</span>
               </div>
             </div>
+
+            <div style="display: flex; align-items: baseline; gap: 12px; padding: 2px 0 12px; flex-wrap: wrap;">
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 0.64rem; letter-spacing: 0.14em; color: var(--text-tertiary); text-transform: uppercase;">LVAIR Index</span>
+                <span id="chart-price-index" style="font-family: var(--font-mono); font-weight: 800; font-size: 1.45rem; color: #ffffff; line-height: 1;">$0.0000</span>
+              </div>
+              <span id="chart-price-change" style="font-family: var(--font-mono); font-size: 0.9rem; color: #10b981; padding-bottom: 2px;">0.00%</span>
+              <span id="chart-pool-depth" style="margin-left: auto; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-tertiary); padding-bottom: 2px;"></span>
+            </div>
             
             <div style="height: 240px; width: 100%; position: relative; margin-bottom: 16px;">
-              <canvas id="price-chart" style="width: 100%; height: 100%;"></canvas>
+              <canvas id="price-chart" style="width: 100%; height: 100%; cursor: crosshair;"></canvas>
             </div>
 
             <div class="panel-header" style="margin-top: 8px;">

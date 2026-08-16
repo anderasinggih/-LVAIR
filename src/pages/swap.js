@@ -426,50 +426,192 @@ export function renderRecentTrades() {
   }).join('');
 }
 
+let chartPoints = [];
+let lastHoverIndex = -1;
+let chartEventsBound = false;
+
+function formatChartTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function updateChartHeader() {
+  const { ammPool } = AppState;
+  if (!ammPool) return;
+  const priceEl = document.getElementById('chart-price-index');
+  const changeEl = document.getElementById('chart-price-change');
+  const depthEl = document.getElementById('chart-pool-depth');
+  const price = ammPool.getCurrentPrice();
+
+  if (priceEl) priceEl.innerText = `$${price.toFixed(4)}`;
+
+  const history = ammPool.priceHistory;
+  if (changeEl && history && history.length >= 2) {
+    const first = history[0].price;
+    const last = history[history.length - 1].price;
+    const pct = first > 0 ? ((last - first) / first) * 100 : 0;
+    changeEl.innerText = `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
+    changeEl.style.color = pct >= 0 ? '#10b981' : '#f87171';
+  }
+
+  if (depthEl && typeof ammPool.lvairReserve === 'number') {
+    depthEl.innerText = `Depth ${Number(ammPool.lvairReserve).toLocaleString()} LVAIR / ${Number(ammPool.usdtReserve).toLocaleString()} USDT`;
+  }
+}
+
 export function renderChart() {
   const { ammPool } = AppState;
   if (!canvas || !ctx || !ammPool) return;
   const history = ammPool.priceHistory;
+  updateChartHeader();
   if (history.length < 2) return;
 
   const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = rect.width;
+  const H = rect.height;
+  ctx.clearRect(0, 0, W, H);
 
   const prices = history.map(h => h.price);
   const minP = Math.min(...prices) * 0.99;
   const maxP = Math.max(...prices) * 1.01;
+  const range = (maxP - minP) || 1;
 
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
   ctx.lineWidth = 1;
+  ctx.font = '10px JetBrains Mono, monospace';
   for (let i = 0; i < 5; i++) {
-    const y = (canvas.height / 5) * i;
+    const y = (H / 4) * i;
     ctx.beginPath();
     ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
+    ctx.lineTo(W, y);
     ctx.stroke();
+
+    const priceAtY = maxP - (range * i) / 4;
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.55)';
+    ctx.fillText(`$${priceAtY.toFixed(4)}`, 6, y - 4);
   }
 
-  ctx.beginPath();
-  const stepX = canvas.width / (prices.length - 1);
-  prices.forEach((p, idx) => {
+  const stepX = W / (prices.length - 1);
+  chartPoints = prices.map((p, idx) => {
     const x = idx * stepX;
-    const y = canvas.height - ((p - minP) / (maxP - minP)) * canvas.height;
-    if (idx === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+    const y = H - ((p - minP) / range) * H;
+    return { x, y, price: p, ts: history[idx].timestamp, lvair: history[idx].lvairReserve, usdt: history[idx].usdtReserve };
   });
 
+  ctx.beginPath();
+  chartPoints.forEach((pt, idx) => {
+    if (idx === 0) ctx.moveTo(pt.x, pt.y);
+    else ctx.lineTo(pt.x, pt.y);
+  });
   ctx.strokeStyle = '#2563eb';
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  ctx.lineTo(canvas.width, canvas.height);
-  ctx.lineTo(0, canvas.height);
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  ctx.lineTo(W, H);
+  ctx.lineTo(0, H);
+  const gradient = ctx.createLinearGradient(0, 0, 0, H);
   gradient.addColorStop(0, 'rgba(37, 99, 235, 0.15)');
   gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
   ctx.fillStyle = gradient;
   ctx.fill();
+
+  if (lastHoverIndex >= 0) {
+    if (lastHoverIndex >= chartPoints.length) lastHoverIndex = chartPoints.length - 1;
+    drawChartCrosshair(chartPoints[lastHoverIndex], W, H);
+  }
+
+  updateChartHeader();
+
+  if (!chartEventsBound && canvas) {
+    chartEventsBound = true;
+    canvas.addEventListener('mousemove', (e) => {
+      if (!chartPoints.length) return;
+      const r = canvas.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      let best = 0;
+      let bestD = Infinity;
+      for (let i = 0; i < chartPoints.length; i++) {
+        const d = Math.abs(chartPoints[i].x - x);
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      }
+      lastHoverIndex = best;
+      renderChart();
+    });
+    canvas.addEventListener('mouseleave', () => {
+      lastHoverIndex = -1;
+      renderChart();
+    });
+  }
+}
+
+function drawChartCrosshair(pt, W, H) {
+  ctx.save();
+
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pt.x, 0);
+  ctx.lineTo(pt.x, H);
+  ctx.moveTo(0, pt.y);
+  ctx.lineTo(W, pt.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.beginPath();
+  ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#2563eb';
+  ctx.stroke();
+
+  const tooltipW = 176;
+  const tooltipH = 70;
+  let tx = pt.x + 14;
+  let ty = pt.y - tooltipH - 14;
+  if (tx + tooltipW > W) tx = pt.x - tooltipW - 14;
+  if (tx < 6) tx = 6;
+  if (ty < 6) ty = pt.y + 14;
+  if (ty + tooltipH > H) ty = H - tooltipH - 6;
+
+  ctx.beginPath();
+  ctx.moveTo(tx + 8, ty);
+  ctx.lineTo(tx + tooltipW - 8, ty);
+  ctx.quadraticCurveTo(tx + tooltipW, ty, tx + tooltipW, ty + 8);
+  ctx.lineTo(tx + tooltipW, ty + tooltipH - 8);
+  ctx.quadraticCurveTo(tx + tooltipW, ty + tooltipH, tx + tooltipW - 8, ty + tooltipH);
+  ctx.lineTo(tx + 8, ty + tooltipH);
+  ctx.quadraticCurveTo(tx, ty + tooltipH, tx, ty + tooltipH - 8);
+  ctx.lineTo(tx, ty + 8);
+  ctx.quadraticCurveTo(tx, ty, tx + 8, ty);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(37, 99, 235, 0.45)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 13px JetBrains Mono, monospace';
+  ctx.fillText(`$${pt.price.toFixed(4)}`, tx + 12, ty + 18);
+
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.fillText(formatChartTime(pt.ts), tx + 12, ty + 34);
+
+  ctx.fillText(`L ${Number(pt.lvair || 0).toLocaleString()} / U ${Number(pt.usdt || 0).toLocaleString()}`, tx + 12, ty + 50);
+
+  ctx.fillStyle = 'rgba(37, 99, 235, 0.9)';
+  ctx.fillText(`Index ${((pt.price / (chartPoints[0].price || 1) - 1) * 100).toFixed(2)}%`, tx + 12, ty + 64);
+
+  ctx.restore();
 }
