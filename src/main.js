@@ -1,6 +1,6 @@
 import { Blockchain } from './core/blockchain.js';
-import { AMMPool } from './core/trading.js';
-import { TradingBotEngine } from './core/bot.js';
+import { AMMPool } from './core/amm.js';
+import { TradingBotEngine } from './core/market-maker.js';
 
 import { AppState, updateUI } from './state.js';
 import { appBrandHomeLink } from './dom.js';

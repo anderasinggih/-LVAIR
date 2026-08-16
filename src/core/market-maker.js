@@ -1,4 +1,4 @@
-import { AMMPool } from './trading.js';
+import { AMMPool } from './amm.js';
 
 export class TradingBotEngine {
   constructor(blockchain, ammPool) {
