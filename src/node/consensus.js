@@ -28,7 +28,7 @@ export function applyBlockToPool(pool, block) {
       lvairReserve: pool.lvairReserve,
       usdtReserve: pool.usdtReserve
     });
-    if (pool.priceHistory.length > 100) pool.priceHistory.shift();
+    if (pool.priceHistory.length > 200000) pool.priceHistory.shift();
     return;
   }
 
@@ -51,7 +51,7 @@ export function applyBlockToPool(pool, block) {
     lvairReserve: pool.lvairReserve,
     usdtReserve: pool.usdtReserve
   });
-  if (pool.priceHistory.length > 100) pool.priceHistory.shift();
+  if (pool.priceHistory.length > 200000) pool.priceHistory.shift();
 
   pool.trades.unshift({
     id: inTx.txHash,

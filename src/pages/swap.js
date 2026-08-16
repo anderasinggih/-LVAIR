@@ -16,7 +16,7 @@ import {
 import { AppState, updateUI } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
-import { rpcPost } from '../api.js';
+import { rpcPost, getApiBaseUrl } from '../api.js';
 import { refreshNodeState } from '../node-sync.js';
 import { formatBlockNumber } from '../format.js';
 
@@ -119,6 +119,7 @@ function recalculateQuote() {
 
 export function setupSwapPage() {
   setupSlippageButtons();
+  setupChartToolbar();
 
   if (swapInputAmount) swapInputAmount.addEventListener('input', recalculateQuote);
 
@@ -431,9 +432,89 @@ let chartPoints = [];
 let lastHoverIndex = -1;
 let chartEventsBound = false;
 
+let chartTF = 'LIVE';
+let chartType = 'line';
+let chartCandles = [];
+let chartLastFetch = 0;
+let chartFetchInFlight = false;
+
 function formatChartTime(ts) {
   const d = new Date(ts);
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function formatChartAxisTime(ts) {
+  const d = new Date(ts);
+  if (chartTF === '1D') {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+function setupChartToolbar() {
+  document.querySelectorAll('.chart-btn[data-tf]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.getAttribute('data-tf') === chartTF) return;
+      chartTF = btn.getAttribute('data-tf');
+      document.querySelectorAll('.chart-btn[data-tf]').forEach(b => b.classList.toggle('active', b === btn));
+      chartCandles = [];
+      lastHoverIndex = -1;
+      const tfEl = document.getElementById('chart-timeframe');
+      if (tfEl) tfEl.innerText = chartTF === 'LIVE' ? 'Real-time Ledger Feed' : `${chartTF} Price History`;
+      renderChart();
+    });
+  });
+  document.querySelectorAll('.chart-btn[data-type]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.getAttribute('data-type') === chartType) return;
+      chartType = btn.getAttribute('data-type');
+      document.querySelectorAll('.chart-btn[data-type]').forEach(b => b.classList.toggle('active', b === btn));
+      lastHoverIndex = -1;
+      renderChart();
+    });
+  });
+}
+
+async function ensureChartData() {
+  if (chartTF === 'LIVE') return;
+  if (chartCandles.length && Date.now() - chartLastFetch < 15000) return;
+  if (chartFetchInFlight) return;
+  chartFetchInFlight = true;
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/chart?tf=${encodeURIComponent(chartTF)}`);
+    if (!res.ok) throw new Error(`chart fetch failed (${res.status})`);
+    const data = await res.json();
+    if (data.success && Array.isArray(data.candles) && data.candles.length) {
+      chartCandles = data.candles;
+      chartLastFetch = Date.now();
+    }
+  } catch (e) {} finally {
+    chartFetchInFlight = false;
+  }
+}
+
+function buildChartSeries() {
+  if (chartTF === 'LIVE') {
+    const history = AppState.ammPool.priceHistory || [];
+    return history.map(h => ({
+      time: h.timestamp,
+      price: h.price,
+      open: h.price,
+      high: h.price,
+      low: h.price,
+      close: h.price,
+      lvair: h.lvairReserve,
+      usdt: h.usdtReserve
+    }));
+  }
+  return chartCandles.map(c => ({
+    time: c.time,
+    price: c.close,
+    open: c.open,
+    high: c.high,
+    low: c.low,
+    close: c.close
+  }));
 }
 
 function updateChartHeader() {
@@ -446,13 +527,15 @@ function updateChartHeader() {
 
   if (priceEl) priceEl.innerText = `$${price.toFixed(4)}`;
 
-  const history = ammPool.priceHistory;
-  if (changeEl && history && history.length >= 2) {
-    const first = history[0].price;
-    const last = history[history.length - 1].price;
-    const pct = first > 0 ? ((last - first) / first) * 100 : 0;
-    changeEl.innerText = `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
-    changeEl.style.color = pct >= 0 ? '#10b981' : '#f87171';
+  if (changeEl) {
+    const series = buildChartSeries();
+    if (series.length >= 2) {
+      const first = series[0].close;
+      const last = series[series.length - 1].close;
+      const pct = first > 0 ? ((last - first) / first) * 100 : 0;
+      changeEl.innerText = `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
+      changeEl.style.color = pct >= 0 ? '#10b981' : '#f87171';
+    }
   }
 
   if (depthEl && typeof ammPool.lvairReserve === 'number') {
@@ -460,12 +543,14 @@ function updateChartHeader() {
   }
 }
 
-export function renderChart() {
+export async function renderChart() {
   const { ammPool } = AppState;
   if (!canvas || !ctx || !ammPool) return;
-  const history = ammPool.priceHistory;
   updateChartHeader();
-  if (history.length < 2) return;
+  await ensureChartData();
+
+  const series = buildChartSeries();
+  if (series.length < 2) return;
 
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -475,58 +560,90 @@ export function renderChart() {
 
   const W = rect.width;
   const H = rect.height;
+  const AXIS_H = 22;
+  const plotH = H - AXIS_H;
   ctx.clearRect(0, 0, W, H);
 
-  const prices = history.map(h => h.price);
-  const minP = Math.min(...prices) * 0.99;
-  const maxP = Math.max(...prices) * 1.01;
+  const isCandle = chartTF !== 'LIVE' && chartType === 'candle';
+  const lows = series.map(p => p.low);
+  const highs = series.map(p => p.high);
+  const minP = Math.min(...lows) * 0.99;
+  const maxP = Math.max(...highs) * 1.01;
   const range = (maxP - minP) || 1;
+  const yOf = (p) => plotH - ((p - minP) / range) * plotH;
+  const xOf = (i) => (i / (series.length - 1)) * W;
+
+  chartPoints = series.map((p, i) => ({ ...p, x: xOf(i), y: yOf(p.close) }));
 
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
   ctx.lineWidth = 1;
   ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textBaseline = 'middle';
   for (let i = 0; i < 5; i++) {
-    const y = (H / 4) * i;
+    const y = (plotH / 4) * i;
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(W, y);
     ctx.stroke();
-
     const priceAtY = maxP - (range * i) / 4;
     ctx.fillStyle = 'rgba(148, 163, 184, 0.55)';
-    ctx.fillText(`$${priceAtY.toFixed(4)}`, 6, y - 4);
+    ctx.fillText(`$${priceAtY.toFixed(4)}`, 6, y);
   }
 
-  const stepX = W / (prices.length - 1);
-  chartPoints = prices.map((p, idx) => {
-    const x = idx * stepX;
-    const y = H - ((p - minP) / range) * H;
-    return { x, y, price: p, ts: history[idx].timestamp, lvair: history[idx].lvairReserve, usdt: history[idx].usdtReserve };
-  });
+  if (!isCandle) {
+    ctx.beginPath();
+    chartPoints.forEach((pt, idx) => {
+      if (idx === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-  ctx.beginPath();
-  chartPoints.forEach((pt, idx) => {
-    if (idx === 0) ctx.moveTo(pt.x, pt.y);
-    else ctx.lineTo(pt.x, pt.y);
-  });
-  ctx.strokeStyle = '#2563eb';
-  ctx.lineWidth = 2;
-  ctx.stroke();
+    ctx.lineTo(W, plotH);
+    ctx.lineTo(0, plotH);
+    const gradient = ctx.createLinearGradient(0, 0, 0, plotH);
+    gradient.addColorStop(0, 'rgba(37, 99, 235, 0.15)');
+    gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+    ctx.fillStyle = gradient;
+    ctx.fill();
+  } else {
+    const bw = Math.max(2, (W / series.length) * 0.62);
+    chartPoints.forEach(pt => {
+      const color = pt.close >= pt.open ? '#10b981' : '#f87171';
+      const openY = yOf(pt.open);
+      const closeY = yOf(pt.close);
+      const highY = yOf(pt.high);
+      const lowY = yOf(pt.low);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pt.x, highY);
+      ctx.lineTo(pt.x, lowY);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      const top = Math.min(openY, closeY);
+      const h = Math.max(1, Math.abs(closeY - openY));
+      ctx.fillRect(pt.x - bw / 2, top, bw, h);
+    });
+  }
 
-  ctx.lineTo(W, H);
-  ctx.lineTo(0, H);
-  const gradient = ctx.createLinearGradient(0, 0, 0, H);
-  gradient.addColorStop(0, 'rgba(37, 99, 235, 0.15)');
-  gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
-  ctx.fillStyle = gradient;
-  ctx.fill();
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
+  ctx.font = '10px JetBrains Mono, monospace';
+  const axisCount = Math.max(2, Math.floor(W / 90));
+  for (let i = 0; i < axisCount; i++) {
+    const idx = Math.round((i / (axisCount - 1)) * (series.length - 1));
+    const pt = chartPoints[idx];
+    ctx.textAlign = i === 0 ? 'left' : (i === axisCount - 1 ? 'right' : 'center');
+    ctx.fillText(formatChartAxisTime(pt.time), pt.x, H - 5);
+  }
+  ctx.textAlign = 'left';
 
   if (lastHoverIndex >= 0) {
     if (lastHoverIndex >= chartPoints.length) lastHoverIndex = chartPoints.length - 1;
-    drawChartCrosshair(chartPoints[lastHoverIndex], W, H);
+    drawChartCrosshair(chartPoints[lastHoverIndex], W, plotH);
   }
-
-  updateChartHeader();
 
   if (!chartEventsBound && canvas) {
     chartEventsBound = true;
@@ -607,12 +724,18 @@ function drawChartCrosshair(pt, W, H) {
 
   ctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
   ctx.font = '10px JetBrains Mono, monospace';
-  ctx.fillText(formatChartTime(pt.ts), tx + 12, ty + 34);
+  ctx.fillText(formatChartTime(pt.time), tx + 12, ty + 34);
 
-  ctx.fillText(`L ${Number(pt.lvair || 0).toLocaleString()} / U ${Number(pt.usdt || 0).toLocaleString()}`, tx + 12, ty + 50);
-
-  ctx.fillStyle = 'rgba(37, 99, 235, 0.9)';
-  ctx.fillText(`Index ${((pt.price / (chartPoints[0].price || 1) - 1) * 100).toFixed(2)}%`, tx + 12, ty + 64);
+  if (chartTF !== 'LIVE' && chartType === 'candle') {
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(`O ${pt.open.toFixed(4)}  H ${pt.high.toFixed(4)}`, tx + 12, ty + 50);
+    ctx.fillStyle = '#f87171';
+    ctx.fillText(`L ${pt.low.toFixed(4)}  C ${pt.close.toFixed(4)}`, tx + 12, ty + 64);
+  } else {
+    ctx.fillText(`L ${Number(pt.lvair || 0).toLocaleString()} / U ${Number(pt.usdt || 0).toLocaleString()}`, tx + 12, ty + 50);
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.9)';
+    ctx.fillText(`Index ${((pt.price / (chartPoints[0].price || 1) - 1) * 100).toFixed(2)}%`, tx + 12, ty + 64);
+  }
 
   ctx.restore();
 }

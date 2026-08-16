@@ -322,13 +322,64 @@ async function startFullNode() {
       lvairReserve: ammPool.lvairReserve,
       usdtReserve: ammPool.usdtReserve,
       price: ammPool.getCurrentPrice(),
-      priceHistory: ammPool.priceHistory,
+      priceHistory: ammPool.priceHistory.slice(-1000),
       trades: ammPool.trades,
       botRunning: botEngine ? botEngine.isRunning : false,
       botMode: botEngine ? botEngine.getMode() : botStrategyMode,
       minPoolReserves: MIN_POOL_RESERVES,
       mempoolSize: blockchain.pendingTransactions.length
     });
+  });
+
+  const TF_BUCKET_MS = {
+    '1D': 15 * 60 * 1000,
+    '1W': 2 * 60 * 60 * 1000,
+    '1M': 12 * 60 * 60 * 1000,
+    '1Y': 4 * 24 * 60 * 60 * 1000,
+    'ALL': 30 * 24 * 60 * 60 * 1000
+  };
+  const TF_RANGE_MS = {
+    '1D': 24 * 60 * 60 * 1000,
+    '1W': 7 * 24 * 60 * 60 * 1000,
+    '1M': 30 * 24 * 60 * 60 * 1000,
+    '1Y': 365 * 24 * 60 * 60 * 1000,
+    'ALL': Infinity
+  };
+
+  function buildCandles(history, tf) {
+    const bucket = TF_BUCKET_MS[tf];
+    const range = TF_RANGE_MS[tf];
+    const now = Date.now();
+    const cutoff = range === Infinity ? 0 : now - range;
+    const candles = [];
+    let current = null;
+    for (const p of history) {
+      if (p.timestamp < cutoff) continue;
+      const b = Math.floor(p.timestamp / bucket) * bucket;
+      if (!current || current.time !== b) {
+        if (current) candles.push(current);
+        current = { time: b, open: p.price, high: p.price, low: p.price, close: p.price };
+      } else {
+        current.high = Math.max(current.high, p.price);
+        current.low = Math.min(current.low, p.price);
+        current.close = p.price;
+      }
+    }
+    if (current) candles.push(current);
+    return candles;
+  }
+
+  app.get('/api/chart', (req, res) => {
+    const tf = String(req.query.tf || 'LIVE');
+    if (tf === 'LIVE') {
+      const history = ammPool.priceHistory;
+      const points = history.slice(-5000).map(p => ({ timestamp: p.timestamp, price: p.price }));
+      return res.json({ success: true, tf, candles: null, points });
+    }
+    if (!TF_BUCKET_MS[tf]) {
+      return res.status(400).json({ success: false, error: `Unsupported timeframe: ${tf}` });
+    }
+    res.json({ success: true, tf, candles: buildCandles(ammPool.priceHistory, tf), points: null });
   });
 
   app.post('/api/liquidity/provision', async (req, res) => {

@@ -28,7 +28,7 @@ export class AMMPool {
       lvairReserve: this.lvairReserve,
       usdtReserve: this.usdtReserve,
     });
-    if (this.priceHistory.length > 100) this.priceHistory.shift();
+    if (this.priceHistory.length > 200000) this.priceHistory.shift();
   }
 
   getQuote(inputAmount, inputToken) {
