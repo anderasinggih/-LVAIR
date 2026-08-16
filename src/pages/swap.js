@@ -512,7 +512,7 @@ async function ensureChartData() {
   }
 }
 
-const LIVE_WINDOW_MS = 15 * 60 * 1000;
+const LIVE_WINDOW_MS = 5 * 60 * 1000;
 
 function isNarrowChart() {
   return typeof window !== 'undefined' && window.innerWidth < 640;
