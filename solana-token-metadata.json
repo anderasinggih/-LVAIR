@@ -1,0 +1,12 @@
+{
+  "name": "LVAIR Protocol",
+  "symbol": "LVAIR",
+  "description": "LVAIR Protocol — sovereign decentralized liquidity network token. Bridged representation on Solana for on-chain trading.",
+  "image": "https://lvair.195.88.211.46.nip.io/lvair-logo.png",
+  "decimals": 9,
+  "website": "https://lvair.195.88.211.46.nip.io",
+  "extensions": {
+    "website": "https://lvair.195.88.211.46.nip.io",
+    "twitter": ""
+  }
+}

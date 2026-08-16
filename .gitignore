@@ -5,3 +5,9 @@ dist/
 .env
 .env.local
 .data/
+
+# Solana wallet & deployment secrets — NEVER commit
+solana-deployer-key.json
+solana-token-deployment.json
+*.key
+*.secret
