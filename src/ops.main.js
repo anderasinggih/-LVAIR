@@ -55,13 +55,23 @@ async function refreshOpsState() {
   renderAdminDashboard();
 }
 
-function postJson(url, body) {
+async function postJson(url, body) {
   const apiUrl = getApiBaseUrl();
-  return fetch(`${apiUrl}${url}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body || {})
-  });
+  let res;
+  try {
+    res = await fetch(`${apiUrl}${url}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    });
+  } catch (err) {
+    throw new Error('Full-node offline. Jalankan `npm run node` lalu muat ulang halaman.');
+  }
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.error || 'RPC rejected the request');
+  }
+  return res.json();
 }
 
 async function initAdminApp() {
@@ -157,12 +167,7 @@ function setupAdminHandlers() {
   if (btnToggleBot) {
     btnToggleBot.addEventListener('click', async () => {
       try {
-        const res = await postJson('/api/bot/toggle');
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.error || 'RPC error');
-        }
-        const data = await res.json();
+        const data = await postJson('/api/bot/toggle');
         showToast(data.running ? 'Autonomous Market Maker started on node' : 'Autonomous Market Maker paused on node');
       } catch (err) {
         showToast(`Bot control error: ${err.message}`, 'error');
@@ -176,12 +181,7 @@ function setupAdminHandlers() {
       const amount = parseFloat(adminAirdropAmountInput.value);
       if (!amount || amount <= 0) return showToast('Enter a valid airdrop allocation amount', 'error');
       try {
-        const res = await postJson('/api/config/airdrop', { amount });
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.error || 'RPC error');
-        }
-        await res.json();
+        await postJson('/api/config/airdrop', { amount });
         showToast(`Airdrop quota per wallet updated to ${amount} $LVAIR`);
       } catch (err) {
         showToast(`Config error: ${err.message}`, 'error');
@@ -193,12 +193,7 @@ function setupAdminHandlers() {
   if (btnResetAirdropList) {
     btnResetAirdropList.addEventListener('click', async () => {
       try {
-        const res = await postJson('/api/config/reset-whitelist');
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.error || 'RPC error');
-        }
-        await res.json();
+        await postJson('/api/config/reset-whitelist');
         showToast('Airdrop claims whitelist has been reset');
       } catch (err) {
         showToast(`Reset error: ${err.message}`, 'error');
@@ -213,12 +208,7 @@ function setupAdminHandlers() {
       const usdt = parseFloat(adminPoolUsdtInput.value);
       if (!air || !usdt || air <= 0 || usdt <= 0) return showToast('Enter valid pool reserves', 'error');
       try {
-        const res = await postJson('/api/config/reserves', { lvair: air, usdt });
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.error || 'RPC error');
-        }
-        await res.json();
+        await postJson('/api/config/reserves', { lvair: air, usdt });
         showToast(`Pool Reserves updated to ${air.toLocaleString()} LVAIR / $${usdt.toLocaleString()} USDT`);
       } catch (err) {
         showToast(`Reserve error: ${err.message}`, 'error');
@@ -233,12 +223,7 @@ function setupAdminHandlers() {
       btnAdminForceMine.disabled = true;
       btnAdminForceMine.innerText = 'Mining Block...';
       try {
-        const res = await postJson('/api/mine', { minerRewardAddress: currentConnectedAddress || null });
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.error || 'RPC error');
-        }
-        await res.json();
+        await postJson('/api/mine', { minerRewardAddress: currentConnectedAddress || null });
         showToast('New block mined and appended to the ledger!');
       } catch (err) {
         showToast(`Mining error: ${err.message}`, 'error');

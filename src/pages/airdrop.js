@@ -6,7 +6,7 @@ import { AppState, updateUI } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
 import { addToHistory } from './swap.js';
-import { getApiBaseUrl } from '../api.js';
+import { rpcPost } from '../api.js';
 import { refreshNodeState } from '../node-sync.js';
 
 export function setupAirdropPage() {
@@ -25,20 +25,10 @@ export function setupAirdropPage() {
 
     try {
       const quota = AppState.blockchain.airdropClaimAmount || 250;
-      const apiUrl = getApiBaseUrl();
 
-      const res = await fetch(`${apiUrl}/api/airdrop/claim`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userAddress: currentConnectedAddress })
-      });
+      const data = await rpcPost('/api/airdrop/claim', { userAddress: currentConnectedAddress });
+      const claimedBlock = data.blockIndex;
 
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || 'RPC rejected the claim');
-      }
-
-      await res.json();
       await refreshNodeState();
 
       addToHistory({
@@ -49,7 +39,7 @@ export function setupAirdropPage() {
         tokenIn: '—',
         tokenOut: 'LVAIR',
         price: null,
-        blockIndex: AppState.blockchain.chain.length,
+        blockIndex: claimedBlock || AppState.blockchain.chain.length,
         timestamp: Date.now()
       });
 

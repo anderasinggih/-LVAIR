@@ -16,7 +16,7 @@ import {
 import { AppState, updateUI } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
-import { getApiBaseUrl } from '../api.js';
+import { rpcPost } from '../api.js';
 import { refreshNodeState } from '../node-sync.js';
 
 let currentSlippage = 0.5;
@@ -175,23 +175,12 @@ export function setupSwapPage() {
       btnExecuteSwap.innerText = 'Executing On-Chain Swap...';
 
       try {
-        const apiUrl = getApiBaseUrl();
-        const res = await fetch(`${apiUrl}/api/swap`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userAddress: currentConnectedAddress,
-            inputAmount: amountIn,
-            inputToken: currentInputToken
-          })
+        const data = await rpcPost('/api/swap', {
+          userAddress: currentConnectedAddress,
+          inputAmount: amountIn,
+          inputToken: currentInputToken
         });
 
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.error || 'RPC rejected the swap');
-        }
-
-        const data = await res.json();
         const trade = data.result.trade;
         const isBuyingAir = currentInputToken === 'USDT';
 

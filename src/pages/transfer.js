@@ -8,7 +8,7 @@ import {
 import { AppState } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { addToHistory } from './swap.js';
-import { getApiBaseUrl } from '../api.js';
+import { rpcPost } from '../api.js';
 import { refreshNodeState } from '../node-sync.js';
 
 export function setupTransferPage() {
@@ -38,26 +38,14 @@ export function setupTransferPage() {
     btnSendTransfer.innerText = 'Settling Transaction...';
 
     try {
-      const apiUrl = getApiBaseUrl();
-      const res = await fetch(`${apiUrl}/api/tx/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: currentConnectedAddress,
-          to: toAddress,
-          amount,
-          token,
-          type: 'P2P_TRANSFER',
-          metadata: { memo: 'On-Chain Transfer' }
-        })
+      await rpcPost('/api/tx/send', {
+        from: currentConnectedAddress,
+        to: toAddress,
+        amount,
+        token,
+        type: 'P2P_TRANSFER',
+        metadata: { memo: 'On-Chain Transfer' }
       });
-
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || 'RPC rejected the transfer');
-      }
-
-      await res.json();
       await refreshNodeState();
 
       showToast(`Transferred ${amount} ${token} on-chain!`);

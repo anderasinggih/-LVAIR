@@ -7,6 +7,19 @@ import { getApiBaseUrl } from './api.js';
 let lastBlockHash = '';
 let lastTradesCount = 0;
 
+function setNodeIndicator(online) {
+  const ind = document.getElementById('network-indicator');
+  if (!ind) return;
+  const dot = ind.querySelector('span');
+  const nameEl = document.getElementById('network-name');
+  ind.style.borderColor = online ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.35)';
+  ind.style.background = online ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)';
+  ind.style.color = online ? '#10b981' : '#f87171';
+  if (dot) dot.style.background = online ? '#10b981' : '#ef4444';
+  if (dot) dot.style.boxShadow = online ? '0 0 6px #10b981' : '0 0 6px #ef4444';
+  if (nameEl) nameEl.innerText = online ? 'LVAIR Mainnet' : 'Node Offline';
+}
+
 function rebuildClaimedAddresses(blocks) {
   const claimed = new Set();
   blocks.forEach(b => {
@@ -24,6 +37,7 @@ function rebuildClaimedAddresses(blocks) {
 export async function refreshNodeState() {
   const apiUrl = getApiBaseUrl();
   let changed = false;
+  let anyOk = false;
 
   try {
     const [blocksRes, cfgRes, ammRes] = await Promise.all([
@@ -33,6 +47,7 @@ export async function refreshNodeState() {
     ]);
 
     if (blocksRes && blocksRes.ok) {
+      anyOk = true;
       const blocks = await blocksRes.json();
       if (Array.isArray(blocks) && blocks.length > 0) {
         AppState.blockchain.chain = blocks.map(b => Block.fromJSON(b));
@@ -46,12 +61,14 @@ export async function refreshNodeState() {
     }
 
     if (cfgRes && cfgRes.ok) {
+      anyOk = true;
       const cfg = await cfgRes.json();
       if (cfg.airdropClaimAmount) AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
       if (cfg.miningReward) AppState.blockchain.miningReward = cfg.miningReward;
     }
 
     if (ammRes && ammRes.ok) {
+      anyOk = true;
       const amm = await ammRes.json();
       if (amm && typeof amm.lvairReserve === 'number') {
         AppState.ammPool.lvairReserve = amm.lvairReserve;
@@ -67,6 +84,8 @@ export async function refreshNodeState() {
       }
     }
   } catch (e) {}
+
+  setNodeIndicator(anyOk);
 
   if (changed) {
     updateUI();
