@@ -507,7 +507,7 @@ async function ensureChartData() {
 
 function buildLiveCandles() {
   const history = AppState.ammPool.priceHistory || [];
-  const bucket = 5 * 60 * 1000;
+  const bucket = 60 * 1000;
   const out = [];
   let cur = null;
   for (const h of history) {
@@ -516,6 +516,7 @@ function buildLiveCandles() {
       if (cur) out.push(cur);
       cur = {
         time: b,
+        price: h.price,
         open: h.price,
         high: h.price,
         low: h.price,
@@ -638,7 +639,10 @@ export async function renderChart() {
   const W = rect.width;
   const H = rect.height;
   const AXIS_H = 22;
-  const plotH = H - AXIS_H;
+  const X_PAD = 8;
+  const LABEL_W = 52;
+  const X_RIGHT = Math.max(X_PAD + 2, W - LABEL_W - 8);
+  const plotH = H - AXIS_H - 6;
   ctx.clearRect(0, 0, W, H);
 
   const isCandle = chartType === 'candle';
@@ -648,7 +652,7 @@ export async function renderChart() {
   const maxP = Math.max(...highs) * 1.01;
   const range = (maxP - minP) || 1;
   const yOf = (p) => plotH - ((p - minP) / range) * plotH;
-  const xOf = (i) => (i / (series.length - 1)) * W;
+  const xOf = (i) => X_PAD + (i / (series.length - 1)) * (X_RIGHT - X_PAD);
 
   chartPoints = series.map((p, i) => ({ ...p, x: xOf(i), y: yOf(p.close) }));
 
@@ -681,15 +685,15 @@ export async function renderChart() {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.lineTo(W, plotH);
-    ctx.lineTo(0, plotH);
+    ctx.lineTo(X_RIGHT, plotH);
+    ctx.lineTo(X_PAD, plotH);
     const gradient = ctx.createLinearGradient(0, 0, 0, plotH);
     gradient.addColorStop(0, 'rgba(37, 99, 235, 0.15)');
     gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
     ctx.fillStyle = gradient;
     ctx.fill();
   } else {
-    const bw = Math.max(2, (W / series.length) * 0.62);
+    const bw = Math.max(2, ((X_RIGHT - X_PAD) / series.length) * 0.62);
     chartPoints.forEach(pt => {
       const color = pt.close >= pt.open ? '#10b981' : '#f87171';
       const openY = yOf(pt.open);
@@ -708,6 +712,22 @@ export async function renderChart() {
       ctx.fillRect(pt.x - bw / 2, top, bw, h);
     });
   }
+
+  const lastPt = chartPoints[chartPoints.length - 1];
+  ctx.save();
+  ctx.setLineDash([5, 4]);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(X_PAD, lastPt.y);
+  ctx.lineTo(X_RIGHT, lastPt.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.arc(lastPt.x, lastPt.y, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.restore();
 
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
