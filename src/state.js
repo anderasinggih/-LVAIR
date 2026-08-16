@@ -47,10 +47,24 @@ export function updateUI() {
   if (currentConnectedAddress) {
     if (btnExecuteSwap) btnExecuteSwap.innerText = 'Execute Swap';
     if (airdropStatusText) {
-      const hasClaimed = blockchain.claimedAddresses.has(currentConnectedAddress);
+      const userAddrNorm = currentConnectedAddress.toLowerCase();
+      const hasClaimed = Array.from(blockchain.claimedAddresses).some(a => (a || '').toLowerCase() === userAddrNorm);
       const quota = blockchain.airdropClaimAmount || 250;
       airdropStatusText.innerText = hasClaimed ? `Claimed (${quota} $LVAIR Allocated)` : `Eligible for ${quota} $LVAIR Claim`;
       airdropStatusText.style.color = hasClaimed ? 'var(--text-tertiary)' : 'var(--accent-success)';
+      
+      const btnClaimAirdrop = document.getElementById('btn-claim-airdrop');
+      if (btnClaimAirdrop) {
+        if (hasClaimed) {
+          btnClaimAirdrop.disabled = true;
+          btnClaimAirdrop.innerText = 'Airdrop Already Claimed';
+          btnClaimAirdrop.className = 'btn-secondary';
+        } else {
+          btnClaimAirdrop.disabled = false;
+          btnClaimAirdrop.innerText = `Claim ${quota} $LVAIR Airdrop`;
+          btnClaimAirdrop.className = 'btn-primary';
+        }
+      }
     }
   } else {
     if (btnExecuteSwap) btnExecuteSwap.innerText = 'Connect Wallet to Swap';
