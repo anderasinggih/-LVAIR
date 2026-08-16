@@ -235,24 +235,24 @@ function setupAdminHandlers() {
 
   if (btnLiquidityProvision) {
     btnLiquidityProvision.addEventListener('click', async () => {
-      const operatorAddress = AppState.currentConnectedAddress;
-      if (!operatorAddress) {
-        showToast('Connect the Protocol Owner wallet first', 'error');
-        return;
-      }
-      const lvairAmount = parseFloat(lpLvairInput ? lpLvairInput.value : 0) || 0;
-      const usdtAmount = parseFloat(lpUsdtInput ? lpUsdtInput.value : 0) || 0;
-      if (!(lvairAmount > 0) && !(usdtAmount > 0)) {
-        showToast('Enter an amount for LVAIR and/or USDT', 'error');
-        return;
-      }
-      btnLiquidityProvision.disabled = true;
-      btnLiquidityProvision.innerText = 'Provisioning...';
       try {
+        const operatorAddress = AppState.currentConnectedAddress;
+        if (!operatorAddress) {
+          showToast('Connect the Protocol Owner wallet first', 'error');
+          return;
+        }
+        const lvairAmount = parseFloat(lpLvairInput ? lpLvairInput.value : 0) || 0;
+        const usdtAmount = parseFloat(lpUsdtInput ? lpUsdtInput.value : 0) || 0;
+        if (!(lvairAmount > 0) && !(usdtAmount > 0)) {
+          showToast('Enter an amount for LVAIR and/or USDT', 'error');
+          return;
+        }
+        btnLiquidityProvision.disabled = true;
+        btnLiquidityProvision.innerText = 'Provisioning...';
         const data = await postJson('/api/liquidity/provision', { lvairAmount, usdtAmount, operatorAddress });
         showToast(`Liquidity provided — block #${data.blockIndex ? formatBlockNumber(data.blockIndex) : 'pending'} | Reserves: ${data.lvairReserve.toLocaleString()} LVAIR / ${data.usdtReserve.toLocaleString()} USDT`);
       } catch (err) {
-        showToast(`Liquidity error: ${err.message}`, 'error');
+        showToast(`Liquidity error: ${err.message || 'Unknown error'}`, 'error');
       } finally {
         btnLiquidityProvision.disabled = false;
         btnLiquidityProvision.innerText = 'Provide Liquidity';
@@ -263,28 +263,28 @@ function setupAdminHandlers() {
 
   if (btnLiquidityWithdrawal) {
     btnLiquidityWithdrawal.addEventListener('click', async () => {
-      const operatorAddress = AppState.currentConnectedAddress;
-      if (!operatorAddress) {
-        showToast('Connect the Protocol Owner wallet first', 'error');
-        return;
-      }
-      const lvairAmount = parseFloat(lpLvairInput ? lpLvairInput.value : 0) || 0;
-      const usdtAmount = parseFloat(lpUsdtInput ? lpUsdtInput.value : 0) || 0;
-      if (!(lvairAmount > 0) && !(usdtAmount > 0)) {
-        showToast('Enter an amount for LVAIR and/or USDT', 'error');
-        return;
-      }
-      const confirmed = window.confirm(
-        `Withdraw ${lvairAmount} LVAIR / ${usdtAmount} USDT from the liquidity pool?\n\nThis reduces trading depth permanently. The protocol minimum reserve requirement is enforced.`
-      );
-      if (!confirmed) return;
-      btnLiquidityWithdrawal.disabled = true;
-      btnLiquidityWithdrawal.innerText = 'Withdrawing...';
       try {
+        const operatorAddress = AppState.currentConnectedAddress;
+        if (!operatorAddress) {
+          showToast('Connect the Protocol Owner wallet first', 'error');
+          return;
+        }
+        const lvairAmount = parseFloat(lpLvairInput ? lpLvairInput.value : 0) || 0;
+        const usdtAmount = parseFloat(lpUsdtInput ? lpUsdtInput.value : 0) || 0;
+        if (!(lvairAmount > 0) && !(usdtAmount > 0)) {
+          showToast('Enter an amount for LVAIR and/or USDT', 'error');
+          return;
+        }
+        const confirmed = window.confirm(
+          `Withdraw ${lvairAmount} LVAIR / ${usdtAmount} USDT from the liquidity pool?\n\nThis reduces trading depth permanently. The protocol minimum reserve requirement is enforced.`
+        );
+        if (!confirmed) return;
+        btnLiquidityWithdrawal.disabled = true;
+        btnLiquidityWithdrawal.innerText = 'Withdrawing...';
         const data = await postJson('/api/liquidity/withdrawal', { lvairAmount, usdtAmount, operatorAddress });
         showToast(`Liquidity withdrawn — block #${data.blockIndex ? formatBlockNumber(data.blockIndex) : 'pending'} | Reserves: ${data.lvairReserve.toLocaleString()} LVAIR / ${data.usdtReserve.toLocaleString()} USDT`);
       } catch (err) {
-        showToast(`Withdrawal error: ${err.message}`, 'error');
+        showToast(`Withdrawal error: ${err.message || 'Unknown error'}`, 'error');
       } finally {
         btnLiquidityWithdrawal.disabled = false;
         btnLiquidityWithdrawal.innerText = 'Withdraw Liquidity';

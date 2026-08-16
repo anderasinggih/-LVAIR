@@ -512,8 +512,17 @@ async function ensureChartData() {
   }
 }
 
+function isNarrowChart() {
+  return typeof window !== 'undefined' && window.innerWidth < 640;
+}
+
+function limitLiveSeries(history) {
+  if (!isNarrowChart() || history.length <= 60) return history;
+  return history.slice(-60);
+}
+
 function buildLiveCandles() {
-  const history = AppState.ammPool.priceHistory || [];
+  const history = limitLiveSeries(AppState.ammPool.priceHistory || []);
   const bucket = 60 * 1000;
   const out = [];
   let cur = null;
@@ -538,13 +547,14 @@ function buildLiveCandles() {
     }
   }
   if (cur) out.push(cur);
+  if (isNarrowChart() && out.length > 60) return out.slice(-60);
   return out;
 }
 
 function buildChartSeries() {
   if (chartTF === 'LIVE') {
     if (chartType === 'candle') return buildLiveCandles();
-    const history = AppState.ammPool.priceHistory || [];
+    const history = limitLiveSeries(AppState.ammPool.priceHistory || []);
     return history.map(h => ({
       time: h.timestamp,
       price: h.price,
@@ -768,10 +778,10 @@ export async function renderChart() {
 
   if (!chartEventsBound && canvas) {
     chartEventsBound = true;
-    canvas.addEventListener('mousemove', (e) => {
+    const updateChartHover = (clientX) => {
       if (!chartPoints.length) return;
       const r = canvas.getBoundingClientRect();
-      const x = e.clientX - r.left;
+      const x = clientX - r.left;
       let best = 0;
       let bestD = Infinity;
       for (let i = 0; i < chartPoints.length; i++) {
@@ -783,10 +793,28 @@ export async function renderChart() {
       }
       lastHoverIndex = best;
       renderChart();
-    });
-    canvas.addEventListener('mouseleave', () => {
+    };
+    const clearChartHover = () => {
+      if (lastHoverIndex === -1) return;
       lastHoverIndex = -1;
       renderChart();
+    };
+
+    canvas.addEventListener('mousemove', (e) => updateChartHover(e.clientX));
+    canvas.addEventListener('pointermove', (e) => updateChartHover(e.clientX));
+    canvas.addEventListener('mouseleave', clearChartHover);
+    canvas.addEventListener('pointerleave', clearChartHover);
+    canvas.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      if (t) updateChartHover(t.clientX);
+    }, { passive: true });
+    canvas.addEventListener('touchmove', (e) => {
+      const t = e.touches[0];
+      if (t) updateChartHover(t.clientX);
+    }, { passive: true });
+
+    document.addEventListener('click', (e) => {
+      if (canvas && e.target !== canvas && !canvas.contains(e.target)) clearChartHover();
     });
   }
 }

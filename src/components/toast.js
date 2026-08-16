@@ -6,8 +6,16 @@ const ICONS = {
 };
 
 export function showToast(message, type = 'success') {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.setAttribute(
+      'style',
+      'position: fixed; top: 20px; right: 20px; z-index: 2147483647; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: min(92vw, 420px);'
+    );
+    document.body.appendChild(container);
+  }
   const icon = ICONS[type] || ICONS.info;
   const toast = document.createElement('div');
   toast.className = `toast-msg toast-${ICONS[type] ? type : 'info'}`;
