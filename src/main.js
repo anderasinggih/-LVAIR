@@ -8,7 +8,7 @@ import { setupRouter, navigateTo, ROUTES } from './router.js';
 import { setupWalletModal, restoreSavedWallet, setConnectedWallet, disconnectWallet } from './components/wallet-modal.js';
 
 import { setupLandingPage, renderLandingStats } from './pages/landing.js';
-import { setupSwapPage, renderRecentTrades, renderChart } from './pages/swap.js';
+import { setupSwapPage, renderRecentTrades, renderChart, renderHistory } from './pages/swap.js';
 import { setupTransferPage } from './pages/transfer.js';
 import { setupAirdropPage } from './pages/airdrop.js';
 
@@ -43,8 +43,10 @@ async function initApp() {
       window.ethereum.on('accountsChanged', (accounts) => {
         if (accounts && accounts.length > 0) {
           setConnectedWallet(accounts[0], 'MetaMask');
+          renderHistory();
         } else {
           disconnectWallet();
+          renderHistory();
         }
       });
     }
@@ -61,6 +63,14 @@ function setupTabsNavigation() {
       if (target === 'trading') navigateTo(ROUTES.SWAP);
       else if (target === 'transfer') navigateTo(ROUTES.TRANSFER);
       else if (target === 'airdrop') navigateTo(ROUTES.AIRDROP);
+      else if (target === 'history') {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        const histTab = document.getElementById('tab-history');
+        if (histTab) histTab.style.display = 'block';
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        tab.classList.add('active');
+        renderHistory();
+      }
     });
   });
 

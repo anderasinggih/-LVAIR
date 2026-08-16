@@ -5,6 +5,7 @@ import {
 import { AppState, updateUI } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
+import { addToHistory } from './swap.js';
 
 export function setupAirdropPage() {
   if (!btnClaimAirdrop) return;
@@ -22,6 +23,17 @@ export function setupAirdropPage() {
 
     try {
       await blockchain.claimAirdrop(currentConnectedAddress);
+      addToHistory({
+        type: 'airdrop',
+        subtype: 'CLAIM',
+        amountIn: 0,
+        amountOut: 250,
+        tokenIn: '—',
+        tokenOut: 'LVAIR',
+        price: null,
+        blockIndex: blockchain.chain.length,
+        timestamp: Date.now()
+      });
       showToast(`250 $LVAIR successfully claimed!`);
       updateUI();
       renderLandingStats();

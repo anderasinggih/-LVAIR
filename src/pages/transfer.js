@@ -9,6 +9,7 @@ import { AppState, updateUI } from '../state.js';
 import { Transaction } from '../core/block.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
+import { addToHistory } from './swap.js';
 
 export function setupTransferPage() {
   if (!btnSendTransfer) return;
@@ -50,6 +51,17 @@ export function setupTransferPage() {
       await blockchain.minePendingTransactions(currentConnectedAddress);
 
       showToast(`Transferred ${amount} ${token} on-chain!`);
+      addToHistory({
+        type: 'transfer',
+        subtype: 'P2P_TRANSFER',
+        amountIn: amount,
+        amountOut: amount,
+        tokenIn: token,
+        tokenOut: token,
+        price: null,
+        blockIndex: blockchain.chain.length,
+        timestamp: Date.now()
+      });
       transferRecipientInput.value = '';
       updateUI();
       renderLandingStats();

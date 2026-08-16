@@ -51,6 +51,12 @@ export function disconnectWallet() {
   updateUI();
 }
 
+function sanitizeText(str) {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(String(str)));
+  return div.innerHTML;
+}
+
 function openAccountDetailsModal() {
   let accModal = document.getElementById('account-details-modal');
   if (!accModal) {
@@ -62,9 +68,12 @@ function openAccountDetailsModal() {
 
   const addr = AppState.currentConnectedAddress || '';
   const prov = AppState.currentConnectedProvider || 'Web3 Wallet';
-
   const userAir = AppState.blockchain && addr ? AppState.blockchain.getBalanceOfAddress(addr, 'LVAIR') : 0;
   const userUsdt = AppState.blockchain && addr ? AppState.blockchain.getBalanceOfAddress(addr, 'USDT') : 0;
+  const shortAddr = addr ? `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}` : '';
+
+  const safeAddr = sanitizeText(addr);
+  const safeProv = sanitizeText(prov);
 
   accModal.innerHTML = `
     <div class="modal-card">
@@ -74,15 +83,14 @@ function openAccountDetailsModal() {
       </div>
 
       <div style="background-color: #121212; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 14px;">
-        <div style="font-size: 0.72rem; color: #60a5fa; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Provider: ${prov}</div>
-        <div style="font-family: var(--font-mono); font-size: 0.84rem; color: #ffffff; word-break: break-all; margin-bottom: 12px;">${addr}</div>
+        <div style="font-size: 0.72rem; color: #60a5fa; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Provider: ${safeProv}</div>
+        <div style="font-family: var(--font-mono); font-size: 0.84rem; color: #ffffff; word-break: break-all; margin-bottom: 12px;">${safeAddr}</div>
         <button id="btn-copy-address" class="btn-secondary" style="width: 100%; padding: 7px; font-size: 0.8rem;">
           Copy Address
         </button>
       </div>
 
-      <!-- Live Wallet Balance Breakdown -->
-      <div style="background-color: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 18px;">
+      <div style="background-color: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
         <div style="font-size: 0.72rem; color: #71717a; text-transform: uppercase; font-weight: 700; margin-bottom: 10px;">Token Balances</div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <span style="font-weight: 600; font-size: 0.88rem;">$LVAIR Balance</span>
@@ -91,6 +99,17 @@ function openAccountDetailsModal() {
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-weight: 600; font-size: 0.88rem;">USDT Balance</span>
           <span style="font-family: var(--font-mono); font-weight: 700; color: #10b981; font-size: 0.95rem;">$${userUsdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+      </div>
+
+      <div style="background-color: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; font-size: 0.78rem; color: var(--text-tertiary);">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span>Network</span>
+          <span style="color: #10b981; font-weight: 600;">LVAIR Mainnet</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Status</span>
+          <span style="color: #10b981; font-weight: 600;">● Active</span>
         </div>
       </div>
 

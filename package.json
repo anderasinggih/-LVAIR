@@ -10,7 +10,10 @@
     "test:core": "node src/core/test-runner.js"
   },
   "dependencies": {
+    "@solana/spl-token": "^0.4.15",
+    "@solana/web3.js": "^1.98.4",
     "bip39": "^3.1.0",
+    "bs58": "^6.0.0",
     "classic-level": "^3.0.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
