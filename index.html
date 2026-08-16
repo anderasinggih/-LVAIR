@@ -332,8 +332,10 @@
                 <button class="chart-btn" data-tf="ALL">ALL</button>
               </div>
               <div style="display: flex; gap: 4px; margin-left: auto;">
-                <button class="chart-btn active" data-type="line">Line</button>
-                <button class="chart-btn" data-type="candle">Candles</button>
+                <button id="chart-type-toggle" class="chart-btn active" title="Toggle Line / Candles" style="display: flex; align-items: center; gap: 6px;">
+                  <svg id="chart-type-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"></polyline></svg>
+                  <span id="chart-type-label">Line</span>
+                </button>
               </div>
             </div>
 

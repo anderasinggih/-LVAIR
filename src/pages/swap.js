@@ -445,7 +445,7 @@ function formatChartTime(ts) {
 
 function formatChartAxisTime(ts) {
   const d = new Date(ts);
-  if (chartTF === '1D') {
+  if (chartTF === '1D' || (chartTF === 'LIVE' && chartType === 'candle')) {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -464,15 +464,27 @@ function setupChartToolbar() {
       renderChart();
     });
   });
-  document.querySelectorAll('.chart-btn[data-type]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.getAttribute('data-type') === chartType) return;
-      chartType = btn.getAttribute('data-type');
-      document.querySelectorAll('.chart-btn[data-type]').forEach(b => b.classList.toggle('active', b === btn));
+  const typeToggle = document.getElementById('chart-type-toggle');
+  if (typeToggle) {
+    typeToggle.addEventListener('click', () => {
+      chartType = chartType === 'line' ? 'candle' : 'line';
+      updateChartTypeToggle();
       lastHoverIndex = -1;
       renderChart();
     });
-  });
+    updateChartTypeToggle();
+  }
+}
+
+function updateChartTypeToggle() {
+  const icon = document.getElementById('chart-type-icon');
+  const label = document.getElementById('chart-type-label');
+  if (label) label.innerText = chartType === 'line' ? 'Line' : 'Candles';
+  if (icon) {
+    icon.innerHTML = chartType === 'line'
+      ? '<polyline points="3 17 9 11 13 15 21 7"></polyline>'
+      : '<line x1="5.5" y1="4" x2="5.5" y2="20"></line><rect x="3" y="7" width="5" height="10" rx="1"></rect><line x1="12" y1="2" x2="12" y2="22"></line><rect x="9.5" y="5" width="5" height="14" rx="1"></rect><line x1="18.5" y1="6" x2="18.5" y2="18"></line><rect x="16" y="9" width="5" height="6" rx="1"></rect>';
+  }
 }
 
 async function ensureChartData() {
@@ -493,8 +505,37 @@ async function ensureChartData() {
   }
 }
 
+function buildLiveCandles() {
+  const history = AppState.ammPool.priceHistory || [];
+  const bucket = 5 * 60 * 1000;
+  const out = [];
+  let cur = null;
+  for (const h of history) {
+    const b = Math.floor((h.timestamp || Date.now()) / bucket) * bucket;
+    if (!cur || cur.time !== b) {
+      if (cur) out.push(cur);
+      cur = {
+        time: b,
+        open: h.price,
+        high: h.price,
+        low: h.price,
+        close: h.price,
+        lvair: h.lvairReserve,
+        usdt: h.usdtReserve
+      };
+    } else {
+      cur.high = Math.max(cur.high, h.price);
+      cur.low = Math.min(cur.low, h.price);
+      cur.close = h.price;
+    }
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
 function buildChartSeries() {
   if (chartTF === 'LIVE') {
+    if (chartType === 'candle') return buildLiveCandles();
     const history = AppState.ammPool.priceHistory || [];
     return history.map(h => ({
       time: h.timestamp,
@@ -550,7 +591,7 @@ function updateChartHeader() {
   if (changeEl) {
     const series = buildChartSeries();
     if (series.length >= 2) {
-      const first = series[0].close;
+      const first = series[0].open;
       const last = series[series.length - 1].close;
       const diff = last - first;
       const pct = first > 0 ? (diff / first) * 100 : 0;
@@ -600,7 +641,7 @@ export async function renderChart() {
   const plotH = H - AXIS_H;
   ctx.clearRect(0, 0, W, H);
 
-  const isCandle = chartTF !== 'LIVE' && chartType === 'candle';
+  const isCandle = chartType === 'candle';
   const lows = series.map(p => p.low);
   const highs = series.map(p => p.high);
   const minP = Math.min(...lows) * 0.99;
@@ -615,16 +656,20 @@ export async function renderChart() {
   ctx.lineWidth = 1;
   ctx.font = '10px JetBrains Mono, monospace';
   ctx.textBaseline = 'middle';
+  ctx.textAlign = 'right';
   for (let i = 0; i < 5; i++) {
     const y = (plotH / 4) * i;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
+    if (i < 4) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    }
     const priceAtY = maxP - (range * i) / 4;
     ctx.fillStyle = 'rgba(148, 163, 184, 0.55)';
-    ctx.fillText(`$${priceAtY.toFixed(4)}`, 6, y);
+    ctx.fillText(`$${priceAtY.toFixed(4)}`, W - 6, i === 4 ? y - 6 : y);
   }
+  ctx.textAlign = 'left';
 
   if (!isCandle) {
     ctx.beginPath();
