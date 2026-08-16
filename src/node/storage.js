@@ -1,0 +1,86 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { ClassicLevel } from 'classic-level';
+
+/**
+ * Native Node Database Storage Engine (Bitcoin / Ethereum Geth Style)
+ * 1. blocks/blk00000.dat -> Raw Binary/JSON Append-Only Block Ledger
+ * 2. chainstate/ -> Google LevelDB Key-Value State Database (Addresses, Nonces, Balances)
+ * 3. keystore/ -> Encrypted Wallets
+ */
+export class NodeStorageEngine {
+  constructor(baseDir = '/Volumes/LVNPC/Blockchain/data') {
+    this.baseDir = baseDir;
+    this.blocksDir = path.join(baseDir, 'blocks');
+    this.chainstateDir = path.join(baseDir, 'chainstate');
+    this.keystoreDir = path.join(baseDir, 'keystore');
+    this.datFilePath = path.join(this.blocksDir, 'blk00000.dat');
+
+    this.initDirectories();
+    // Initialize Google LevelDB Database
+    this.db = new ClassicLevel(this.chainstateDir, { valueEncoding: 'json' });
+  }
+
+  initDirectories() {
+    if (!fs.existsSync(this.baseDir)) fs.mkdirSync(this.baseDir, { recursive: true });
+    if (!fs.existsSync(this.blocksDir)) fs.mkdirSync(this.blocksDir, { recursive: true });
+    if (!fs.existsSync(this.keystoreDir)) fs.mkdirSync(this.keystoreDir, { recursive: true });
+    if (!fs.existsSync(this.datFilePath)) fs.writeFileSync(this.datFilePath, '', 'utf8');
+  }
+
+  /**
+   * Append raw block to blk00000.dat file
+   */
+  async appendRawBlock(block) {
+    const rawLine = JSON.stringify(block) + '\n';
+    fs.appendFileSync(this.datFilePath, rawLine, 'utf8');
+
+    // Index block by Height and Hash in LevelDB
+    await this.db.put(`block:height:${block.index}`, block.hash);
+    await this.db.put(`block:hash:${block.hash}`, block);
+    await this.db.put('chain:latest_height', block.index);
+    await this.db.put('chain:latest_hash', block.hash);
+
+    // Update account balances in LevelDB Chainstate
+    for (const tx of block.transactions) {
+      await this.db.put(`tx:${tx.txHash}`, { ...tx, blockHeight: block.index, blockHash: block.hash });
+    }
+  }
+
+  /**
+   * Read all blocks from the raw blk00000.dat file
+   */
+  async readAllRawBlocks() {
+    if (!fs.existsSync(this.datFilePath)) return [];
+    const content = fs.readFileSync(this.datFilePath, 'utf8').trim();
+    if (!content) return [];
+    const lines = content.split('\n');
+    return lines.map(line => JSON.parse(line));
+  }
+
+  /**
+   * Put key-value state to LevelDB
+   */
+  async putState(key, value) {
+    await this.db.put(`state:${key}`, value);
+  }
+
+  /**
+   * Get key-value state from LevelDB
+   */
+  async getState(key) {
+    try {
+      return await this.db.get(`state:${key}`);
+    } catch (e) {
+      if (e.code === 'LEVEL_NOT_FOUND') return null;
+      throw e;
+    }
+  }
+
+  /**
+   * Close database gracefully
+   */
+  async close() {
+    await this.db.close();
+  }
+}

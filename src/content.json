@@ -1,0 +1,99 @@
+{
+  "project": {
+    "name": "LVAIR Protocol",
+    "symbol": "LVAIR",
+    "pair": "LVAIR / USDT",
+    "headline": "Empowering Next-Gen Decentralized Trading & Liquidity.",
+    "subheadline": "The native digital currency and utility asset powering the LVAIR decentralized ecosystem. Trade seamlessly with low fees, deep automated liquidity, and institutional-grade cryptographic security.",
+    "badge": "Official Mainnet Launch • Verified Liquidity",
+    "stats": {
+      "initialPrice": "$0.2500",
+      "totalSupply": "10,000,000 $LVAIR",
+      "initialLiquidity": "100k / $25k",
+      "volume24h": "$142,500+"
+    }
+  },
+  "valueProps": [
+    {
+      "title": "Instant Non-Custodial Swaps",
+      "description": "No deposits, no lockups, and no middlemen. Swap directly between $LVAIR and USDT from your own personal wallet in one click."
+    },
+    {
+      "title": "Deep Automated Liquidity",
+      "description": "Constant-product mathematical pools guarantee non-stop liquidity, protecting market participants from unfair price manipulation."
+    },
+    {
+      "title": "Universal Wallet Support",
+      "description": "Seamlessly connects with MetaMask, Phantom, Binance Web3 Wallet, Coinbase Wallet, and Trust Wallet with zero setup hassle."
+    }
+  ],
+  "tokenomics": [
+    {
+      "label": "Trading Pair",
+      "value": "$LVAIR / USDT",
+      "description": "Primary DEX liquidity pair active 24/7 with zero deposit fees and instant blockchain confirmations."
+    },
+    {
+      "label": "Total Hard-Cap Supply",
+      "value": "10,000,000 $LVAIR",
+      "description": "100% fixed supply. No mint function, no inflationary dilution, and no hidden developer tax."
+    },
+    {
+      "label": "Initial Pool Liquidity",
+      "value": "100,000 $LVAIR + $25k USDT",
+      "description": "Permanent genesis liquidity locked in the pool to guarantee deep execution for early traders."
+    },
+    {
+      "label": "Community Airdrop (20%)",
+      "value": "2,000,000 $LVAIR",
+      "isHighlight": true,
+      "description": "250 $LVAIR free allocation for eligible wallets to foster organic community adoption."
+    }
+  ],
+  "roadmap": [
+    {
+      "phase": "Phase 1 • Q1 2026 (Completed)",
+      "title": "Genesis Launch & Pool Seeding",
+      "status": "completed",
+      "items": [
+        "Smart Contract & Protocol Deployment",
+        "$LVAIR / USDT AMM Pool Activation",
+        "Community Airdrop Launch"
+      ]
+    },
+    {
+      "phase": "Phase 2 • Q2 2026 (Current)",
+      "title": "Ecosystem & DEX Expansion",
+      "status": "current",
+      "items": [
+        "Multi-wallet connector integration",
+        "CoinMarketCap & CoinGecko listing review",
+        "Liquidity staking reward program"
+      ]
+    },
+    {
+      "phase": "Phase 3 • Q3-Q4 2026 (Upcoming)",
+      "title": "Cross-Chain & Institutional Rails",
+      "status": "upcoming",
+      "items": [
+        "Multi-chain bridging (EVM & Solana)",
+        "Institutional market making partnerships",
+        "Decentralized DAO governance deployment"
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do I buy or swap $LVAIR?",
+      "answer": "Click 'Launch DEX App', connect your Web3 wallet (MetaMask, Phantom, Binance, etc.), enter the amount of USDT you wish to swap, and confirm the transaction. Your $LVAIR tokens will appear in your wallet immediately."
+    },
+    {
+      "question": "Who controls my tokens and wallet?",
+      "answer": "You do. LVAIR Protocol is 100% non-custodial. We never store, manage, or have access to your private keys or funds."
+    },
+    {
+      "question": "How can I claim the 250 $LVAIR Airdrop?",
+      "answer": "Open the DEX App, switch to the 'Airdrop' tab with your connected wallet, and click 'Claim 250 $LVAIR'. Each unique wallet address is entitled to one claim during the genesis distribution phase."
+    }
+  ]
+}
