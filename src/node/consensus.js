@@ -1,6 +1,40 @@
 import { CryptoEngine } from '../core/crypto.js';
 
 export const GENESIS_RESERVES = { lvair: 100000, usdt: 25000 };
+export const GENESIS_SUPPLY = 10_000_000;
+export const MAX_SUPPLY = 20_000_000;
+export const MINING_REWARD_INITIAL = 10;
+export const MINING_HALVING_SUPPLY_STEP = 0.5;
+
+export function computeTotalSupply(blocks) {
+  let supply = 0;
+  for (const block of blocks || []) {
+    for (const tx of block.transactions || []) {
+      if (tx.token !== 'LVAIR') continue;
+      if (tx.type === 'COINBASE_GENESIS' || tx.type === 'COINBASE_REWARD') {
+        supply += Number(tx.amount) || 0;
+      }
+    }
+  }
+  return supply;
+}
+
+export function getMiningReward(blocks) {
+  const currentSupply = computeTotalSupply(blocks);
+  const remaining = MAX_SUPPLY - currentSupply;
+  if (remaining <= 0) return 0;
+
+  const mined = Math.max(0, currentSupply - GENESIS_SUPPLY);
+  const budget = MAX_SUPPLY - GENESIS_SUPPLY;
+
+  let reward = MINING_REWARD_INITIAL;
+  let threshold = budget * MINING_HALVING_SUPPLY_STEP;
+  while (reward > 0.000001 && mined >= threshold) {
+    reward /= 2;
+    threshold = threshold + (budget - threshold) / 2;
+  }
+  return Math.min(reward, remaining);
+}
 
 export function createEmptyPool() {
   return {
@@ -87,7 +121,7 @@ export function rebuildClaimedAddresses(blocks) {
   return claimed;
 }
 
-export async function validateBlock(block, prevBlock) {
+export async function validateBlock(block, prevBlock, context = {}) {
   const target = Array((block.difficulty || 2) + 1).join('0');
   if (!block.hash || !block.hash.startsWith(target)) return 'Proof-of-work below network difficulty';
   if (block.merkleRoot) {
@@ -101,6 +135,18 @@ export async function validateBlock(block, prevBlock) {
     if (block.previousHash !== prevBlock.hash) return 'Parent hash linkage broken';
     if (block.index !== prevBlock.index + 1) return 'Non-sequential block index';
   }
+  if (context.chain) {
+    const supplyBefore = computeTotalSupply(context.chain);
+    const blockMinted = (block.transactions || []).reduce((sum, tx) => {
+      if (tx.token === 'LVAIR' && (tx.type === 'COINBASE_GENESIS' || tx.type === 'COINBASE_REWARD')) {
+        return sum + (Number(tx.amount) || 0);
+      }
+      return sum;
+    }, 0);
+    if (supplyBefore + blockMinted > MAX_SUPPLY) {
+      return `Supply cap exceeded: ${supplyBefore} + ${blockMinted} > ${MAX_SUPPLY}`;
+    }
+  }
   return null;
 }
 
@@ -108,7 +154,8 @@ export async function chainIsValid(blocks) {
   if (!blocks || !blocks.length) return { valid: false, error: 'Empty chain' };
   for (let i = 0; i < blocks.length; i++) {
     const prev = i > 0 ? blocks[i - 1] : null;
-    const err = await validateBlock(blocks[i], prev);
+    const context = { chain: blocks.slice(0, i) };
+    const err = await validateBlock(blocks[i], prev, context);
     if (err) return { valid: false, error: `Block #${blocks[i].index}: ${err}` };
   }
   return { valid: true };

@@ -65,6 +65,7 @@ export async function refreshNodeState() {
       const cfg = await cfgRes.json();
       if (cfg.airdropClaimAmount) AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
       if (cfg.miningReward) AppState.blockchain.miningReward = cfg.miningReward;
+      if (cfg.maxSupply) AppState.ammPool.maxSupply = cfg.maxSupply;
     }
 
     if (ammRes && ammRes.ok) {

@@ -649,7 +649,12 @@ function updateChartHeader() {
   const supplyEl = document.getElementById('chart-supply');
   if (capEl) capEl.innerText = formatUsdCompact(ammPool.marketCap);
   if (volEl) volEl.innerText = formatUsdCompact(ammPool.volume24h);
-  if (supplyEl) supplyEl.innerText = `${formatSupplyCompact(ammPool.circulatingSupply)} LVAIR`;
+  if (supplyEl) {
+    const maxSupply = ammPool.maxSupply;
+    supplyEl.innerText = maxSupply
+      ? `${formatSupplyCompact(ammPool.circulatingSupply)} / ${formatSupplyCompact(maxSupply)} LVAIR`
+      : `${formatSupplyCompact(ammPool.circulatingSupply)} LVAIR`;
+  }
 
   const oracleBar = document.getElementById('oracle-bar');
   const oracle = ammPool.oracle;

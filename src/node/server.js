@@ -12,7 +12,8 @@ import { Transaction, Block } from '../core/block.js';
 import { P2PNetwork } from './p2p.js';
 import {
   rebuildPoolState, rebuildClaimedAddresses, applyBlockToPool,
-  validateBlock, chainIsValid, sameChain
+  validateBlock, chainIsValid, sameChain,
+  computeTotalSupply, getMiningReward, MAX_SUPPLY
 } from './consensus.js';
 import { buildSignableMessage, verifySignature } from '../core/verify.js';
 import { oracle } from './oracle.js';
@@ -187,12 +188,17 @@ async function startFullNode() {
   async function minePending(minerAddress) {
     return withLock(async () => {
       if (!blockchain.pendingTransactions.length) return null;
+      const dynamicReward = getMiningReward(blockchain.chain);
+      if (dynamicReward !== blockchain.miningReward) {
+        console.log(`[EMISSION] Mining reward adjusted: ${blockchain.miningReward} -> ${dynamicReward} (supply ${computeTotalSupply(blockchain.chain).toLocaleString()}/${MAX_SUPPLY.toLocaleString()})`);
+        blockchain.miningReward = dynamicReward;
+      }
       const block = await blockchain.minePendingTransactions(minerAddress);
       await storage.appendRawBlock(block);
       await applyBlockEffects(block);
       seenBlocks.add(block.hash);
       p2p.broadcastBlock(block);
-      logEvent('BLOCK_MINED', 'tag-block', `Block #${block.index} mined with ${block.transactions.length} transactions`, { block: block.index, txs: block.transactions.length });
+      logEvent('BLOCK_MINED', 'tag-block', `Block #${block.index} mined with ${block.transactions.length} transactions`, { block: block.index, txs: block.transactions.length, supply: computeTotalSupply(blockchain.chain) });
       return block;
     });
   }
@@ -220,7 +226,7 @@ async function startFullNode() {
         if (seenBlocks.has(block.hash)) return;
         if (blockchain.chain.some(b => b.hash === block.hash)) { seenBlocks.add(block.hash); return; }
 
-        const err = await validateBlock(block, blockchain.getLatestBlock());
+        const err = await validateBlock(block, blockchain.getLatestBlock(), { chain: blockchain.chain });
         if (err) {
           logEvent('BLOCK_REJECTED', 'tag-block', `Block #${block.index} rejected (${err}); requesting chain sync`);
           p2p.broadcast({ type: 'getchain' });
@@ -425,6 +431,7 @@ async function startFullNode() {
   }
 
   app.get('/api/config', (req, res) => {
+    const totalSupply = computeTotalSupply(blockchain.chain);
     res.json({
       success: true,
       network: 'LVAIR Mainnet L1',
@@ -432,6 +439,9 @@ async function startFullNode() {
       miningReward: blockchain.miningReward,
       difficulty: blockchain.difficulty,
       genesisReserves: { lvair: 100000, usdt: 25000 },
+      maxSupply: MAX_SUPPLY,
+      totalSupply,
+      supplyRemaining: Math.max(0, MAX_SUPPLY - totalSupply),
       claimedCount: blockchain.claimedAddresses.size,
       poolReserves: {
         lvair: ammPool.lvairReserve,
@@ -769,6 +779,7 @@ async function startFullNode() {
 
   app.get('/api/node/status', (req, res) => {
     const tip = blockchain.getLatestBlock();
+    const totalSupply = computeTotalSupply(blockchain.chain);
     res.json({
       network: 'LVAIR Mainnet L1',
       version: '1.2.0',
@@ -781,6 +792,10 @@ async function startFullNode() {
       airdropClaimAmount: blockchain.airdropClaimAmount,
       botRunning: botEngine ? botEngine.isRunning : false,
       mempoolSize: blockchain.pendingTransactions.length,
+      maxSupply: MAX_SUPPLY,
+      totalSupply,
+      supplyRemaining: Math.max(0, MAX_SUPPLY - totalSupply),
+      miningReward: blockchain.miningReward,
       reserves: {
         lvair: ammPool.lvairReserve,
         usdt: ammPool.usdtReserve
