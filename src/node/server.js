@@ -101,7 +101,21 @@ async function startFullNode() {
   blockchain.airdropClaimAmount = AIRDROP_AMOUNT;
   blockchain.miningReward = MINING_REWARD;
 
-  const existingBlocks = await storage.readAllRawBlocks();
+  let existingBlocks = await storage.readAllRawBlocks();
+  if (existingBlocks.length === 0) {
+    const recovered = await storage.readBlocksFromChainstate();
+    if (recovered.length > 0) {
+      const recoveredBlocks = recovered.map(b => Block.fromJSON(b));
+      const check = await chainIsValid(recoveredBlocks);
+      if (check.valid) {
+        await storage.writeRawBlocks(recovered);
+        console.log(`Recovered ${recovered.length} blocks from LevelDB chainstate -> blk00000.dat ledger restored`);
+        existingBlocks = recovered;
+      } else {
+        console.log(`Chainstate recovery skipped (${check.error}); starting fresh genesis`);
+      }
+    }
+  }
   if (existingBlocks.length > 0) {
     blockchain.chain = existingBlocks.map(b => Block.fromJSON(b));
     console.log(`Loaded ${existingBlocks.length} blocks from physical LevelDB & blk00000.dat ledger`);

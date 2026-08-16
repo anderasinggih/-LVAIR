@@ -88,6 +88,51 @@ export class NodeStorageEngine {
   }
 
   /**
+   * Rebuild blocks from the LevelDB chainstate as a recovery fallback when
+   * blk00000.dat is missing or empty. Follows previousHash links starting from
+   * the highest indexed block so orphaned blocks (e.g. a freshly regenerated
+   * genesis) never mix into the recovered chain.
+   */
+  async readBlocksFromChainstate() {
+    const byHeight = [];
+    const byHash = new Map();
+    let height = 0;
+    while (true) {
+      let hash;
+      try {
+        hash = await this.db.get(`block:height:${height}`);
+      } catch (e) {
+        if (e.code === 'LEVEL_NOT_FOUND') break;
+        throw e;
+      }
+      if (!hash) break;
+      try {
+        const block = await this.db.get(`block:hash:${hash}`);
+        if (block) {
+          byHeight.push(block);
+          byHash.set(hash, block);
+        }
+      } catch (e) {
+        if (e.code !== 'LEVEL_NOT_FOUND') throw e;
+      }
+      height++;
+    }
+    if (byHeight.length === 0) return [];
+
+    const chain = [];
+    let cur = byHeight[byHeight.length - 1];
+    let guard = 0;
+    while (cur && guard < 1000000) {
+      chain.unshift(cur);
+      guard++;
+      const prev = byHash.get(cur.previousHash);
+      if (!prev) break;
+      cur = prev;
+    }
+    return chain;
+  }
+
+  /**
    * Put key-value state to LevelDB
    */
   async putState(key, value) {
