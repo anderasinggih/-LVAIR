@@ -35,19 +35,8 @@ async function fetchNodeTelemetry() {
 
     if (resStatus && resStatus.ok) {
       const status = await resStatus.json();
-      
-      const elHeight = document.getElementById('mon-block-height');
-      const elPeers = document.getElementById('mon-p2p-peers');
-      const elPrice = document.getElementById('mon-spot-price');
-      const elQuota = document.getElementById('mon-airdrop-quota');
-      const elClaimed = document.getElementById('mon-claimed-count');
       const elBadge = document.getElementById('node-status-badge');
 
-      if (elHeight) elHeight.innerText = `#${status.blockHeight || 0}`;
-      if (elPeers) elPeers.innerText = `${status.p2pPeers || 0} Connected`;
-      if (elPrice) elPrice.innerText = `$${(status.spotPrice || 0.25).toFixed(4)}`;
-      if (elQuota) elQuota.innerText = `${status.airdropClaimAmount || 250} LVAIR`;
-      if (elClaimed) elClaimed.innerText = `${status.claimedWallets || 0} Wallets`;
       if (elBadge) {
         elBadge.innerText = 'Node Online';
         elBadge.className = 'badge badge-success';

@@ -4,6 +4,7 @@ import { showToast } from './components/toast.js';
 import { getApiBaseUrl } from './api.js';
 
 let lastBotRunning = null;
+let lastP2PPeers = 0;
 
 function seedMirrors() {
   AppState.blockchain = {
@@ -38,6 +39,7 @@ async function refreshOpsState() {
       AppState.blockchain.airdropClaimAmount = status.airdropClaimAmount || 250;
       AppState.blockchain.miningReward = 10;
       lastBotRunning = !!status.botRunning;
+      lastP2PPeers = status.p2pPeers || 0;
     }
 
     if (cfgRes && cfgRes.ok) {
@@ -300,6 +302,13 @@ function renderAdminDashboard() {
 
   if (adminTotalClaims) adminTotalClaims.innerText = blockchain && blockchain.claimedAddresses ? `${blockchain.claimedAddresses.size} Wallets` : '0 Wallets';
   if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${blockchain.chain.length} Blocks` : '#1 Blocks';
+
+  const opsQuota = document.getElementById('ops-airdrop-quota');
+  const opsPeers = document.getElementById('ops-p2p-peers');
+  const opsPrice = document.getElementById('ops-spot-price');
+  if (opsQuota) opsQuota.innerText = `${(blockchain && blockchain.airdropClaimAmount) || 250} LVAIR`;
+  if (opsPeers) opsPeers.innerText = `${lastP2PPeers || 0} Connected`;
+  if (opsPrice && ammPool) opsPrice.innerText = `$${ammPool.getCurrentPrice().toFixed(4)}`;
 
   if (blockchain) {
     const quotaInput = document.getElementById('admin-airdrop-amount-input');
