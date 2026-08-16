@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LVAIR Protocol Ops & Governance Portal</title>
+    <title>LVAIR Protocol • Protocol Ops & Governance Console</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -18,7 +18,7 @@
     <div id="wallet-modal" class="modal-overlay" style="display: none;">
       <div class="modal-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 1.15rem; font-weight: 800;">Authenticate Owner Wallet</h3>
+          <h3 style="font-size: 1.15rem; font-weight: 800;">Authenticate Owner Key</h3>
           <button id="btn-close-modal" style="background: none; border: none; color: #71717a; font-size: 1.4rem; cursor: pointer;">✕</button>
         </div>
         <p style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 20px;">
@@ -43,12 +43,12 @@
       <!-- Top Bar -->
       <header class="app-header" style="margin-bottom: 32px;">
         <div class="brand-section">
-          <div class="logo-badge" style="background-color: #ef4444;">OPS PORTAL</div>
-          <div class="brand-title">LVAIR Protocol Governance</div>
+          <div class="logo-badge" style="background-color: #2563eb;">OPS CONSOLE</div>
+          <div class="brand-title">LVAIR Protocol Ops & Governance</div>
         </div>
         <div style="display: flex; align-items: center; gap: 14px;">
           <div style="font-size: 0.8rem; color: #71717a;">
-            Owner: <span id="admin-owner-display" style="font-family: var(--font-mono); color: #ffffff;">Checking...</span>
+            Protocol Owner: <span id="admin-owner-display" style="font-family: var(--font-mono); color: #ffffff;">Checking...</span>
           </div>
           <button id="btn-connect-wallet" class="btn-primary" style="padding: 8px 18px; font-size: 0.85rem; font-family: var(--font-mono);">
             Connect Wallet
@@ -59,23 +59,23 @@
       <!-- Auth Shield Gate -->
       <div id="admin-auth-card" class="panel" style="max-width: 520px; margin: 80px auto; text-align: center; padding: 40px 30px;">
         <div style="font-size: 2.5rem; margin-bottom: 12px;">🛡️</div>
-        <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 8px;">Protocol Owner Signature Required</h2>
+        <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 8px;">Protocol Owner Authorization Required</h2>
         <p style="color: #a1a1aa; font-size: 0.88rem; line-height: 1.6; margin-bottom: 24px;">
-          This portal is cryptographically restricted. Connect the Protocol Owner wallet and sign the authorization challenge.
+          This console is cryptographically restricted. Connect the Protocol Owner wallet and verify your signature challenge.
         </p>
         <button id="btn-claim-protocol-owner" class="btn-primary" style="width: 100%; padding: 14px;">
           Verify Owner Signature →
         </button>
       </div>
 
-      <!-- Main Admin Dashboard Panel -->
+      <!-- Main Ops Dashboard Panel -->
       <div id="admin-controls-panel" style="display: none;">
         
         <!-- Live System Metric Summary -->
         <div class="stat-grid" style="margin-bottom: 28px;">
           <div class="stat-box">
             <div class="stat-label">Market Maker Engine</div>
-            <div style="margin-top: 6px;"><span id="admin-bot-status" class="badge badge-success">Running (4000ms Loop)</span></div>
+            <div style="margin-top: 6px;"><span id="admin-bot-status" class="badge badge-success">Running (4000ms Interval)</span></div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Total Airdrop Claims</div>
@@ -161,11 +161,11 @@
 
       <!-- Ops Footer -->
       <footer style="margin-top: 60px; text-align: center; color: #71717a; font-size: 0.8rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px;">
-        LVAIR Protocol • Internal Core Governance & Infrastructure
+        LVAIR Protocol • Sovereign Core Governance & Infrastructure
       </footer>
 
     </div>
 
-    <script type="module" src="/src/admin.main.js"></script>
+    <script type="module" src="/src/ops.main.js"></script>
   </body>
 </html>
