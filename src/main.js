@@ -30,10 +30,30 @@ async function initApp() {
 
     try {
       const apiUrl = getApiBaseUrl();
-      const res = await fetch(`${apiUrl}/api/config`);
-      if (res.ok) {
-        const cfg = await res.json();
+      const [resCfg, resBlocks] = await Promise.all([
+        fetch(`${apiUrl}/api/config`),
+        fetch(`${apiUrl}/api/blocks`)
+      ]);
+
+      if (resCfg.ok) {
+        const cfg = await resCfg.json();
         if (cfg.airdropClaimAmount) AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
+      }
+
+      if (resBlocks.ok) {
+        const blocks = await resBlocks.json();
+        if (blocks && blocks.length > 0) {
+          AppState.blockchain.chain = blocks;
+          blocks.forEach(b => {
+            if (b.transactions) {
+              b.transactions.forEach(t => {
+                if (t.type === 'AIRDROP_CLAIM' && t.toAddress) {
+                  AppState.blockchain.claimedAddresses.add(t.toAddress.toLowerCase());
+                }
+              });
+            }
+          });
+        }
       }
     } catch (e) {}
 
@@ -49,14 +69,32 @@ async function initApp() {
     setInterval(async () => {
       try {
         const apiUrl = getApiBaseUrl();
-        const res = await fetch(`${apiUrl}/api/config`);
-        if (res.ok) {
-          const cfg = await res.json();
+        const [resCfg, resBlocks] = await Promise.all([
+          fetch(`${apiUrl}/api/config`),
+          fetch(`${apiUrl}/api/blocks`)
+        ]);
+
+        if (resCfg.ok) {
+          const cfg = await resCfg.json();
           if (cfg.airdropClaimAmount && AppState.blockchain) {
-            if (AppState.blockchain.airdropClaimAmount !== cfg.airdropClaimAmount) {
-              AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
-              updateUI();
-            }
+            AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
+          }
+        }
+
+        if (resBlocks.ok) {
+          const blocks = await resBlocks.json();
+          if (blocks && blocks.length > 0 && AppState.blockchain) {
+            AppState.blockchain.chain = blocks;
+            blocks.forEach(b => {
+              if (b.transactions) {
+                b.transactions.forEach(t => {
+                  if (t.type === 'AIRDROP_CLAIM' && t.toAddress) {
+                    AppState.blockchain.claimedAddresses.add(t.toAddress.toLowerCase());
+                  }
+                });
+              }
+            });
+            updateUI();
           }
         }
       } catch (e) {}

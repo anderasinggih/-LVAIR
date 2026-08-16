@@ -6,6 +6,7 @@ import { AppState, updateUI } from '../state.js';
 import { showToast } from '../components/toast.js';
 import { renderLandingStats } from './landing.js';
 import { addToHistory } from './swap.js';
+import { getApiBaseUrl } from '../api.js';
 
 export function setupAirdropPage() {
   if (!btnClaimAirdrop) return;
@@ -23,7 +24,26 @@ export function setupAirdropPage() {
 
     try {
       const quota = blockchain.airdropClaimAmount || 250;
+      const apiUrl = getApiBaseUrl();
+
+      // Submit to Global Node Server RPC
+      let serverClaimSuccess = false;
+      try {
+        const res = await fetch(`${apiUrl}/api/airdrop/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userAddress: currentConnectedAddress })
+        });
+        if (res.ok) {
+          serverClaimSuccess = true;
+        }
+      } catch (e) {
+        console.warn('Direct server claim offline, executing local consensus fallback');
+      }
+
+      // Execute on client state
       await blockchain.claimAirdrop(currentConnectedAddress);
+
       addToHistory({
         type: 'airdrop',
         subtype: 'CLAIM',
@@ -35,6 +55,7 @@ export function setupAirdropPage() {
         blockIndex: blockchain.chain.length,
         timestamp: Date.now()
       });
+
       showToast(`${quota} $LVAIR successfully claimed!`);
       updateUI();
       renderLandingStats();
