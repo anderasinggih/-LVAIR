@@ -11,6 +11,7 @@ import { setupLandingPage, renderLandingStats } from './pages/landing.js';
 import { setupSwapPage, renderRecentTrades, renderChart, renderHistory } from './pages/swap.js';
 import { setupTransferPage } from './pages/transfer.js';
 import { setupAirdropPage } from './pages/airdrop.js';
+import { getApiBaseUrl } from './api.js';
 
 async function initApp() {
   try {
@@ -28,7 +29,8 @@ async function initApp() {
     await AppState.blockchain.init();
 
     try {
-      const res = await fetch('/api/config');
+      const apiUrl = getApiBaseUrl();
+      const res = await fetch(`${apiUrl}/api/config`);
       if (res.ok) {
         const cfg = await res.json();
         if (cfg.airdropClaimAmount) AppState.blockchain.airdropClaimAmount = cfg.airdropClaimAmount;
@@ -46,7 +48,8 @@ async function initApp() {
 
     setInterval(async () => {
       try {
-        const res = await fetch('/api/config');
+        const apiUrl = getApiBaseUrl();
+        const res = await fetch(`${apiUrl}/api/config`);
         if (res.ok) {
           const cfg = await res.json();
           if (cfg.airdropClaimAmount && AppState.blockchain) {

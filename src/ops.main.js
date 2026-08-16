@@ -4,6 +4,7 @@ import { TradingBotEngine } from './core/market-maker.js';
 import { AppState, updateUI, PROTOCOL_OWNER_CONFIG } from './state.js';
 import { setupWalletModal, restoreSavedWallet, setConnectedWallet, disconnectWallet } from './components/wallet-modal.js';
 import { showToast } from './components/toast.js';
+import { getApiBaseUrl } from './api.js';
 
 async function initAdminApp() {
   try {
@@ -129,7 +130,8 @@ function setupAdminHandlers() {
       await blockchain.saveState();
 
       try {
-        await fetch('/api/config/airdrop', {
+        const apiUrl = getApiBaseUrl();
+        await fetch(`${apiUrl}/api/config/airdrop`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount })
@@ -149,7 +151,8 @@ function setupAdminHandlers() {
       await blockchain.saveState();
 
       try {
-        await fetch('/api/config/reset-whitelist', { method: 'POST' });
+        const apiUrl = getApiBaseUrl();
+        await fetch(`${apiUrl}/api/config/reset-whitelist`, { method: 'POST' });
       } catch (e) {}
 
       showToast('Airdrop claims whitelist has been reset');
@@ -169,7 +172,8 @@ function setupAdminHandlers() {
       ammPool.k = air * usdt;
 
       try {
-        await fetch('/api/config/reserves', {
+        const apiUrl = getApiBaseUrl();
+        await fetch(`${apiUrl}/api/config/reserves`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ lvair: air, usdt })
