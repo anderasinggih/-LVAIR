@@ -623,10 +623,10 @@ function updateChartHeader() {
 export async function renderChart() {
   const { ammPool } = AppState;
   if (!canvas || !ctx || !ammPool) return;
-  updateChartHeader();
   await ensureChartData();
 
   const series = buildChartSeries();
+  updateChartHeader();
   if (series.length < 2) return;
 
   const rect = canvas.getBoundingClientRect();
@@ -807,7 +807,7 @@ function drawChartCrosshair(pt, W, H) {
   ctx.font = '10px JetBrains Mono, monospace';
   ctx.fillText(formatChartTime(pt.time), tx + 12, ty + 34);
 
-  if (chartTF !== 'LIVE' && chartType === 'candle') {
+  if (chartType === 'candle') {
     ctx.fillStyle = '#10b981';
     ctx.fillText(`O ${pt.open.toFixed(4)}  H ${pt.high.toFixed(4)}`, tx + 12, ty + 50);
     ctx.fillStyle = '#f87171';
