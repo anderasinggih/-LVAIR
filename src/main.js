@@ -22,6 +22,7 @@ const pageApp = document.getElementById('page-app');
 const btnLandingEnterApp = document.getElementById('btn-landing-enter-app');
 const btnHeroTradeNow = document.getElementById('btn-hero-trade-now');
 const btnHeroConnect = document.getElementById('btn-hero-connect');
+const btnTerminalEnterApp = document.getElementById('btn-terminal-enter-app');
 const appBrandHomeLink = document.getElementById('app-brand-home-link');
 
 const heroBadge = document.getElementById('hero-badge');
@@ -202,6 +203,7 @@ function setupNavigationRouting() {
 
   btnLandingEnterApp.addEventListener('click', showApp);
   btnHeroTradeNow.addEventListener('click', showApp);
+  if (btnTerminalEnterApp) btnTerminalEnterApp.addEventListener('click', showApp);
   btnHeroConnect.addEventListener('click', () => {
     walletModal.style.display = 'flex';
   });
