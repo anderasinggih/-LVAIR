@@ -19,7 +19,11 @@ import { setupAdminPage, renderAdminDashboard } from './pages/admin.js';
  */
 async function initApp() {
   try {
-    // 1. Initialize UI Handlers & Pages Synchronously
+    // 1. Setup & Resolve Router First (Instant zero-flicker rendering)
+    restoreSavedWallet();
+    setupRouter();
+
+    // 2. Initialize UI Handlers & Pages Synchronously
     setupLandingPage();
     setupSwapPage();
     setupTransferPage();
@@ -28,12 +32,12 @@ async function initApp() {
     setupWalletModal();
     setupTabsNavigation();
 
-    // 2. Initialize Blockchain, AMM Pool & State
+    // 3. Initialize Blockchain, AMM Pool & State
     AppState.blockchain = new Blockchain(2);
     await AppState.blockchain.init();
     AppState.ammPool = new AMMPool(AppState.blockchain, 100000, 25000);
 
-    // 3. Autonomous Liquidity Engine
+    // 4. Autonomous Liquidity Engine
     AppState.botEngine = new TradingBotEngine(AppState.blockchain, AppState.ammPool);
     AppState.botEngine.start(4000, () => {
       updateUI();
@@ -41,9 +45,6 @@ async function initApp() {
       renderRecentTrades();
     });
 
-    // 4. Restore Wallet & Initialize Routing
-    restoreSavedWallet();
-    setupRouter();
     updateUI();
     renderLandingStats();
     renderRecentTrades();
