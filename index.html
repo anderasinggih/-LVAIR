@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- Zebec-Style Ambient Radial Background Glow -->
-    <div class="zebec-ambient-bg"></div>
+    <!-- Zebec-Style Ambient Radial + Mesh Grid Background -->
+    <div class="zebec-hero-bg"></div>
 
     <!-- Toast Notification Container -->
     <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; left: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; max-width: 400px; margin-left: auto;"></div>
@@ -57,7 +57,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- PAGE 1: DEDICATED PUBLIC OFFICIAL LANDING PAGE (ZEBEC AESTHETIC)          -->
+    <!-- PAGE 1: DEDICATED PUBLIC OFFICIAL LANDING PAGE (ZEBEC AUTHENTIC DESIGN)   -->
     <!-- ========================================================================= -->
     <div id="page-landing" style="display: block; min-height: 100vh; position: relative; z-index: 1;">
       
@@ -71,104 +71,140 @@
 
           <div class="landing-nav-links" style="display: flex; align-items: center; gap: 28px;">
             <a href="#about-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 500;">About</a>
+            <a href="#impact-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 500;">Impact</a>
             <a href="#tokenomics-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 500;">Tokenomics</a>
             <a href="#roadmap-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 500;">Roadmap</a>
             <a href="#faq-sec" style="color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; font-weight: 500;">FAQ</a>
           </div>
 
           <div>
-            <button id="btn-landing-enter-app" class="btn-primary" style="width: auto; padding: 9px 22px; font-size: 0.86rem; font-weight: 600;">
+            <button id="btn-landing-enter-app" class="btn-primary" style="width: auto; padding: 10px 24px; font-size: 0.86rem; font-weight: 700;">
               Launch App →
             </button>
           </div>
         </div>
       </nav>
 
-      <!-- Hero Banner (Zebec Style) -->
-      <section style="padding: 85px 20px 65px 20px; text-align: center; max-width: 900px; margin: 0 auto;">
+      <!-- Hero Banner (Zebec Style Headline: Where Real-Time Meets Decentralized Finance) -->
+      <section style="padding: 100px 20px 70px 20px; text-align: center; max-width: 960px; margin: 0 auto;">
         <div class="zebec-pill">
-          <span style="display: inline-block; width: 6px; height: 6px; background: var(--accent-success); border-radius: 50%;"></span>
+          <span style="display: inline-block; width: 7px; height: 7px; background: var(--accent-success); border-radius: 50%; box-shadow: 0 0 8px #10b981;"></span>
           <span id="hero-badge">Official Mainnet Launch • Verified Liquidity</span>
         </div>
 
-        <h1 id="hero-headline" class="hero-title gradient-text" style="font-size: 3.6rem; font-weight: 800; line-height: 1.12; letter-spacing: -0.03em; margin-bottom: 24px;">
-          Empowering Next-Gen Decentralized Trading & Liquidity.
+        <h1 id="hero-headline" class="hero-title gradient-text" style="font-size: 4rem; font-weight: 900; line-height: 1.08; letter-spacing: -0.04em; margin-bottom: 24px;">
+          Where Real-Time <br/>Meets Real-World Finance.
         </h1>
 
-        <p id="hero-subheadline" class="hero-subheadline" style="font-size: 1.15rem; color: var(--text-secondary); max-width: 680px; margin: 0 auto 36px auto; line-height: 1.6;">
-          <strong>$LVAIR</strong> is the native digital currency and utility asset powering the LVAIR decentralized ecosystem.
+        <p id="hero-subheadline" class="hero-subheadline" style="font-size: 1.2rem; color: var(--text-secondary); max-width: 720px; margin: 0 auto 40px auto; line-height: 1.6;">
+          <strong>$LVAIR</strong> powers the next generation of continuous automated market liquidity, instant decentralized swaps, and sovereign crypto finance.
         </p>
 
-        <div class="hero-buttons-container" style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-          <button id="btn-hero-trade-now" class="btn-primary" style="width: auto; padding: 14px 32px; font-size: 0.95rem; font-weight: 600;">
+        <div class="hero-buttons-container" style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+          <button id="btn-hero-trade-now" class="btn-primary" style="width: auto; padding: 15px 36px; font-size: 0.98rem; font-weight: 700;">
             Launch Trading App →
           </button>
-          <button id="btn-hero-connect" class="btn-secondary" style="padding: 14px 30px; font-size: 0.95rem;">
+          <button id="btn-hero-connect" class="btn-secondary" style="padding: 15px 32px; font-size: 0.98rem;">
             Connect Web3 Wallet
           </button>
         </div>
-      </section>
 
-      <!-- Real-time Live Market Strip -->
-      <section style="max-width: 1200px; margin: 0 auto 60px auto; padding: 0 20px;">
-        <div class="stat-grid">
-          <div class="stat-box">
-            <div class="stat-label">Live Spot Price</div>
-            <div class="stat-val" id="landing-price-val">$0.2500</div>
+        <!-- Zebec Ecosystem Partner Logos -->
+        <div style="margin-top: 50px;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); font-weight: 700; margin-bottom: 16px;">
+            Supported Multi-Chain Ecosystems & Wallets
           </div>
-          <div class="stat-box">
-            <div class="stat-label">Total Pool Liquidity</div>
-            <div class="stat-val" id="landing-reserves-val">100k / $25k</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Total Genesis Supply</div>
-            <div class="stat-val" id="landing-total-supply">10,000,000 $LVAIR</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">24h Network Volume</div>
-            <div class="stat-val" id="landing-height-val" style="color: var(--accent-success);">$142,500+</div>
+          <div class="partners-marquee-container">
+            <div class="partner-logo-item">Solana</div>
+            <div class="partner-logo-item">Ethereum</div>
+            <div class="partner-logo-item">MetaMask</div>
+            <div class="partner-logo-item">Phantom</div>
+            <div class="partner-logo-item">Binance Web3</div>
+            <div class="partner-logo-item">Coinbase</div>
           </div>
         </div>
       </section>
 
-      <!-- Section: Why Choose LVAIR -->
-      <section id="about-sec" style="max-width: 1200px; margin: 0 auto 70px auto; padding: 0 20px;">
-        <div style="text-align: center; margin-bottom: 36px;">
-          <h2 class="gradient-text" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Why Choose $LVAIR?</h2>
-          <p style="color: var(--text-secondary); font-size: 0.92rem;">Built for modern traders who demand speed, security, and true financial sovereignty</p>
+      <!-- Section: Zebec Giant Impact Stats (Changing the Way Money Moves) -->
+      <section id="impact-sec" style="max-width: 1200px; margin: 0 auto 80px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <div class="zebec-tagline">Network Impact</div>
+          <h2 class="gradient-text" style="font-size: 2.3rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px;">
+            Changing the Way Digital Liquidity Moves
+          </h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Building sovereign decentralized infrastructure for the modern web3 economy</p>
         </div>
-        <div id="dynamic-value-props" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;"></div>
+
+        <div class="zebec-impact-grid">
+          <div class="zebec-impact-card">
+            <div class="zebec-impact-number" id="landing-price-val">$0.2500</div>
+            <div class="zebec-impact-label">Live Spot Price ($LVAIR/USDT)</div>
+          </div>
+          <div class="zebec-impact-card">
+            <div class="zebec-impact-number" id="landing-reserves-val">100k / $25k</div>
+            <div class="zebec-impact-label">Decentralized Pool Liquidity</div>
+          </div>
+          <div class="zebec-impact-card">
+            <div class="zebec-impact-number" id="landing-total-supply">10M</div>
+            <div class="zebec-impact-label">Total Genesis Hard-Cap Supply</div>
+          </div>
+          <div class="zebec-impact-card">
+            <div class="zebec-impact-number" id="landing-height-val" style="color: var(--accent-success);">$142,500+</div>
+            <div class="zebec-impact-label">24h Continuous Trading Volume</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Why Choose LVAIR (Zebec Bento Grid) -->
+      <section id="about-sec" style="max-width: 1200px; margin: 0 auto 80px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <div class="zebec-tagline">Core Advantages</div>
+          <h2 class="gradient-text" style="font-size: 2.3rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px;">
+            Bringing the Blockchain to Everyday Finance
+          </h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Built for modern traders who demand speed, security, and true financial sovereignty</p>
+        </div>
+        <div id="dynamic-value-props" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;"></div>
       </section>
 
       <!-- Section: Tokenomics -->
-      <section id="tokenomics-sec" style="max-width: 1200px; margin: 0 auto 70px auto; padding: 0 20px;">
-        <div style="text-align: center; margin-bottom: 36px;">
-          <h2 class="gradient-text" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Tokenomics & Distribution</h2>
-          <p style="color: var(--text-secondary); font-size: 0.92rem;">Transparent, predictable, and fair allocation structure</p>
+      <section id="tokenomics-sec" style="max-width: 1200px; margin: 0 auto 80px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <div class="zebec-tagline">Economics</div>
+          <h2 class="gradient-text" style="font-size: 2.3rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px;">
+            Tokenomics & Value Distribution
+          </h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Transparent, predictable, and fair allocation structure</p>
         </div>
-        <div id="dynamic-tokenomics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px;"></div>
+        <div id="dynamic-tokenomics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;"></div>
       </section>
 
       <!-- Section: Roadmap -->
-      <section id="roadmap-sec" style="max-width: 1200px; margin: 0 auto 70px auto; padding: 0 20px;">
-        <div style="text-align: center; margin-bottom: 36px;">
-          <h2 class="gradient-text" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Development Roadmap</h2>
-          <p style="color: var(--text-secondary); font-size: 0.92rem;">Milestones and expansion plans for the $LVAIR ecosystem</p>
+      <section id="roadmap-sec" style="max-width: 1200px; margin: 0 auto 80px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <div class="zebec-tagline">Vision</div>
+          <h2 class="gradient-text" style="font-size: 2.3rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px;">
+            Development Roadmap & Milestones
+          </h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Expansion plans for the LVAIR Protocol multi-chain ecosystem</p>
         </div>
-        <div id="dynamic-roadmap" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;"></div>
+        <div id="dynamic-roadmap" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;"></div>
       </section>
 
       <!-- Section: FAQ -->
-      <section id="faq-sec" style="max-width: 860px; margin: 0 auto 80px auto; padding: 0 20px;">
-        <div style="text-align: center; margin-bottom: 36px;">
-          <h2 class="gradient-text" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Frequently Asked Questions</h2>
-          <p style="color: var(--text-secondary); font-size: 0.92rem;">Everything you need to know before getting started</p>
+      <section id="faq-sec" style="max-width: 860px; margin: 0 auto 90px auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <div class="zebec-tagline">Support</div>
+          <h2 class="gradient-text" style="font-size: 2.3rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px;">
+            Frequently Asked Questions
+          </h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Everything you need to know before getting started</p>
         </div>
-        <div id="dynamic-faqs" style="display: flex; flex-direction: column; gap: 14px;"></div>
+        <div id="dynamic-faqs" style="display: flex; flex-direction: column; gap: 16px;"></div>
       </section>
 
       <!-- Footer -->
-      <footer style="border-top: 1px solid var(--border-subtle); padding: 32px 20px; text-align: center; color: var(--text-tertiary); font-size: 0.82rem;">
+      <footer style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 40px 20px; text-align: center; color: var(--text-tertiary); font-size: 0.85rem;">
         <div>LVAIR Protocol © 2026 • Official Digital Asset Network • All Rights Reserved</div>
       </footer>
     </div>
@@ -194,7 +230,7 @@
         </nav>
 
         <div class="header-right">
-          <button id="btn-connect-wallet" class="btn-primary" style="width: auto; padding: 8px 18px; font-size: 0.84rem; font-family: var(--font-mono);">
+          <button id="btn-connect-wallet" class="btn-primary" style="width: auto; padding: 9px 20px; font-size: 0.85rem; font-family: var(--font-mono);">
             Connect Wallet
           </button>
         </div>
@@ -237,7 +273,7 @@
               </div>
             </div>
             
-            <div style="height: 220px; width: 100%; position: relative; margin-bottom: 16px;">
+            <div style="height: 230px; width: 100%; position: relative; margin-bottom: 16px;">
               <canvas id="price-chart" style="width: 100%; height: 100%;"></canvas>
             </div>
 
@@ -279,7 +315,7 @@
             </div>
 
             <div style="text-align: center; margin: 8px 0;">
-              <button id="btn-toggle-pair" class="btn-secondary" style="padding: 4px 12px; font-size: 0.75rem;">Switch Pair</button>
+              <button id="btn-toggle-pair" class="btn-secondary" style="padding: 5px 14px; font-size: 0.78rem;">Switch Pair</button>
             </div>
 
             <div class="form-group">
@@ -290,7 +326,7 @@
               </div>
             </div>
 
-            <div style="margin-bottom: 18px; font-size: 0.8rem; color: var(--text-secondary); background: var(--bg-surface-elevated); padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 5px;">
+            <div style="margin-bottom: 18px; font-size: 0.8rem; color: var(--text-secondary); background: var(--bg-surface-elevated); padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 6px;">
               <div style="display:flex; justify-content:space-between;">
                 <span>Price Impact:</span>
                 <span id="swap-price-impact" style="font-family: var(--font-mono); color: var(--accent-success);">0.0%</span>
@@ -334,7 +370,7 @@
 
             <div class="form-group">
               <label class="form-label">Select Token</label>
-              <select id="transfer-token-select" style="width: 100%; background: var(--bg-app); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 10px 12px; border-radius: 8px; font-family: var(--font-sans); font-size: 0.85rem;">
+              <select id="transfer-token-select" style="width: 100%; background: var(--bg-app); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 11px 14px; border-radius: 10px; font-family: var(--font-sans); font-size: 0.88rem;">
                 <option value="LVAIR">$LVAIR Token</option>
                 <option value="USDT">USDT Stablecoin</option>
               </select>
@@ -376,12 +412,12 @@
               Claim the initial token allocation for your connected wallet. Each unique address is eligible for 250 $LVAIR.
             </p>
 
-            <div style="background: var(--bg-surface-elevated); padding: 12px 14px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-subtle);">
+            <div style="background: var(--bg-surface-elevated); padding: 14px 16px; border-radius: 10px; margin-bottom: 16px; border: 1px solid var(--border-subtle);">
               <div style="font-size: 0.72rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 4px;">Eligibility Status</div>
               <div id="airdrop-status-text" style="font-weight: 600; color: var(--accent-success); font-size: 0.88rem;">Connect Wallet to Check</div>
             </div>
 
-            <button class="btn-primary" id="btn-claim-airdrop" style="width: auto; padding: 9px 20px;">Claim 250 $LVAIR Airdrop</button>
+            <button class="btn-primary" id="btn-claim-airdrop" style="width: auto; padding: 10px 22px;">Claim 250 $LVAIR Airdrop</button>
           </div>
 
           <div class="panel">
@@ -403,9 +439,9 @@
         <div class="panel">
           <div class="panel-header">
             <span class="panel-title">Block Explorer & Ledger State</span>
-            <div style="display: flex; gap: 6px;">
-              <button id="btn-export-chain" class="btn-secondary" style="padding: 6px 12px; font-size: 0.75rem;">Export JSON</button>
-              <button id="btn-validate-chain" class="btn-secondary" style="padding: 6px 12px; font-size: 0.75rem;">Verify Chain</button>
+            <div style="display: flex; gap: 8px;">
+              <button id="btn-export-chain" class="btn-secondary" style="padding: 6px 14px; font-size: 0.75rem;">Export JSON</button>
+              <button id="btn-validate-chain" class="btn-secondary" style="padding: 6px 14px; font-size: 0.75rem;">Verify Chain</button>
             </div>
           </div>
 
@@ -429,7 +465,7 @@
       </div>
 
       <!-- dApp Footer -->
-      <footer style="border-top: 1px solid var(--border-subtle); padding: 28px 0; margin-top: 40px; text-align: center; color: var(--text-tertiary); font-size: 0.8rem;">
+      <footer style="border-top: 1px solid var(--border-subtle); padding: 32px 0; margin-top: 40px; text-align: center; color: var(--text-tertiary); font-size: 0.82rem;">
         <div>LVAIR Protocol © 2026 • Sovereign Decentralized Liquidity Network</div>
       </footer>
 
