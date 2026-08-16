@@ -20,9 +20,8 @@ async function initAdminApp() {
     });
 
     restoreSavedWallet();
-    const savedAdminToken = localStorage.getItem(ADMIN_AUTH_TOKEN_KEY);
-    if (savedAdminToken && AppState.currentConnectedAddress && PROTOCOL_OWNER_CONFIG.ownerAddress) {
-      if (savedAdminToken === AppState.currentConnectedAddress.toLowerCase() && AppState.currentConnectedAddress.toLowerCase() === PROTOCOL_OWNER_CONFIG.ownerAddress.toLowerCase()) {
+    if (AppState.currentConnectedAddress && PROTOCOL_OWNER_CONFIG.ownerAddress) {
+      if (AppState.currentConnectedAddress.toLowerCase() === PROTOCOL_OWNER_CONFIG.ownerAddress.toLowerCase()) {
         PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
       }
     }
@@ -34,15 +33,12 @@ async function initAdminApp() {
           setConnectedWallet(accounts[0], 'MetaMask');
           if (PROTOCOL_OWNER_CONFIG.ownerAddress && accounts[0].toLowerCase() === PROTOCOL_OWNER_CONFIG.ownerAddress.toLowerCase()) {
             PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
-            localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, accounts[0].toLowerCase());
           } else {
             PROTOCOL_OWNER_CONFIG.isAdminAuthorized = false;
-            localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
           }
         } else {
           disconnectWallet();
           PROTOCOL_OWNER_CONFIG.isAdminAuthorized = false;
-          localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
         }
         renderAdminDashboard();
       });
@@ -79,33 +75,15 @@ function setupAdminHandlers() {
         PROTOCOL_OWNER_CONFIG.ownerAddress = currentConnectedAddress;
         localStorage.setItem('LVAIR_PROTOCOL_OWNER_ADDR', currentConnectedAddress);
         PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
-        localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, currentConnectedAddress.toLowerCase());
         showToast(`Protocol Ownership Claimed by ${currentConnectedAddress.substring(0, 6)}...${currentConnectedAddress.substring(currentConnectedAddress.length - 4)}!`);
         renderAdminDashboard();
         return;
       }
 
       if (currentConnectedAddress.toLowerCase() === PROTOCOL_OWNER_CONFIG.ownerAddress.toLowerCase()) {
-        if (window.ethereum) {
-          try {
-            const challenge = `LVAIR Protocol Admin Auth Challenge - Nonce: ${Date.now()}`;
-            await window.ethereum.request({
-              method: 'personal_sign',
-              params: [challenge, currentConnectedAddress]
-            });
-            PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
-            localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, currentConnectedAddress.toLowerCase());
-            showToast('Cryptographic signature verified. Admin access granted!');
-            renderAdminDashboard();
-          } catch (err) {
-            showToast('Signature rejected: Admin verification cancelled', 'error');
-          }
-        } else {
-          PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
-          localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, currentConnectedAddress.toLowerCase());
-          showToast('Owner address verified!');
-          renderAdminDashboard();
-        }
+        PROTOCOL_OWNER_CONFIG.isAdminAuthorized = true;
+        showToast('Protocol Owner Authorized! Full Ops Control Active.');
+        renderAdminDashboard();
       } else {
         showToast('Access Denied: Connected wallet is not the registered Protocol Owner', 'error');
       }
@@ -215,7 +193,7 @@ function renderAdminDashboard() {
   const btnConnectWallet = document.getElementById('btn-connect-wallet');
 
   const isOwner = PROTOCOL_OWNER_CONFIG.ownerAddress;
-  const isAuth = PROTOCOL_OWNER_CONFIG.isAdminAuthorized;
+  const isAuth = (currentConnectedAddress && isOwner && currentConnectedAddress.toLowerCase() === isOwner.toLowerCase()) || PROTOCOL_OWNER_CONFIG.isAdminAuthorized;
 
   if (btnConnectWallet) {
     if (currentConnectedAddress) {
