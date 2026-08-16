@@ -316,7 +316,34 @@ async function startFullNode() {
     }
   });
 
+  function computeMarketMetrics() {
+    let lvairSupply = 0;
+    for (const block of blockchain.chain) {
+      for (const tx of block.transactions || []) {
+        if (tx.token !== 'LVAIR') continue;
+        if (tx.type === 'COINBASE_GENESIS' || tx.type === 'COINBASE_REWARD' || tx.type === 'AIRDROP_CLAIM') {
+          lvairSupply += Number(tx.amount);
+        }
+      }
+    }
+    const price = ammPool.getCurrentPrice();
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    let volume24h = 0;
+    for (const t of ammPool.trades || []) {
+      if (now - (t.timestamp || 0) > day) continue;
+      const usdtAmt = t.inputToken === 'USDT' ? Number(t.inputAmount || 0) : Number(t.outputAmount || 0);
+      volume24h += usdtAmt;
+    }
+    return {
+      marketCap: price * lvairSupply,
+      volume24h,
+      circulatingSupply: lvairSupply
+    };
+  }
+
   app.get('/api/amm/state', (req, res) => {
+    const metrics = computeMarketMetrics();
     res.json({
       success: true,
       lvairReserve: ammPool.lvairReserve,
@@ -327,7 +354,10 @@ async function startFullNode() {
       botRunning: botEngine ? botEngine.isRunning : false,
       botMode: botEngine ? botEngine.getMode() : botStrategyMode,
       minPoolReserves: MIN_POOL_RESERVES,
-      mempoolSize: blockchain.pendingTransactions.length
+      mempoolSize: blockchain.pendingTransactions.length,
+      marketCap: metrics.marketCap,
+      volume24h: metrics.volume24h,
+      circulatingSupply: metrics.circulatingSupply
     });
   });
 

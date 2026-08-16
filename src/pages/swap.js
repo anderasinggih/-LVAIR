@@ -517,11 +517,31 @@ function buildChartSeries() {
   }));
 }
 
+function formatUsdCompact(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return '—';
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(n >= 1e10 ? 0 : 2)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(n >= 1e7 ? 0 : 2)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}K`;
+  return `$${n.toFixed(2)}`;
+}
+
+function formatSupplyCompact(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return '—';
+  if (n >= 1e9) return `${(n / 1e9).toFixed(n >= 1e10 ? 0 : 2)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 2)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}K`;
+  return n.toLocaleString();
+}
+
 function updateChartHeader() {
   const { ammPool } = AppState;
   if (!ammPool) return;
   const priceEl = document.getElementById('chart-price-index');
   const changeEl = document.getElementById('chart-price-change');
+  const nominalEl = document.getElementById('chart-change-nominal');
+  const pctEl = document.getElementById('chart-change-pct');
   const depthEl = document.getElementById('chart-pool-depth');
   const price = ammPool.getCurrentPrice();
 
@@ -532,15 +552,31 @@ function updateChartHeader() {
     if (series.length >= 2) {
       const first = series[0].close;
       const last = series[series.length - 1].close;
-      const pct = first > 0 ? ((last - first) / first) * 100 : 0;
-      changeEl.innerText = `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
-      changeEl.style.color = pct >= 0 ? '#10b981' : '#f87171';
+      const diff = last - first;
+      const pct = first > 0 ? (diff / first) * 100 : 0;
+      const color = diff >= 0 ? '#10b981' : '#f87171';
+      changeEl.style.color = color;
+      if (nominalEl) {
+        nominalEl.innerText = `${diff >= 0 ? '+' : '-'}$${Math.abs(diff).toFixed(4)}`;
+        nominalEl.style.color = color;
+      }
+      if (pctEl) {
+        pctEl.innerText = `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
+        pctEl.style.color = color;
+      }
     }
   }
 
   if (depthEl && typeof ammPool.lvairReserve === 'number') {
     depthEl.innerText = `Depth ${Number(ammPool.lvairReserve).toLocaleString()} LVAIR / ${Number(ammPool.usdtReserve).toLocaleString()} USDT`;
   }
+
+  const capEl = document.getElementById('chart-market-cap');
+  const volEl = document.getElementById('chart-volume-24h');
+  const supplyEl = document.getElementById('chart-supply');
+  if (capEl) capEl.innerText = formatUsdCompact(ammPool.marketCap);
+  if (volEl) volEl.innerText = formatUsdCompact(ammPool.volume24h);
+  if (supplyEl) supplyEl.innerText = `${formatSupplyCompact(ammPool.circulatingSupply)} LVAIR`;
 }
 
 export async function renderChart() {

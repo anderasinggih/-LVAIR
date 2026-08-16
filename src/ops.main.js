@@ -184,7 +184,7 @@ function setupAdminHandlers() {
     btnClaimProtocolOwner.addEventListener('click', async () => {
       const { currentConnectedAddress } = AppState;
       if (!currentConnectedAddress) {
-        showToast('Please connect your Web3 wallet first', 'error');
+        showToast('Please connect your wallet first', 'warning');
         const walletModal = document.getElementById('wallet-modal');
         if (walletModal) walletModal.style.display = 'flex';
         return;

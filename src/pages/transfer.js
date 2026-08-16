@@ -17,7 +17,7 @@ export function setupTransferPage() {
   btnSendTransfer.addEventListener('click', async () => {
     const { currentConnectedAddress } = AppState;
     if (!currentConnectedAddress) {
-      showToast('Authentication required: Connect your Web3 wallet to transfer tokens', 'error');
+      showToast('Please connect your wallet to transfer tokens', 'warning');
       if (walletModal) walletModal.style.display = 'flex';
       return;
     }

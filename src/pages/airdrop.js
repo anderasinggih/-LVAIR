@@ -15,7 +15,7 @@ export function setupAirdropPage() {
   btnClaimAirdrop.addEventListener('click', async () => {
     const { currentConnectedAddress } = AppState;
     if (!currentConnectedAddress) {
-      showToast('Authentication required: Connect your Web3 wallet to claim airdrop', 'error');
+      showToast('Please connect your wallet to claim the airdrop', 'warning');
       if (walletModal) walletModal.style.display = 'flex';
       return;
     }

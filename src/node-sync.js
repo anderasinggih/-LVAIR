@@ -74,6 +74,9 @@ export async function refreshNodeState() {
         AppState.ammPool.lvairReserve = amm.lvairReserve;
         AppState.ammPool.usdtReserve = amm.usdtReserve;
         if (Array.isArray(amm.priceHistory)) AppState.ammPool.priceHistory = amm.priceHistory;
+        AppState.ammPool.marketCap = amm.marketCap;
+        AppState.ammPool.volume24h = amm.volume24h;
+        AppState.ammPool.circulatingSupply = amm.circulatingSupply;
         if (Array.isArray(amm.trades)) {
           AppState.ammPool.trades = amm.trades;
           if (amm.trades.length !== lastTradesCount) {

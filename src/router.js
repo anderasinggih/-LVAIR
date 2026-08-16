@@ -36,7 +36,7 @@ export function handlePathRouting() {
   const savedWallet = localStorage.getItem('LVAIR_CONNECTED_WALLET_ADDR');
 
   if (PROTECTED_ROUTES.has(path) && !savedWallet) {
-    showToast('Unauthorized: Please connect your Web3 wallet to access this feature', 'error');
+    showToast('Please connect your wallet to continue', 'warning');
     const walletModal = document.getElementById('wallet-modal');
     if (walletModal) walletModal.style.display = 'flex';
     

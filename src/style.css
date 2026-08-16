@@ -737,3 +737,103 @@ header.app-header {
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* Chart toolbar */
+.chart-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+.chart-btn:hover {
+  border-color: rgba(37, 99, 235, 0.5);
+  color: #fff;
+}
+.chart-btn.active {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: rgba(37, 99, 235, 0.65);
+  color: #60a5fa;
+}
+
+/* Phantom-style chart metrics */
+.chart-metric {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.chart-metric-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.chart-metric-val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #ffffff;
+}
+
+/* Toasts */
+.toast-msg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 11px 14px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  transform: translateY(6px);
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.toast-msg.toast-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.toast-msg.toast-out {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.toast-msg.toast-success {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+.toast-msg.toast-error {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.toast-msg.toast-warning {
+  border-color: rgba(251, 191, 36, 0.35);
+}
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.toast-text {
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .chart-metric {
+    grid-column: 1 / -1;
+  }
+}
