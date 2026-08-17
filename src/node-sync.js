@@ -53,6 +53,9 @@ export async function refreshNodeState() {
       if (blocks.length > 0) {
         AppState.blockchain.chain = blocks.map(b => Block.fromJSON(b));
         AppState.blockchain.claimedAddresses = rebuildClaimedAddresses(blocks);
+        if (!Array.isArray(data) && data.total) {
+          AppState.blockchain._serverTotalBlocks = data.total;
+        }
         const latestHash = blocks[blocks.length - 1].hash;
         if (latestHash !== lastBlockHash) {
           lastBlockHash = latestHash;

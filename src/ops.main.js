@@ -388,7 +388,7 @@ function renderAdminDashboard() {
   }
 
   if (adminTotalClaims) adminTotalClaims.innerText = blockchain && blockchain.claimedAddresses ? `${blockchain.claimedAddresses.size} Wallets` : '0 Wallets';
-  if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${formatBlockNumber(blockchain.chain.length)} Blocks` : '#1 Blocks';
+  if (adminTotalBlocks) adminTotalBlocks.innerText = blockchain ? `#${formatBlockNumber(blockchain._serverTotalBlocks || blockchain.chain.length)} Blocks` : '#1 Blocks';
 
   const opsQuota = document.getElementById('ops-airdrop-quota');
   const opsPeers = document.getElementById('ops-p2p-peers');
