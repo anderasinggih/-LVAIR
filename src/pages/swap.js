@@ -444,6 +444,10 @@ let chartVisibleCount = 0;
 let chartDragging = false;
 let chartDragStartX = 0;
 let chartDragStartOffset = 0;
+let chartCurrentSeriesLen = 0;
+let chartBoundsW = 0;
+let chartBoundsXPad = 8;
+let chartBoundsXRight = 0;
 
 const TF_LABELS = { M1: '1 Min', M5: '5 Min', M15: '15 Min', M30: '30 Min', H1: '1 Hour', H4: '4 Hour', D1: 'Daily', W1: 'Weekly', MN: 'Monthly' };
 
@@ -693,7 +697,19 @@ function updateChartHeader() {
   }
 }
 
+let chartRendering = false;
+
 export async function renderChart() {
+  if (chartRendering) return;
+  chartRendering = true;
+  try {
+    await _renderChartInner();
+  } finally {
+    chartRendering = false;
+  }
+}
+
+async function _renderChartInner() {
   const { ammPool } = AppState;
   if (!canvas || !ctx || !ammPool) return;
   await ensureChartData();
@@ -715,6 +731,10 @@ export async function renderChart() {
   const LABEL_W = 52;
   const X_PAD = 8;
   const X_RIGHT = Math.max(X_PAD + 2, W - LABEL_W - 8);
+  chartCurrentSeriesLen = series.length;
+  chartBoundsW = W;
+  chartBoundsXPad = X_PAD;
+  chartBoundsXRight = X_RIGHT;
   const plotH = H - AXIS_H - 6 - VOL_H;
   ctx.clearRect(0, 0, W, H);
 
@@ -857,22 +877,21 @@ export async function renderChart() {
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
-      const W = rect.width;
-      const X_PAD = 8;
-      const LABEL_W = 52;
-      const X_RIGHT = Math.max(X_PAD + 2, W - LABEL_W - 8);
-      const mouseRatio = (mouseX - X_PAD) / (X_RIGHT - X_PAD);
+      const totalLen = chartCurrentSeriesLen;
+      if (totalLen < 2) return;
 
-      const prev = chartVisibleCount <= 0 ? series.length : chartVisibleCount;
+      const XR = chartBoundsXRight;
+      const XP = chartBoundsXPad;
+      const mouseRatio = Math.max(0, Math.min(1, (mouseX - XP) / (XR - XP)));
+
+      const prev = chartVisibleCount <= 0 ? totalLen : chartVisibleCount;
       const zoomFactor = e.deltaY > 0 ? 1.15 : 0.87;
       let next = Math.max(4, Math.round(prev * zoomFactor));
-      if (next > series.length) next = series.length;
+      if (next > totalLen) next = totalLen;
 
       const offsetAtMouse = chartOffset + (1 - mouseRatio) * prev;
       chartVisibleCount = next;
-      chartOffset = Math.max(0, Math.round(offsetAtMouse - (1 - mouseRatio) * next));
-      const maxOff = Math.max(0, series.length - chartVisibleCount);
-      if (chartOffset > maxOff) chartOffset = maxOff;
+      chartOffset = Math.max(0, Math.min(Math.round(offsetAtMouse - (1 - mouseRatio) * next), totalLen - next));
 
       renderChart();
     }, { passive: false });
@@ -883,41 +902,58 @@ export async function renderChart() {
       chartDragStartOffset = chartOffset;
       canvas.style.cursor = 'grabbing';
     });
-    canvas.addEventListener('mousemove', (e) => {
+
+    window.addEventListener('mousemove', (e) => {
+      if (!chartDragging) return;
+      const XR = chartBoundsXRight;
+      const XP = chartBoundsXPad;
+      const dx = e.clientX - chartDragStartX;
+      const candlesPerPx = (chartVisibleCount <= 0 ? chartCurrentSeriesLen : chartVisibleCount) / Math.max(1, XR - XP);
+      chartOffset = Math.max(0, chartDragStartOffset + Math.round(dx * candlesPerPx));
+      renderChart();
+    });
+
+    window.addEventListener('mouseup', () => {
       if (chartDragging) {
-        const dx = e.clientX - chartDragStartX;
-        const candlesPerPx = chartVisibleCount / (X_RIGHT - X_PAD);
-        chartOffset = Math.max(0, chartDragStartOffset + Math.round(dx * candlesPerPx));
-        renderChart();
-        return;
+        chartDragging = false;
+        canvas.style.cursor = 'crosshair';
       }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (chartDragging) return;
       updateChartHover(e.clientX);
     });
-    canvas.addEventListener('mouseup', () => {
-      chartDragging = false;
-      canvas.style.cursor = 'crosshair';
-    });
+
     canvas.addEventListener('mouseleave', () => {
-      chartDragging = false;
-      canvas.style.cursor = 'crosshair';
       if (lastHoverIndex !== -1) { lastHoverIndex = -1; renderChart(); }
     });
-    canvas.addEventListener('pointermove', (e) => { if (!chartDragging) updateChartHover(e.clientX); });
-    canvas.addEventListener('pointerleave', () => { if (lastHoverIndex !== -1) { lastHoverIndex = -1; renderChart(); } });
+
     canvas.addEventListener('touchstart', (e) => {
-      const t = e.touches[0]; if (t) { chartDragging = true; chartDragStartX = t.clientX; chartDragStartOffset = chartOffset; }
+      const t = e.touches[0];
+      if (t) {
+        chartDragging = true;
+        chartDragStartX = t.clientX;
+        chartDragStartOffset = chartOffset;
+        updateChartHover(t.clientX);
+      }
     }, { passive: true });
+
     canvas.addEventListener('touchmove', (e) => {
       const t = e.touches[0];
       if (!t) return;
       if (chartDragging) {
+        const XR = chartBoundsXRight;
+        const XP = chartBoundsXPad;
         const dx = t.clientX - chartDragStartX;
-        const candlesPerPx = chartVisibleCount / (X_RIGHT - X_PAD);
+        const candlesPerPx = (chartVisibleCount <= 0 ? chartCurrentSeriesLen : chartVisibleCount) / Math.max(1, XR - XP);
         chartOffset = Math.max(0, chartDragStartOffset + Math.round(dx * candlesPerPx));
-        renderChart();
       }
+      updateChartHover(t.clientX);
+      renderChart();
     }, { passive: true });
-    canvas.addEventListener('touchend', () => { chartDragging = false; });
+
+    canvas.addEventListener('touchend', () => { chartDragging = false; lastHoverIndex = -1; renderChart(); });
 
     document.addEventListener('click', (e) => {
       if (canvas && e.target !== canvas && !canvas.contains(e.target)) {
