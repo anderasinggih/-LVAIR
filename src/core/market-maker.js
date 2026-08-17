@@ -18,7 +18,7 @@ export class TradingBotEngine {
     this.human = {
       phase: 'accumulation',
       phaseTimer: 0,
-      phaseDuration: this.randInt(20, 40),
+      phaseDuration: this.randInt(10, 25),
       support: 0.2,
       resistance: 0.3,
       trendDir: 1,
@@ -103,16 +103,16 @@ export class TradingBotEngine {
 
   getInterval() {
     const base = {
-      human: 1500,
-      volatile: 800,
-      volume: 400,
-      momentum: 2000,
-      random: 1500,
-      balanced: 3000,
-      accumulate: 3000,
-      distribute: 3000,
-    }[this.mode] || 2000;
-    return Math.max(300, base + this.rand(-base * 0.4, base * 0.4));
+      human: 800,
+      volatile: 300,
+      volume: 200,
+      momentum: 1000,
+      random: 600,
+      balanced: 1500,
+      accumulate: 1500,
+      distribute: 1500,
+    }[this.mode] || 1000;
+    return Math.max(150, base + this.rand(-base * 0.5, base * 0.5));
   }
 
   async step() {
@@ -174,18 +174,18 @@ export class TradingBotEngine {
     switch (h.phase) {
       case 'accumulation':
         h.phase = 'markup';
-        h.phaseDuration = this.randInt(25, 50);
+        h.phaseDuration = this.randInt(12, 28);
         h.trendDir = 1;
         h.targetPrice = h.resistance + range * 0.3;
         break;
       case 'markup':
-        if (Math.random() < 0.15 && price > h.resistance) {
+        if (Math.random() < 0.25 && price > h.resistance) {
           h.phase = 'fomo';
-          h.phaseDuration = this.randInt(8, 15);
+          h.phaseDuration = this.randInt(4, 10);
           h.fomoActive = true;
         } else {
           h.phase = 'distribution';
-          h.phaseDuration = this.randInt(20, 40);
+          h.phaseDuration = this.randInt(10, 22);
           h.trendDir = 0;
           h.support = price - range * 0.2;
           h.resistance = price + range * 0.15;
@@ -194,19 +194,19 @@ export class TradingBotEngine {
         break;
       case 'distribution':
         h.phase = 'markdown';
-        h.phaseDuration = this.randInt(25, 50);
+        h.phaseDuration = this.randInt(12, 28);
         h.trendDir = -1;
         h.targetPrice = h.support - range * 0.3;
         h.resistance = price + range * 0.1;
         break;
       case 'markdown':
-        if (Math.random() < 0.12 && price < h.support) {
+        if (Math.random() < 0.2 && price < h.support) {
           h.phase = 'panic';
-          h.phaseDuration = this.randInt(6, 12);
+          h.phaseDuration = this.randInt(3, 8);
           h.panicLevel = 3;
         } else {
           h.phase = 'accumulation';
-          h.phaseDuration = this.randInt(20, 40);
+          h.phaseDuration = this.randInt(10, 22);
           h.trendDir = 0;
           h.support = price - range * 0.15;
           h.resistance = price + range * 0.2;
@@ -215,13 +215,13 @@ export class TradingBotEngine {
         break;
       case 'breakout':
         h.phase = h.breakoutDir > 0 ? 'markup' : 'markdown';
-        h.phaseDuration = this.randInt(20, 40);
+        h.phaseDuration = this.randInt(10, 22);
         h.trendDir = h.breakoutDir;
         h.targetPrice = price + h.breakoutDir * range * 0.5;
         break;
       case 'panic':
         h.phase = 'accumulation';
-        h.phaseDuration = this.randInt(25, 45);
+        h.phaseDuration = this.randInt(12, 25);
         h.trendDir = 0;
         h.support = price - range * 0.1;
         h.resistance = price + range * 0.25;
@@ -243,16 +243,16 @@ export class TradingBotEngine {
   async humanAccumulation(price, rsi) {
     const h = this.human;
     const nearSupport = price <= h.support * 1.02;
-    const bias = nearSupport ? 0.75 : 0.55;
+    const bias = nearSupport ? 0.8 : 0.6;
     const direction = this.pickDirection(bias);
     const amount = direction === 'buy'
-      ? this.rand(8, 30)
-      : this.rand(3, 12);
+      ? this.rand(20, 80)
+      : this.rand(5, 20);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     const reason = `ACCUM near support $${h.support.toFixed(4)}`;
-    if (nearSupport && Math.random() < 0.08) {
+    if (nearSupport && Math.random() < 0.15) {
       h.phase = 'breakout';
-      h.phaseDuration = this.randInt(4, 8);
+      h.phaseDuration = this.randInt(3, 6);
       h.breakoutDir = 1;
     }
     return this.executeTrade(direction, amount, token, reason);
@@ -261,16 +261,16 @@ export class TradingBotEngine {
   async humanMarkup(price, rsi, momentum) {
     const h = this.human;
     const aboveMA = price > h.ma;
-    const bias = aboveMA ? 0.65 : 0.55;
-    const isPullback = price > h.resistance && Math.random() < 0.4;
+    const bias = aboveMA ? 0.7 : 0.55;
+    const isPullback = price > h.resistance && Math.random() < 0.5;
     if (isPullback) {
-      const amount = this.rand(15, 60);
+      const amount = this.rand(40, 150);
       return this.executeTrade('sell', amount, 'LVAIR', `PROFIT TAKE @ resistance $${h.resistance.toFixed(4)}`);
     }
     const direction = this.pickDirection(bias);
     const amount = direction === 'buy'
-      ? this.rand(10, 40)
-      : this.rand(5, 20);
+      ? this.rand(25, 100)
+      : this.rand(10, 40);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     return this.executeTrade(direction, amount, token, `TREND UP RSI:${rsi.toFixed(0)} MOM:${momentum.toFixed(3)}`);
   }
@@ -278,16 +278,16 @@ export class TradingBotEngine {
   async humanDistribution(price, rsi) {
     const h = this.human;
     const nearResistance = price >= h.resistance * 0.98;
-    const bias = nearResistance ? 0.3 : 0.45;
+    const bias = nearResistance ? 0.25 : 0.4;
     const direction = this.pickDirection(bias);
     const amount = direction === 'buy'
-      ? this.rand(3, 12)
-      : this.rand(10, 40);
+      ? this.rand(5, 20)
+      : this.rand(25, 100);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     const reason = `DISTRIBUTE near resistance $${h.resistance.toFixed(4)}`;
-    if (nearResistance && Math.random() < 0.08) {
+    if (nearResistance && Math.random() < 0.15) {
       h.phase = 'breakout';
-      h.phaseDuration = this.randInt(4, 8);
+      h.phaseDuration = this.randInt(3, 6);
       h.breakoutDir = -1;
     }
     return this.executeTrade(direction, amount, token, reason);
@@ -296,23 +296,23 @@ export class TradingBotEngine {
   async humanMarkdown(price, rsi, momentum) {
     const h = this.human;
     const belowMA = price < h.ma;
-    const bias = belowMA ? 0.35 : 0.45;
-    const isBounce = price < h.support && Math.random() < 0.35;
+    const bias = belowMA ? 0.3 : 0.45;
+    const isBounce = price < h.support && Math.random() < 0.45;
     if (isBounce) {
-      const amount = this.rand(10, 40);
+      const amount = this.rand(30, 120);
       return this.executeTrade('buy', amount, 'USDT', `DIP BUY @ support $${h.support.toFixed(4)}`);
     }
     const direction = this.pickDirection(bias);
     const amount = direction === 'buy'
-      ? this.rand(5, 20)
-      : this.rand(10, 40);
+      ? this.rand(10, 40)
+      : this.rand(25, 100);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     return this.executeTrade(direction, amount, token, `TREND DOWN RSI:${rsi.toFixed(0)} MOM:${momentum.toFixed(3)}`);
   }
 
   async humanBreakout(price, rsi) {
     const h = this.human;
-    const size = this.rand(40, 120);
+    const size = this.rand(80, 300);
     const token = h.breakoutDir > 0 ? 'USDT' : 'LVAIR';
     const direction = h.breakoutDir > 0 ? 'buy' : 'sell';
     return this.executeTrade(direction, size, token, `BREAKOUT ${h.breakoutDir > 0 ? 'UP' : 'DOWN'} RSI:${rsi.toFixed(0)}`);
@@ -321,48 +321,50 @@ export class TradingBotEngine {
   async humanPanic(price, rsi) {
     const h = this.human;
     h.panicLevel = Math.max(0, h.panicLevel - 1);
-    const size = this.rand(30, 100 + h.panicLevel * 30);
+    const size = this.rand(60, 200 + h.panicLevel * 50);
     return this.executeTrade('sell', size, 'LVAIR', `PANIC SELL level:${h.panicLevel} RSI:${rsi.toFixed(0)}`);
   }
 
   async humanFomo(price, rsi) {
-    const size = this.rand(25, 80);
+    const size = this.rand(60, 200);
     return this.executeTrade('buy', size, 'USDT', `FOMO BUY RSI:${rsi.toFixed(0)} parabolic`);
   }
 
   async strategyVolatile(rsi, momentum, volatility, price) {
-    const isImpulse = Math.random() < 0.12 && this.impulseCooldown <= 0;
+    const isImpulse = Math.random() < 0.25 && this.impulseCooldown <= 0;
     if (isImpulse) {
-      this.impulseCooldown = this.randInt(3, 8);
-      const impulseSize = this.rand(150, 500);
+      this.impulseCooldown = this.randInt(1, 4);
+      const impulseSize = this.rand(200, 800);
       const direction = Math.random() < 0.5 ? 'buy' : 'sell';
       const token = direction === 'buy' ? 'USDT' : 'LVAIR';
       return this.executeTrade(direction, impulseSize, token, `IMPULSE ${direction.toUpperCase()} $${impulseSize.toFixed(0)}`);
     }
 
     let bias = 0.5;
-    if (rsi < 25) bias = 0.8;
-    else if (rsi > 75) bias = 0.2;
-    else if (momentum > 0.01) bias = 0.65;
-    else if (momentum < -0.01) bias = 0.35;
+    if (rsi < 20) bias = 0.85;
+    else if (rsi > 80) bias = 0.15;
+    else if (rsi < 35) bias = 0.7;
+    else if (rsi > 65) bias = 0.3;
+    else if (momentum > 0.005) bias = 0.65;
+    else if (momentum < -0.005) bias = 0.35;
 
     const direction = this.pickDirection(bias);
-    const amount = this.rand(20, 150);
+    const amount = this.rand(30, 250);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     return this.executeTrade(direction, amount, token, `VOLATILE RSI:${rsi.toFixed(0)} MOM:${momentum.toFixed(3)}`);
   }
 
   async strategyVolume(rsi, momentum, price) {
-    const burstSize = this.randInt(3, 8);
+    const burstSize = this.randInt(5, 15);
     const trades = [];
     for (let i = 0; i < burstSize; i++) {
       let bias = 0.5;
-      if (rsi < 30) bias = 0.7;
-      else if (rsi > 70) bias = 0.3;
-      else bias = 0.5 + momentum * 2;
+      if (rsi < 30) bias = 0.75;
+      else if (rsi > 70) bias = 0.25;
+      else bias = 0.5 + momentum * 3;
 
       const direction = this.pickDirection(bias);
-      const amount = this.rand(2, 15);
+      const amount = this.rand(5, 30);
       const token = direction === 'buy' ? 'USDT' : 'LVAIR';
       const trade = await this.executeTrade(direction, amount, token, `VOLUME BURST ${i + 1}/${burstSize}`);
       if (trade) trades.push(trade);
@@ -372,37 +374,37 @@ export class TradingBotEngine {
 
   async strategyMomentum(rsi, momentum, volatility, price) {
     let direction;
-    if (Math.abs(momentum) > 0.005) {
+    if (Math.abs(momentum) > 0.003) {
       direction = momentum > 0 ? 'buy' : 'sell';
     } else {
       direction = this.pickDirection(0.5);
     }
 
-    const isImpulse = Math.random() < 0.08 && this.impulseCooldown <= 0;
+    const isImpulse = Math.random() < 0.15 && this.impulseCooldown <= 0;
     if (isImpulse) {
-      this.impulseCooldown = this.randInt(5, 12);
-      const impulseSize = this.rand(100, 300);
+      this.impulseCooldown = this.randInt(2, 6);
+      const impulseSize = this.rand(150, 500);
       const token = direction === 'buy' ? 'USDT' : 'LVAIR';
       return this.executeTrade(direction, impulseSize, token, `MOMENTUM IMPULSE ${direction.toUpperCase()}`);
     }
 
-    const amount = this.rand(10, 80);
+    const amount = this.rand(20, 120);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     return this.executeTrade(direction, amount, token, `MOMENTUM RSI:${rsi.toFixed(0)} MOM:${momentum.toFixed(3)}`);
   }
 
   async strategyRandom(rsi, price) {
-    const isSpike = Math.random() < 0.06 && this.impulseCooldown <= 0;
+    const isSpike = Math.random() < 0.12 && this.impulseCooldown <= 0;
     if (isSpike) {
-      this.impulseCooldown = this.randInt(4, 10);
-      const spikeSize = this.rand(200, 600);
+      this.impulseCooldown = this.randInt(2, 6);
+      const spikeSize = this.rand(300, 800);
       const direction = this.pickDirection(0.5);
       const token = direction === 'buy' ? 'USDT' : 'LVAIR';
       return this.executeTrade(direction, spikeSize, token, `SPIKE ${direction.toUpperCase()} $${spikeSize.toFixed(0)}`);
     }
 
     const direction = this.pickDirection(0.5);
-    const amount = this.rand(5, 100);
+    const amount = this.rand(10, 150);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     return this.executeTrade(direction, amount, token, `RANDOM RSI:${rsi.toFixed(0)}`);
   }
@@ -414,7 +416,7 @@ export class TradingBotEngine {
     else bias = 0.5 + momentum;
 
     const direction = this.pickDirection(bias);
-    const amount = direction === 'buy' ? this.rand(5, 20) : this.rand(10, 40);
+    const amount = direction === 'buy' ? this.rand(10, 40) : this.rand(20, 60);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     return this.executeTrade(direction, amount, token, `BALANCED RSI:${rsi.toFixed(0)}`);
   }
@@ -422,7 +424,7 @@ export class TradingBotEngine {
   async strategyAccumulate(rsi, momentum) {
     const bias = 0.8;
     const direction = this.pickDirection(bias);
-    const amount = direction === 'buy' ? this.rand(5, 25) : this.rand(10, 30);
+    const amount = direction === 'buy' ? this.rand(10, 50) : this.rand(15, 40);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     return this.executeTrade(direction, amount, token, `ACCUMULATE RSI:${rsi.toFixed(0)}`);
   }
@@ -430,7 +432,7 @@ export class TradingBotEngine {
   async strategyDistribute(rsi, momentum) {
     const bias = 0.2;
     const direction = this.pickDirection(bias);
-    const amount = direction === 'buy' ? this.rand(5, 20) : this.rand(15, 50);
+    const amount = direction === 'buy' ? this.rand(10, 30) : this.rand(25, 70);
     const token = direction === 'buy' ? 'USDT' : 'LVAIR';
     return this.executeTrade(direction, amount, token, `DISTRIBUTE RSI:${rsi.toFixed(0)}`);
   }
