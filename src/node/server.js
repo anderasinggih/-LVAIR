@@ -630,7 +630,7 @@ async function startFullNode() {
       return res.json({ success: true, tf, candles: null, points });
     }
     if (!TF_BUCKET_MS[tf]) {
-      return res.status(400).json({ success: false, error: `Unsupported timeframe: ${tf}. Use M1,M5,M15,M30,H1,H4,D1,W1,MN` });
+      return res.status(400).json({ success: false, error: `Unsupported timeframe: ${tf}. Use S30,M1,M5,M15,M30,H1,H4,D1,W1,MN` });
     }
     res.json({ success: true, tf, candles: buildCandles(ammPool.priceHistory, tf), points: null });
   });

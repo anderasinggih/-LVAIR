@@ -234,7 +234,7 @@
         if(!res.ok)throw new Error(res.status);
         const data=await res.json();
         if(curTF==='LIVE')candles=buildCandles(data.points||[],'S30');
-        else candles=(data.candles||[]).map(c=>({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close,volume:c.volume||0}));
+        else candles=(data.candles||[]).map(c=>({time:Math.floor(c.time/1000),open:c.open,high:c.high,low:c.low,close:c.close,volume:c.volume||0}));
         candles.sort((a,b)=>a.time-b.time);
         candleS.setData(candles);
         volS.setData(candles.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'})));
