@@ -559,14 +559,14 @@ async function startFullNode() {
     'MN': 30 * 24 * 60 * 60 * 1000,
   };
   const TF_RANGE_MS = {
-    'M1': 2 * 60 * 60 * 1000,
-    'M5': 12 * 60 * 60 * 1000,
-    'M15': 24 * 60 * 60 * 1000,
-    'M30': 2 * 24 * 60 * 60 * 1000,
-    'H1': 7 * 24 * 60 * 60 * 1000,
-    'H4': 30 * 24 * 60 * 60 * 1000,
-    'D1': 180 * 24 * 60 * 60 * 1000,
-    'W1': 365 * 24 * 60 * 60 * 1000,
+    'M1': 24 * 60 * 60 * 1000,
+    'M5': 7 * 24 * 60 * 60 * 1000,
+    'M15': 30 * 24 * 60 * 60 * 1000,
+    'M30': 60 * 24 * 60 * 60 * 1000,
+    'H1': 180 * 24 * 60 * 60 * 1000,
+    'H4': 365 * 24 * 60 * 60 * 1000,
+    'D1': 730 * 24 * 60 * 60 * 1000,
+    'W1': 1825 * 24 * 60 * 60 * 1000,
     'MN': Infinity,
   };
 
@@ -575,22 +575,41 @@ async function startFullNode() {
     const range = TF_RANGE_MS[tf];
     const now = Date.now();
     const cutoff = range === Infinity ? 0 : now - range;
-    const candles = [];
+    const raw = [];
     let current = null;
     for (const p of history) {
       if (p.timestamp < cutoff) continue;
       const b = Math.floor(p.timestamp / bucket) * bucket;
       if (!current || current.time !== b) {
-        if (current) candles.push(current);
+        if (current) raw.push(current);
         current = { time: b, open: p.price, high: p.price, low: p.price, close: p.price, volume: 0 };
       } else {
         current.high = Math.max(current.high, p.price);
         current.low = Math.min(current.low, p.price);
         current.close = p.price;
       }
-      current.volume += Math.abs((p.lvairReserve || 0) - (candles.length > 0 ? candles[candles.length - 1]?.lvairReserve || 0 : p.lvairReserve || 0));
+      const prevLv = raw.length > 0 ? raw[raw.length - 1].lvair : (current.lvair || 0);
+      current.volume += Math.abs((p.lvairReserve || 0) - prevLv);
+      current.lvair = p.lvairReserve || 0;
     }
-    if (current) candles.push(current);
+    if (current) raw.push(current);
+    if (raw.length < 2) return raw;
+
+    const candles = [];
+    let t = raw[0].time;
+    const lastT = raw[raw.length - 1].time;
+    let ri = 0;
+    let lastClose = raw[0].open;
+    while (t <= lastT) {
+      if (ri < raw.length && raw[ri].time === t) {
+        candles.push({ time: raw[ri].time, open: raw[ri].open, high: raw[ri].high, low: raw[ri].low, close: raw[ri].close, volume: raw[ri].volume });
+        lastClose = raw[ri].close;
+        ri++;
+      } else {
+        candles.push({ time: t, open: lastClose, high: lastClose, low: lastClose, close: lastClose, volume: 0 });
+      }
+      t += bucket;
+    }
     return candles;
   }
 

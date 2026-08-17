@@ -440,7 +440,7 @@ let chartFetchInFlight = false;
 let lastChartDecimals = 4;
 
 let chartOffset = 0;
-let chartVisibleCount = 80;
+let chartVisibleCount = 0;
 let chartDragging = false;
 let chartDragStartX = 0;
 let chartDragStartOffset = 0;
@@ -482,6 +482,7 @@ function setupChartToolbar() {
       chartLastFetch = 0;
       lastHoverIndex = -1;
       chartOffset = 0;
+      chartVisibleCount = 0;
       const tfEl = document.getElementById('chart-timeframe');
       if (tfEl) tfEl.innerText = chartTF === 'LIVE' ? 'Real-time Ledger Feed' : (TF_LABELS[chartTF] || chartTF);
       renderChart();
@@ -717,10 +718,10 @@ export async function renderChart() {
   const plotH = H - AXIS_H - 6 - VOL_H;
   ctx.clearRect(0, 0, W, H);
 
-  if (chartVisibleCount > series.length) chartVisibleCount = Math.max(20, series.length);
+  if (chartVisibleCount <= 0 || chartVisibleCount > series.length) chartVisibleCount = series.length;
+  if (chartOffset < 0) chartOffset = 0;
   const maxOffset = Math.max(0, series.length - chartVisibleCount);
   if (chartOffset > maxOffset) chartOffset = maxOffset;
-  if (chartOffset < 0) chartOffset = 0;
 
   const visStart = Math.max(0, Math.floor(series.length - chartVisibleCount - chartOffset));
   const visEnd = Math.min(series.length, visStart + chartVisibleCount);
@@ -854,11 +855,25 @@ export async function renderChart() {
 
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
-      const delta = e.deltaY > 0 ? 1.12 : 0.89;
-      const prev = chartVisibleCount;
-      chartVisibleCount = Math.max(10, Math.min(series.length, Math.round(chartVisibleCount * delta)));
-      const ratio = chartVisibleCount / prev;
-      chartOffset = Math.round(chartOffset * ratio);
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const W = rect.width;
+      const X_PAD = 8;
+      const LABEL_W = 52;
+      const X_RIGHT = Math.max(X_PAD + 2, W - LABEL_W - 8);
+      const mouseRatio = (mouseX - X_PAD) / (X_RIGHT - X_PAD);
+
+      const prev = chartVisibleCount <= 0 ? series.length : chartVisibleCount;
+      const zoomFactor = e.deltaY > 0 ? 1.15 : 0.87;
+      let next = Math.max(4, Math.round(prev * zoomFactor));
+      if (next > series.length) next = series.length;
+
+      const offsetAtMouse = chartOffset + (1 - mouseRatio) * prev;
+      chartVisibleCount = next;
+      chartOffset = Math.max(0, Math.round(offsetAtMouse - (1 - mouseRatio) * next));
+      const maxOff = Math.max(0, series.length - chartVisibleCount);
+      if (chartOffset > maxOff) chartOffset = maxOff;
+
       renderChart();
     }, { passive: false });
 
