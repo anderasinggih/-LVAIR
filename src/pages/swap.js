@@ -633,24 +633,25 @@ function updateChartHeader() {
   const depthEl = document.getElementById('chart-pool-depth');
   const price = ammPool.getCurrentPrice();
 
-  const series = buildChartSeries();
-  let dec = 4;
-  if (series.length >= 1) {
-    const sL = Math.min(...series.map(p => p.low));
-    const sH = Math.max(...series.map(p => p.high));
-    dec = pricePrecision(sH - sL);
-  }
+  const dec = 4;
   lastChartDecimals = dec;
 
   if (priceEl) priceEl.innerText = `$${price.toFixed(dec)}`;
 
   if (changeEl) {
-    if (series.length >= 2) {
-      const first = series[0].open;
-      const last = series[series.length - 1].close;
-      const diff = last - first;
-      const pct = first > 0 ? (diff / first) * 100 : 0;
-      const color = diff >= 0 ? '#10b981' : '#f87171';
+    const history = AppState.ammPool.priceHistory || [];
+    const now = Date.now();
+    const ago24h = now - 24 * 60 * 60 * 1000;
+    let refPrice = null;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].timestamp <= ago24h) { refPrice = history[i].price; break; }
+    }
+    if (refPrice === null && history.length > 0) refPrice = history[0].price;
+
+    if (refPrice !== null && refPrice > 0) {
+      const diff = price - refPrice;
+      const pct = (diff / refPrice) * 100;
+      const color = diff >= 0 ? '#10b981' : '#ef4444';
       changeEl.style.color = color;
       if (nominalEl) {
         nominalEl.innerText = `${diff >= 0 ? '+' : '-'}$${Math.abs(diff).toFixed(dec)}`;
