@@ -433,11 +433,19 @@ let lastHoverIndex = -1;
 let chartEventsBound = false;
 
 let chartTF = 'LIVE';
-let chartType = 'line';
+let chartType = 'candle';
 let chartCandles = [];
 let chartLastFetch = 0;
 let chartFetchInFlight = false;
 let lastChartDecimals = 4;
+
+let chartOffset = 0;
+let chartVisibleCount = 80;
+let chartDragging = false;
+let chartDragStartX = 0;
+let chartDragStartOffset = 0;
+
+const TF_LABELS = { M1: '1 Min', M5: '5 Min', M15: '15 Min', M30: '30 Min', H1: '1 Hour', H4: '4 Hour', D1: 'Daily', W1: 'Weekly', MN: 'Monthly' };
 
 function pricePrecision(range) {
   const r = Number(range);
@@ -447,15 +455,21 @@ function pricePrecision(range) {
 
 function formatChartTime(ts) {
   const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
-function formatChartAxisTime(ts) {
-  const d = new Date(ts);
-  if (chartTF === '1D' || (chartTF === 'LIVE' && chartType === 'candle')) {
+  if (['M1','M5','M15','M30','H1','H4'].includes(chartTF)) {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: '2-digit' });
+}
+
+function formatChartAxisTime(ts, tf) {
+  const d = new Date(ts);
+  const t = tf || chartTF;
+  if (t === 'LIVE') return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  if (['M1','M5','M15','M30'].includes(t)) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (['H1','H4'].includes(t)) return d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  if (t === 'D1') return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  if (t === 'W1') return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString([], { month: 'short', year: '2-digit' });
 }
 
 function setupChartToolbar() {
@@ -465,9 +479,11 @@ function setupChartToolbar() {
       chartTF = btn.getAttribute('data-tf');
       document.querySelectorAll('.chart-btn[data-tf]').forEach(b => b.classList.toggle('active', b === btn));
       chartCandles = [];
+      chartLastFetch = 0;
       lastHoverIndex = -1;
+      chartOffset = 0;
       const tfEl = document.getElementById('chart-timeframe');
-      if (tfEl) tfEl.innerText = chartTF === 'LIVE' ? 'Real-time Ledger Feed' : `${chartTF} Price History`;
+      if (tfEl) tfEl.innerText = chartTF === 'LIVE' ? 'Real-time Ledger Feed' : (TF_LABELS[chartTF] || chartTF);
       renderChart();
     });
   });
@@ -568,6 +584,7 @@ function buildChartSeries() {
       high: h.price,
       low: h.price,
       close: h.price,
+      volume: 0,
       lvair: h.lvairReserve,
       usdt: h.usdtReserve
     }));
@@ -578,7 +595,8 @@ function buildChartSeries() {
     open: c.open,
     high: c.high,
     low: c.low,
-    close: c.close
+    close: c.close,
+    volume: c.volume || 0
   }));
 }
 
@@ -681,7 +699,7 @@ export async function renderChart() {
 
   const series = buildChartSeries();
   updateChartHeader();
-  if (series.length < 2) return;
+  if (series.length < 1) return;
 
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -691,16 +709,27 @@ export async function renderChart() {
 
   const W = rect.width;
   const H = rect.height;
+  const VOL_H = chartType === 'candle' ? Math.min(40, H * 0.15) : 0;
   const AXIS_H = 22;
-  const X_PAD = 8;
   const LABEL_W = 52;
+  const X_PAD = 8;
   const X_RIGHT = Math.max(X_PAD + 2, W - LABEL_W - 8);
-  const plotH = H - AXIS_H - 6;
+  const plotH = H - AXIS_H - 6 - VOL_H;
   ctx.clearRect(0, 0, W, H);
 
-  const isCandle = chartType === 'candle';
-  const lows = series.map(p => p.low);
-  const highs = series.map(p => p.high);
+  if (chartVisibleCount > series.length) chartVisibleCount = Math.max(20, series.length);
+  const maxOffset = Math.max(0, series.length - chartVisibleCount);
+  if (chartOffset > maxOffset) chartOffset = maxOffset;
+  if (chartOffset < 0) chartOffset = 0;
+
+  const visStart = Math.max(0, Math.floor(series.length - chartVisibleCount - chartOffset));
+  const visEnd = Math.min(series.length, visStart + chartVisibleCount);
+  const visible = series.slice(visStart, visEnd);
+
+  if (visible.length < 1) return;
+
+  const lows = visible.map(p => p.low);
+  const highs = visible.map(p => p.high);
   const dataMin = Math.min(...lows);
   const dataMax = Math.max(...highs);
   const dataRange = dataMax - dataMin;
@@ -710,9 +739,20 @@ export async function renderChart() {
   const range = (maxP - minP) || 1;
   lastChartDecimals = pricePrecision(range);
   const yOf = (p) => plotH - ((p - minP) / range) * plotH;
-  const xOf = (i) => X_PAD + (i / (series.length - 1)) * (X_RIGHT - X_PAD);
 
-  chartPoints = series.map((p, i) => ({ ...p, x: xOf(i), y: yOf(p.close) }));
+  const candleW = Math.max(2, ((X_RIGHT - X_PAD) / visible.length) * 0.62);
+  const gapW = ((X_RIGHT - X_PAD) / visible.length);
+  const xOf = (i) => X_PAD + (i + 0.5) * gapW;
+
+  const maxVol = Math.max(...visible.map(p => p.volume || 0), 1);
+
+  chartPoints = visible.map((p, i) => ({
+    ...p,
+    x: xOf(i),
+    y: yOf(p.close),
+    visIndex: i,
+    absIndex: visStart + i,
+  }));
 
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
   ctx.lineWidth = 1;
@@ -733,27 +773,9 @@ export async function renderChart() {
   }
   ctx.textAlign = 'left';
 
-  if (!isCandle) {
-    ctx.beginPath();
-    chartPoints.forEach((pt, idx) => {
-      if (idx === 0) ctx.moveTo(pt.x, pt.y);
-      else ctx.lineTo(pt.x, pt.y);
-    });
-    ctx.strokeStyle = '#2563eb';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.lineTo(X_RIGHT, plotH);
-    ctx.lineTo(X_PAD, plotH);
-    const gradient = ctx.createLinearGradient(0, 0, 0, plotH);
-    gradient.addColorStop(0, 'rgba(37, 99, 235, 0.15)');
-    gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
-    ctx.fillStyle = gradient;
-    ctx.fill();
-  } else {
-    const bw = Math.max(2, ((X_RIGHT - X_PAD) / series.length) * 0.62);
+  if (chartType === 'candle') {
     chartPoints.forEach(pt => {
-      const color = pt.close >= pt.open ? '#10b981' : '#f87171';
+      const color = pt.close >= pt.open ? '#10b981' : '#ef4444';
       const openY = yOf(pt.open);
       const closeY = yOf(pt.close);
       const highY = yOf(pt.high);
@@ -767,8 +789,31 @@ export async function renderChart() {
       ctx.fillStyle = color;
       const top = Math.min(openY, closeY);
       const h = Math.max(1, Math.abs(closeY - openY));
-      ctx.fillRect(pt.x - bw / 2, top, bw, h);
+      ctx.fillRect(pt.x - candleW / 2, top, candleW, h);
+
+      if (VOL_H > 0 && pt.volume > 0) {
+        const vH = (pt.volume / maxVol) * VOL_H;
+        ctx.fillStyle = pt.close >= pt.open ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+        ctx.fillRect(pt.x - candleW / 2, plotH + VOL_H - vH, candleW, vH);
+      }
     });
+  } else {
+    ctx.beginPath();
+    chartPoints.forEach((pt, idx) => {
+      if (idx === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.lineTo(chartPoints[chartPoints.length - 1].x, plotH);
+    ctx.lineTo(chartPoints[0].x, plotH);
+    const gradient = ctx.createLinearGradient(0, 0, 0, plotH);
+    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.12)');
+    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+    ctx.fillStyle = gradient;
+    ctx.fill();
   }
 
   const lastPt = chartPoints[chartPoints.length - 1];
@@ -790,9 +835,9 @@ export async function renderChart() {
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
   ctx.font = '10px JetBrains Mono, monospace';
-  const axisCount = Math.max(2, Math.floor(W / 90));
+  const axisCount = Math.max(2, Math.floor(W / 100));
   for (let i = 0; i < axisCount; i++) {
-    const idx = Math.round((i / (axisCount - 1)) * (series.length - 1));
+    const idx = Math.round((i / (axisCount - 1)) * (chartPoints.length - 1));
     const pt = chartPoints[idx];
     ctx.textAlign = i === 0 ? 'left' : (i === axisCount - 1 ? 'right' : 'center');
     ctx.fillText(formatChartAxisTime(pt.time), pt.x, H - 5);
@@ -801,53 +846,88 @@ export async function renderChart() {
 
   if (lastHoverIndex >= 0) {
     if (lastHoverIndex >= chartPoints.length) lastHoverIndex = chartPoints.length - 1;
-    drawChartCrosshair(chartPoints[lastHoverIndex], W, plotH);
+    drawChartCrosshair(chartPoints[lastHoverIndex], W, plotH, VOL_H);
   }
 
   if (!chartEventsBound && canvas) {
     chartEventsBound = true;
-    const updateChartHover = (clientX) => {
-      if (!chartPoints.length) return;
-      const r = canvas.getBoundingClientRect();
-      const x = clientX - r.left;
-      let best = 0;
-      let bestD = Infinity;
-      for (let i = 0; i < chartPoints.length; i++) {
-        const d = Math.abs(chartPoints[i].x - x);
-        if (d < bestD) {
-          bestD = d;
-          best = i;
-        }
-      }
-      lastHoverIndex = best;
-      renderChart();
-    };
-    const clearChartHover = () => {
-      if (lastHoverIndex === -1) return;
-      lastHoverIndex = -1;
-      renderChart();
-    };
 
-    canvas.addEventListener('mousemove', (e) => updateChartHover(e.clientX));
-    canvas.addEventListener('pointermove', (e) => updateChartHover(e.clientX));
-    canvas.addEventListener('mouseleave', clearChartHover);
-    canvas.addEventListener('pointerleave', clearChartHover);
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 1.12 : 0.89;
+      const prev = chartVisibleCount;
+      chartVisibleCount = Math.max(10, Math.min(series.length, Math.round(chartVisibleCount * delta)));
+      const ratio = chartVisibleCount / prev;
+      chartOffset = Math.round(chartOffset * ratio);
+      renderChart();
+    }, { passive: false });
+
+    canvas.addEventListener('mousedown', (e) => {
+      chartDragging = true;
+      chartDragStartX = e.clientX;
+      chartDragStartOffset = chartOffset;
+      canvas.style.cursor = 'grabbing';
+    });
+    canvas.addEventListener('mousemove', (e) => {
+      if (chartDragging) {
+        const dx = e.clientX - chartDragStartX;
+        const candlesPerPx = chartVisibleCount / (X_RIGHT - X_PAD);
+        chartOffset = Math.max(0, chartDragStartOffset + Math.round(dx * candlesPerPx));
+        renderChart();
+        return;
+      }
+      updateChartHover(e.clientX);
+    });
+    canvas.addEventListener('mouseup', () => {
+      chartDragging = false;
+      canvas.style.cursor = 'crosshair';
+    });
+    canvas.addEventListener('mouseleave', () => {
+      chartDragging = false;
+      canvas.style.cursor = 'crosshair';
+      if (lastHoverIndex !== -1) { lastHoverIndex = -1; renderChart(); }
+    });
+    canvas.addEventListener('pointermove', (e) => { if (!chartDragging) updateChartHover(e.clientX); });
+    canvas.addEventListener('pointerleave', () => { if (lastHoverIndex !== -1) { lastHoverIndex = -1; renderChart(); } });
     canvas.addEventListener('touchstart', (e) => {
-      const t = e.touches[0];
-      if (t) updateChartHover(t.clientX);
+      const t = e.touches[0]; if (t) { chartDragging = true; chartDragStartX = t.clientX; chartDragStartOffset = chartOffset; }
     }, { passive: true });
     canvas.addEventListener('touchmove', (e) => {
       const t = e.touches[0];
-      if (t) updateChartHover(t.clientX);
+      if (!t) return;
+      if (chartDragging) {
+        const dx = t.clientX - chartDragStartX;
+        const candlesPerPx = chartVisibleCount / (X_RIGHT - X_PAD);
+        chartOffset = Math.max(0, chartDragStartOffset + Math.round(dx * candlesPerPx));
+        renderChart();
+      }
     }, { passive: true });
+    canvas.addEventListener('touchend', () => { chartDragging = false; });
 
     document.addEventListener('click', (e) => {
-      if (canvas && e.target !== canvas && !canvas.contains(e.target)) clearChartHover();
+      if (canvas && e.target !== canvas && !canvas.contains(e.target)) {
+        if (lastHoverIndex !== -1) { lastHoverIndex = -1; renderChart(); }
+      }
     });
+  }
+
+  function updateChartHover(clientX) {
+    if (!chartPoints.length) return;
+    const r = canvas.getBoundingClientRect();
+    const x = clientX - r.left;
+    let best = 0, bestD = Infinity;
+    for (let i = 0; i < chartPoints.length; i++) {
+      const d = Math.abs(chartPoints[i].x - x);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    if (best !== lastHoverIndex) {
+      lastHoverIndex = best;
+      renderChart();
+    }
   }
 }
 
-function drawChartCrosshair(pt, W, H) {
+function drawChartCrosshair(pt, W, H, volH) {
   ctx.save();
 
   ctx.setLineDash([4, 4]);
@@ -866,17 +946,17 @@ function drawChartCrosshair(pt, W, H) {
   ctx.fillStyle = '#ffffff';
   ctx.fill();
   ctx.lineWidth = 2;
-  ctx.strokeStyle = '#2563eb';
+  ctx.strokeStyle = '#3b82f6';
   ctx.stroke();
 
-  const tooltipW = 176;
-  const tooltipH = 70;
+  const tooltipW = 192;
+  const tooltipH = 84;
   let tx = pt.x + 14;
   let ty = pt.y - tooltipH - 14;
   if (tx + tooltipW > W) tx = pt.x - tooltipW - 14;
   if (tx < 6) tx = 6;
   if (ty < 6) ty = pt.y + 14;
-  if (ty + tooltipH > H) ty = H - tooltipH - 6;
+  if (ty + tooltipH > H + volH) ty = H + volH - tooltipH - 6;
 
   ctx.beginPath();
   ctx.moveTo(tx + 8, ty);
@@ -889,30 +969,37 @@ function drawChartCrosshair(pt, W, H) {
   ctx.lineTo(tx, ty + 8);
   ctx.quadraticCurveTo(tx, ty, tx + 8, ty);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(37, 99, 235, 0.45)';
+  ctx.strokeStyle = 'rgba(59, 130, 246, 0.45)';
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  ctx.fillStyle = '#ffffff';
+  const dec = lastChartDecimals;
   ctx.font = '700 13px JetBrains Mono, monospace';
-  ctx.fillText(`$${pt.price.toFixed(lastChartDecimals)}`, tx + 12, ty + 18);
+  ctx.fillStyle = pt.close >= pt.open ? '#10b981' : '#ef4444';
+  ctx.fillText(`$${pt.close.toFixed(dec)}`, tx + 12, ty + 18);
 
   ctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
   ctx.font = '10px JetBrains Mono, monospace';
   ctx.fillText(formatChartTime(pt.time), tx + 12, ty + 34);
 
-  if (chartType === 'candle') {
-    ctx.fillStyle = '#10b981';
-    ctx.fillText(`O ${pt.open.toFixed(lastChartDecimals)}  H ${pt.high.toFixed(lastChartDecimals)}`, tx + 12, ty + 50);
-    ctx.fillStyle = '#f87171';
-    ctx.fillText(`L ${pt.low.toFixed(lastChartDecimals)}  C ${pt.close.toFixed(lastChartDecimals)}`, tx + 12, ty + 64);
-  } else {
-    ctx.fillText(`L ${Number(pt.lvair || 0).toLocaleString()} / U ${Number(pt.usdt || 0).toLocaleString()}`, tx + 12, ty + 50);
-    ctx.fillStyle = 'rgba(37, 99, 235, 0.9)';
-    ctx.fillText(`Index ${((pt.price / (chartPoints[0].price || 1) - 1) * 100).toFixed(2)}%`, tx + 12, ty + 64);
-  }
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`O ${pt.open.toFixed(dec)}  H ${pt.high.toFixed(dec)}`, tx + 12, ty + 50);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText(`L ${pt.low.toFixed(dec)}  C ${pt.close.toFixed(dec)}`, tx + 12, ty + 64);
+
+  const chg = pt.close - pt.open;
+  const chgPct = pt.open > 0 ? (chg / pt.open) * 100 : 0;
+  ctx.fillStyle = chg >= 0 ? '#10b981' : '#ef4444';
+  ctx.fillText(`${chg >= 0 ? '+' : ''}${chgPct.toFixed(2)}%  Vol ${formatVolShort(pt.volume)}`, tx + 12, ty + 78);
 
   ctx.restore();
+}
+
+function formatVolShort(v) {
+  if (!v || v <= 0) return '0';
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+  return v.toFixed(0);
 }

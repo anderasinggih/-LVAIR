@@ -548,18 +548,26 @@ async function startFullNode() {
   });
 
   const TF_BUCKET_MS = {
-    '1D': 15 * 60 * 1000,
-    '1W': 2 * 60 * 60 * 1000,
-    '1M': 12 * 60 * 60 * 1000,
-    '1Y': 4 * 24 * 60 * 60 * 1000,
-    'ALL': 30 * 24 * 60 * 60 * 1000
+    'M1': 60 * 1000,
+    'M5': 5 * 60 * 1000,
+    'M15': 15 * 60 * 1000,
+    'M30': 30 * 60 * 1000,
+    'H1': 60 * 60 * 1000,
+    'H4': 4 * 60 * 60 * 1000,
+    'D1': 24 * 60 * 60 * 1000,
+    'W1': 7 * 24 * 60 * 60 * 1000,
+    'MN': 30 * 24 * 60 * 60 * 1000,
   };
   const TF_RANGE_MS = {
-    '1D': 24 * 60 * 60 * 1000,
-    '1W': 7 * 24 * 60 * 60 * 1000,
-    '1M': 30 * 24 * 60 * 60 * 1000,
-    '1Y': 365 * 24 * 60 * 60 * 1000,
-    'ALL': Infinity
+    'M1': 2 * 60 * 60 * 1000,
+    'M5': 12 * 60 * 60 * 1000,
+    'M15': 24 * 60 * 60 * 1000,
+    'M30': 2 * 24 * 60 * 60 * 1000,
+    'H1': 7 * 24 * 60 * 60 * 1000,
+    'H4': 30 * 24 * 60 * 60 * 1000,
+    'D1': 180 * 24 * 60 * 60 * 1000,
+    'W1': 365 * 24 * 60 * 60 * 1000,
+    'MN': Infinity,
   };
 
   function buildCandles(history, tf) {
@@ -574,12 +582,13 @@ async function startFullNode() {
       const b = Math.floor(p.timestamp / bucket) * bucket;
       if (!current || current.time !== b) {
         if (current) candles.push(current);
-        current = { time: b, open: p.price, high: p.price, low: p.price, close: p.price };
+        current = { time: b, open: p.price, high: p.price, low: p.price, close: p.price, volume: 0 };
       } else {
         current.high = Math.max(current.high, p.price);
         current.low = Math.min(current.low, p.price);
         current.close = p.price;
       }
+      current.volume += Math.abs((p.lvairReserve || 0) - (candles.length > 0 ? candles[candles.length - 1]?.lvairReserve || 0 : p.lvairReserve || 0));
     }
     if (current) candles.push(current);
     return candles;
@@ -593,7 +602,7 @@ async function startFullNode() {
       return res.json({ success: true, tf, candles: null, points });
     }
     if (!TF_BUCKET_MS[tf]) {
-      return res.status(400).json({ success: false, error: `Unsupported timeframe: ${tf}` });
+      return res.status(400).json({ success: false, error: `Unsupported timeframe: ${tf}. Use M1,M5,M15,M30,H1,H4,D1,W1,MN` });
     }
     res.json({ success: true, tf, candles: buildCandles(ammPool.priceHistory, tf), points: null });
   });
