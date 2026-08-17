@@ -21,48 +21,58 @@
 
     .topbar {
       display: flex; align-items: center; gap: 12px; padding: 8px 16px;
-      border-bottom: 1px solid var(--border); background: var(--bg-card); height: 48px; flex-shrink: 0;
+      border-bottom: 1px solid var(--border); background: var(--bg-card); height: 44px; flex-shrink: 0;
     }
-    .topbar-title { font-weight: 800; font-size: 0.9rem; white-space: nowrap; }
-    .topbar-pair { font-family: var(--mono); color: var(--accent); font-weight: 700; font-size: 0.85rem; }
-    .topbar-price { font-family: var(--mono); font-weight: 800; font-size: 1.05rem; margin-left: 8px; }
-    .topbar-change { font-family: var(--mono); font-size: 0.78rem; margin-left: 6px; }
+    .topbar-title { font-weight: 800; font-size: 0.85rem; white-space: nowrap; }
+    .topbar-pair { font-family: var(--mono); color: var(--accent); font-weight: 700; font-size: 0.82rem; }
+    .topbar-price { font-family: var(--mono); font-weight: 800; font-size: 1rem; margin-left: 6px; }
+    .topbar-change { font-family: var(--mono); font-size: 0.75rem; margin-left: 4px; }
     .topbar-spacer { flex: 1; }
-    .topbar-tf { display: flex; gap: 3px; }
-    .tf-btn {
-      background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
-      font-family: var(--mono); font-size: 0.68rem; font-weight: 600; padding: 4px 8px;
-      border-radius: 4px; cursor: pointer; transition: all 0.15s;
+    .topbar-section { display: flex; align-items: center; gap: 8px; }
+    .topbar-label { font-size: 0.65rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; }
+    .topbar-select {
+      background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text);
+      font-family: var(--mono); font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; cursor: pointer;
     }
-    .tf-btn:hover { border-color: var(--accent); color: var(--text); }
-    .tf-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+    .topbar-select:focus { border-color: var(--accent); outline: none; }
     .topbar-close {
       background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
-      font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer;
+      font-size: 0.72rem; padding: 4px 10px; border-radius: 4px; cursor: pointer;
       font-family: var(--font); font-weight: 600; display: flex; align-items: center; gap: 4px;
     }
     .topbar-close:hover { border-color: var(--red); color: var(--red); }
 
-    .ohlcv-bar {
-      display: flex; gap: 16px; padding: 4px 16px; border-bottom: 1px solid var(--border);
-      background: var(--bg); height: 28px; align-items: center; flex-shrink: 0;
+    .lvair-bar {
+      display: flex; align-items: center; gap: 16px; padding: 4px 16px;
+      border-bottom: 1px solid var(--border); background: var(--bg); height: 30px; flex-shrink: 0;
     }
-    .ohlcv-bar span { font-family: var(--mono); font-size: 0.68rem; color: var(--text-secondary); }
-    .ohlcv-bar .label { color: var(--text-tertiary); margin-right: 2px; }
-    .ohlcv-bar .val { color: var(--text); font-weight: 600; }
-    .ohlcv-bar .up { color: var(--green); }
-    .ohlcv-bar .dn { color: var(--red); }
+    .lvair-bar span { font-family: var(--mono); font-size: 0.66rem; color: var(--text-secondary); }
+    .lvair-bar .lbl { color: var(--text-tertiary); margin-right: 2px; }
+    .lvair-bar .up { color: var(--green); }
+    .lvair-bar .dn { color: var(--red); }
+    .lvair-bar .sep { color: var(--border-light); }
 
-    #chart-container { width: 100%; flex: 1; position: relative; min-height: 0; }
+    #tradingview_chart { width: 100%; flex: 1; min-height: 0; }
 
     .status-bar {
-      display: flex; align-items: center; gap: 12px; padding: 4px 16px;
-      border-top: 1px solid var(--border); background: var(--bg-card); height: 26px; flex-shrink: 0;
+      display: flex; align-items: center; gap: 10px; padding: 3px 16px;
+      border-top: 1px solid var(--border); background: var(--bg-card); height: 24px; flex-shrink: 0;
     }
-    .status-bar span { font-family: var(--mono); font-size: 0.62rem; color: var(--text-tertiary); }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
+    .status-bar span { font-family: var(--mono); font-size: 0.6rem; color: var(--text-tertiary); }
+    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); display: inline-block; }
 
     body { display: flex; flex-direction: column; }
+
+    .loading-overlay {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: var(--bg); z-index: 10; transition: opacity 0.3s;
+    }
+    .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+    .loading-spinner {
+      width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -72,153 +82,178 @@
     <span class="topbar-price" id="tb-price">$0.0000</span>
     <span class="topbar-change" id="tb-change">0.00%</span>
     <span class="topbar-spacer"></span>
-    <div class="topbar-tf" id="tf-bar"></div>
-    <button class="topbar-close" id="btn-close" title="Close fullscreen">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    <div class="topbar-section">
+      <span class="topbar-label">Chart Symbol</span>
+      <select class="topbar-select" id="tv-symbol-select">
+        <option value="BINANCE:LVAIRUSDT" selected>LVAIR/USDT</option>
+        <option value="BINANCE:BTCUSDT">BTC/USDT</option>
+        <option value="BINANCE:ETHUSDT">ETH/USDT</option>
+        <option value="BINANCE:SOLUSDT">SOL/USDT</option>
+        <option value="BINANCE:BNBUSDT">BNB/USDT</option>
+        <option value="BINANCE:XRPUSDT">XRP/USDT</option>
+        <option value="BINANCE:DOGEUSDT">DOGE/USDT</option>
+        <option value="BINANCE:ADAUSDT">ADA/USDT</option>
+        <option value="BINANCE:AVAXUSDT">AVAX/USDT</option>
+        <option value="BINANCE:DOTUSDT">DOT/USDT</option>
+        <option value="BINANCE:LINKUSDT">LINK/USDT</option>
+        <option value="BINANCE:MATICUSDT">MATIC/USDT</option>
+        <option value="TVC:DXY">DXY (Dollar)</option>
+        <option value="COMEX:GC1!">Gold Futures</option>
+      </select>
+    </div>
+    <div class="topbar-section">
+      <span class="topbar-label">Interval</span>
+      <select class="topbar-select" id="tv-interval-select">
+        <option value="1">1m</option>
+        <option value="5">5m</option>
+        <option value="15" selected>15m</option>
+        <option value="30">30m</option>
+        <option value="60">1H</option>
+        <option value="120">2H</option>
+        <option value="240">4H</option>
+        <option value="D">1D</option>
+        <option value="W">1W</option>
+        <option value="M">1M</option>
+      </select>
+    </div>
+    <button class="topbar-close" id="btn-close" title="Close">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       Close
     </button>
   </div>
-  <div class="ohlcv-bar" id="ohlcv-bar">
-    <span><span class="label">O</span><span class="val" id="o-val">—</span></span>
-    <span><span class="label">H</span><span class="val" id="h-val">—</span></span>
-    <span><span class="label">L</span><span class="val" id="l-val">—</span></span>
-    <span><span class="label">C</span><span class="val" id="c-val">—</span></span>
-    <span><span class="label">Vol</span><span class="val" id="v-val">—</span></span>
-    <span style="margin-left: auto;"><span class="label">Candles</span><span class="val" id="candle-count">0</span></span>
+
+  <div class="lvair-bar" id="lvair-bar">
+    <span><span class="lbl">LVAIR</span> <span id="lv-price">$0.0000</span></span>
+    <span class="sep">|</span>
+    <span id="lv-change">0.00%</span>
+    <span class="sep">|</span>
+    <span><span class="lbl">MCap</span> <span id="lv-mcap">—</span></span>
+    <span class="sep">|</span>
+    <span><span class="lbl">Vol24h</span> <span id="lv-vol">—</span></span>
+    <span class="sep">|</span>
+    <span><span class="lbl">Supply</span> <span id="lv-supply">—</span></span>
+    <span class="sep">|</span>
+    <span><span class="lbl">Pool</span> <span id="lv-pool">—</span></span>
+    <span style="margin-left: auto;"><span class="lbl">Oracle</span> <span id="lv-oracle">—</span></span>
   </div>
-  <div id="chart-container"></div>
+
+  <div style="position: relative; width: 100%; flex: 1; min-height: 0;">
+    <div class="loading-overlay" id="loading-overlay">
+      <div style="text-align: center;">
+        <div class="loading-spinner"></div>
+        <div style="margin-top: 12px; font-size: 0.75rem; color: var(--text-tertiary);">Loading TradingView Chart...</div>
+      </div>
+    </div>
+    <div id="tradingview_chart"></div>
+  </div>
+
   <div class="status-bar">
     <span><span class="status-dot"></span></span>
-    <span id="status-text">Connecting...</span>
+    <span id="status-text">TradingView Advanced Chart — Drawing tools, indicators, and analysis</span>
     <span style="margin-left: auto;" id="status-ts"></span>
   </div>
 
-  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js"></script>
   <script>
     (function() {
       const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://127.0.0.1:3001' : '';
-      const TF_LIST = ['LIVE','M1','M5','M15','M30','H1','H4','D1','W1','MN'];
-      const TF_SEC = { M1:60, M5:300, M15:900, M30:1800, H1:3600, H4:14400, D1:86400, W1:604800, MN:2592000 };
       const params = new URLSearchParams(window.location.search);
-      let currentTF = params.get('tf') || 'LIVE';
-      if (!TF_LIST.includes(currentTF)) currentTF = 'LIVE';
+      const initSymbol = params.get('symbol') || 'BINANCE:LVAIRUSDT';
+      const initInterval = params.get('interval') || '15';
 
-      const container = document.getElementById('chart-container');
-      const chart = LightweightCharts.createChart(container, {
-        layout: { background: { type: 'solid', color: '#0a0a0a' }, textColor: '#a1a1aa', fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
-        grid: { vertLines: { color: 'rgba(39,39,42,0.5)' }, horzLines: { color: 'rgba(39,39,42,0.5)' } },
-        crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: 'rgba(96,165,250,0.4)', width: 1, style: 0, labelBackgroundColor: '#60a5fa' }, horzLine: { color: 'rgba(96,165,250,0.4)', width: 1, style: 0, labelBackgroundColor: '#60a5fa' } },
-        rightPriceScale: { borderColor: '#27272a', scaleMargins: { top: 0.08, bottom: 0.2 } },
-        timeScale: { borderColor: '#27272a', timeVisible: true, secondsVisible: false, rightOffset: 5 },
-        handleScroll: { vertTouchDrag: false },
+      const tvWidget = new TradingView.widget({
+        container_id: 'tradingview_chart',
+        autosize: true,
+        symbol: initSymbol,
+        interval: initInterval,
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        backgroundColor: '#0a0a0a',
+        toolbar_bg: '#111113',
+        enable_publishing: false,
+        allow_symbol_change: true,
+        hide_side_toolbar: false,
+        withdateranges: true,
+        hide_volume: false,
+        save_image: false,
+        support_host: 'https://www.tradingview.com',
+        studies: [
+          'STD;Volume',
+          'STD;Moving_average',
+          'RSI@tv-basicstudies',
+          'MACD@tv-basicstudies',
+        ],
+        show_popup_button: true,
+        popup_width: '100%',
+        popup_height: '100%',
       });
-
-      const candleSeries = chart.addCandlestickSeries({
-        upColor: '#10b981', downColor: '#ef4444', borderUpColor: '#10b981', borderDownColor: '#ef4444',
-        wickUpColor: '#10b981', wickDownColor: '#ef4444',
-      });
-      const volumeSeries = chart.addHistogramSeries({
-        priceFormat: { type: 'volume' }, priceScaleId: 'vol',
-      });
-      chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
-
-      const tbPrice = document.getElementById('tb-price');
-      const tbChange = document.getElementById('tb-change');
-      const statusText = document.getElementById('status-text');
-      const statusTs = document.getElementById('status-ts');
-      const candleCountEl = document.getElementById('candle-count');
-      const oVal = document.getElementById('o-val');
-      const hVal = document.getElementById('h-val');
-      const lVal = document.getElementById('l-val');
-      const cVal = document.getElementById('c-val');
-      const vVal = document.getElementById('v-val');
 
       document.getElementById('btn-close').addEventListener('click', () => window.close());
 
-      const tfBar = document.getElementById('tf-bar');
-      TF_LIST.forEach(tf => {
-        const btn = document.createElement('button');
-        btn.className = 'tf-btn' + (tf === currentTF ? ' active' : '');
-        btn.textContent = tf;
-        btn.addEventListener('click', () => {
-          currentTF = tf;
-          tfBar.querySelectorAll('.tf-btn').forEach(b => b.classList.toggle('active', b === btn));
-          loadChart();
-        });
-        tfBar.appendChild(btn);
+      document.getElementById('tv-symbol-select').addEventListener('change', function() {
+        tvWidget.activeChart().changeSymbol(this.value);
+      });
+      document.getElementById('tv-interval-select').addEventListener('change', function() {
+        tvWidget.activeChart().changeInterval(this.value);
       });
 
-      function fmtPrice(p) { return '$' + Number(p).toFixed(4); }
-      function fmtVol(v) { return v >= 1e6 ? (v/1e6).toFixed(2)+'M' : v >= 1e3 ? (v/1e3).toFixed(1)+'K' : v.toFixed(0); }
+      tvWidget.onChartReady(() => {
+        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('status-ts').textContent = new Date().toLocaleTimeString();
+      });
 
-      function buildCandles(points, tf) {
-        if (!points || !points.length) return [];
-        const bucket = TF_SEC[tf] * 1000;
-        const map = new Map();
-        points.forEach(p => {
-          const t = Math.floor(p.timestamp / bucket) * (bucket / 1000);
-          const e = map.get(t);
-          if (!e) { map.set(t, { time: t, open: p.price, high: p.price, low: p.price, close: p.price, volume: 1 }); }
-          else { e.high = Math.max(e.high, p.price); e.low = Math.min(e.low, p.price); e.close = p.price; e.volume++; }
-        });
-        return Array.from(map.values()).sort((a, b) => a.time - b.time);
-      }
-
-      async function loadChart() {
+      async function refreshLvairData() {
         try {
-          statusText.textContent = 'Loading...';
-          const res = await fetch(`${API}/api/chart?tf=${encodeURIComponent(currentTF)}`);
-          if (!res.ok) throw new Error(res.status);
-          const data = await res.json();
-          let candles;
-          if (currentTF === 'LIVE') {
-            candles = buildCandles(data.points || [], 'M1');
-          } else {
-            candles = (data.candles || []).map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume || 0 }));
-          }
-          candles.sort((a, b) => a.time - b.time);
-          candleSeries.setData(candles);
-          volumeSeries.setData(candles.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)' })));
-          candleCountEl.textContent = candles.length;
-          if (candles.length) {
-            const last = candles[candles.length - 1];
-            tbPrice.textContent = fmtPrice(last.close);
-            if (candles.length > 1) {
-              const prev = candles[candles.length - 2].close;
-              const chg = ((last.close - prev) / prev * 100);
-              tbChange.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
-              tbChange.style.color = chg >= 0 ? 'var(--green)' : 'var(--red)';
+          const [chartRes, statusRes] = await Promise.all([
+            fetch(`${API}/api/chart?tf=M15`),
+            fetch(`${API}/api/node/status`)
+          ]);
+          if (chartRes.ok) {
+            const data = await chartRes.json();
+            const candles = data.candles || [];
+            if (candles.length) {
+              const last = candles[candles.length - 1];
+              document.getElementById('lv-price').textContent = '$' + last.close.toFixed(4);
+              if (candles.length > 1) {
+                const prev = candles[candles.length - 2].close;
+                const chg = ((last.close - prev) / prev * 100);
+                const el = document.getElementById('lv-change');
+                el.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+                el.className = chg >= 0 ? 'up' : 'dn';
+              }
+              document.getElementById('lv-mcap').textContent = fmtNum(last.close * 10000000);
+              const vol24 = candles.slice(-96).reduce((s, c) => s + (c.volume || 0), 0);
+              document.getElementById('lv-vol').textContent = fmtNum(vol24);
             }
           }
-          chart.timeScale().fitContent();
-          statusText.textContent = `LVAIR/USDT | ${currentTF} | ${candles.length} candles`;
-          statusTs.textContent = new Date().toLocaleTimeString();
-        } catch (e) {
-          statusText.textContent = 'Error: ' + e.message;
-        }
+          if (statusRes.ok) {
+            const st = await statusRes.json();
+            document.getElementById('lv-supply').textContent = fmtNum(st.totalSupply || 0);
+            const r = st.reserves || {};
+            document.getElementById('lv-pool').textContent =
+              '$' + fmtNum(r.usdt || 0) + ' / ' + fmtNum(r.lvair || 0) + ' LVAIR';
+          }
+          const oracleRes = await fetch(`${API}/api/oracle/prices`);
+          if (oracleRes.ok) {
+            const o = await oracleRes.json();
+            const lvair = (o.prices || []).find(p => p.symbol === 'LVAIR');
+            document.getElementById('lv-oracle').textContent = '$' + ((lvair && lvair.price) || 0).toFixed(4);
+          }
+        } catch(e) {}
       }
 
-      chart.subscribeCrosshairMove(param => {
-        if (!param || !param.time) {
-          oVal.textContent = hVal.textContent = lVal.textContent = cVal.textContent = vVal.textContent = '—';
-          return;
-        }
-        const d = param.seriesData.get(candleSeries);
-        if (!d) return;
-        oVal.textContent = fmtPrice(d.open);
-        hVal.textContent = fmtPrice(d.high);
-        lVal.textContent = fmtPrice(d.low);
-        cVal.textContent = fmtPrice(d.close);
-        cVal.className = 'val ' + (d.close >= d.open ? 'up' : 'dn');
-        const v = param.seriesData.get(volumeSeries);
-        vVal.textContent = v ? fmtVol(v.value) : '—';
-      });
+      function fmtNum(n) {
+        if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+        if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+        if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+        return n.toFixed(0);
+      }
 
-      new ResizeObserver(() => { chart.applyOptions({ width: container.clientWidth, height: container.clientHeight }); }).observe(container);
-
-      loadChart();
-      setInterval(loadChart, currentTF === 'LIVE' ? 2000 : 15000);
+      refreshLvairData();
+      setInterval(refreshLvairData, 5000);
     })();
   </script>
 </body>
