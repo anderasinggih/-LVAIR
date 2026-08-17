@@ -41,15 +41,16 @@ export async function refreshNodeState() {
 
   try {
     const [blocksRes, cfgRes, ammRes] = await Promise.all([
-      fetch(`${apiUrl}/api/blocks`).catch(() => null),
+      fetch(`${apiUrl}/api/blocks?page=1&limit=99999`).catch(() => null),
       fetch(`${apiUrl}/api/config`).catch(() => null),
       fetch(`${apiUrl}/api/amm/state`).catch(() => null)
     ]);
 
     if (blocksRes && blocksRes.ok) {
       anyOk = true;
-      const blocks = await blocksRes.json();
-      if (Array.isArray(blocks) && blocks.length > 0) {
+      const data = await blocksRes.json();
+      const blocks = Array.isArray(data) ? data : (data.blocks || []);
+      if (blocks.length > 0) {
         AppState.blockchain.chain = blocks.map(b => Block.fromJSON(b));
         AppState.blockchain.claimedAddresses = rebuildClaimedAddresses(blocks);
         const latestHash = blocks[blocks.length - 1].hash;
