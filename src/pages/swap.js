@@ -502,6 +502,12 @@ function setupChartToolbar() {
     });
     updateChartTypeToggle();
   }
+  const fsBtn = document.getElementById('chart-fullscreen-btn');
+  if (fsBtn) {
+    fsBtn.addEventListener('click', () => {
+      window.open(`chart.html?tf=${chartTF}`, '_blank');
+    });
+  }
 }
 
 function updateChartTypeToggle() {

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LVAIR Chart | Fullscreen Analysis</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230a0a0a'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-size='16' font-weight='900' font-family='Arial' fill='white'>L</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0a; --bg-card: #111113; --bg-elevated: #18181b;
+      --border: #27272a; --border-light: #3f3f46;
+      --text: #fafafa; --text-secondary: #a1a1aa; --text-tertiary: #71717a;
+      --accent: #60a5fa; --green: #10b981; --red: #ef4444;
+      --font: 'Inter', system-ui, sans-serif; --mono: 'JetBrains Mono', monospace;
+    }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font); }
+
+    .topbar {
+      display: flex; align-items: center; gap: 12px; padding: 8px 16px;
+      border-bottom: 1px solid var(--border); background: var(--bg-card); height: 48px; flex-shrink: 0;
+    }
+    .topbar-title { font-weight: 800; font-size: 0.9rem; white-space: nowrap; }
+    .topbar-pair { font-family: var(--mono); color: var(--accent); font-weight: 700; font-size: 0.85rem; }
+    .topbar-price { font-family: var(--mono); font-weight: 800; font-size: 1.05rem; margin-left: 8px; }
+    .topbar-change { font-family: var(--mono); font-size: 0.78rem; margin-left: 6px; }
+    .topbar-spacer { flex: 1; }
+    .topbar-tf { display: flex; gap: 3px; }
+    .tf-btn {
+      background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
+      font-family: var(--mono); font-size: 0.68rem; font-weight: 600; padding: 4px 8px;
+      border-radius: 4px; cursor: pointer; transition: all 0.15s;
+    }
+    .tf-btn:hover { border-color: var(--accent); color: var(--text); }
+    .tf-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+    .topbar-close {
+      background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
+      font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer;
+      font-family: var(--font); font-weight: 600; display: flex; align-items: center; gap: 4px;
+    }
+    .topbar-close:hover { border-color: var(--red); color: var(--red); }
+
+    .ohlcv-bar {
+      display: flex; gap: 16px; padding: 4px 16px; border-bottom: 1px solid var(--border);
+      background: var(--bg); height: 28px; align-items: center; flex-shrink: 0;
+    }
+    .ohlcv-bar span { font-family: var(--mono); font-size: 0.68rem; color: var(--text-secondary); }
+    .ohlcv-bar .label { color: var(--text-tertiary); margin-right: 2px; }
+    .ohlcv-bar .val { color: var(--text); font-weight: 600; }
+    .ohlcv-bar .up { color: var(--green); }
+    .ohlcv-bar .dn { color: var(--red); }
+
+    #chart-container { width: 100%; flex: 1; position: relative; min-height: 0; }
+
+    .status-bar {
+      display: flex; align-items: center; gap: 12px; padding: 4px 16px;
+      border-top: 1px solid var(--border); background: var(--bg-card); height: 26px; flex-shrink: 0;
+    }
+    .status-bar span { font-family: var(--mono); font-size: 0.62rem; color: var(--text-tertiary); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
+
+    body { display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="topbar-title">LVAIR</span>
+    <span class="topbar-pair">LVAIR / USDT</span>
+    <span class="topbar-price" id="tb-price">$0.0000</span>
+    <span class="topbar-change" id="tb-change">0.00%</span>
+    <span class="topbar-spacer"></span>
+    <div class="topbar-tf" id="tf-bar"></div>
+    <button class="topbar-close" id="btn-close" title="Close fullscreen">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      Close
+    </button>
+  </div>
+  <div class="ohlcv-bar" id="ohlcv-bar">
+    <span><span class="label">O</span><span class="val" id="o-val">—</span></span>
+    <span><span class="label">H</span><span class="val" id="h-val">—</span></span>
+    <span><span class="label">L</span><span class="val" id="l-val">—</span></span>
+    <span><span class="label">C</span><span class="val" id="c-val">—</span></span>
+    <span><span class="label">Vol</span><span class="val" id="v-val">—</span></span>
+    <span style="margin-left: auto;"><span class="label">Candles</span><span class="val" id="candle-count">0</span></span>
+  </div>
+  <div id="chart-container"></div>
+  <div class="status-bar">
+    <span><span class="status-dot"></span></span>
+    <span id="status-text">Connecting...</span>
+    <span style="margin-left: auto;" id="status-ts"></span>
+  </div>
+
+  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+  <script>
+    (function() {
+      const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://127.0.0.1:3001' : '';
+      const TF_LIST = ['LIVE','M1','M5','M15','M30','H1','H4','D1','W1','MN'];
+      const TF_SEC = { M1:60, M5:300, M15:900, M30:1800, H1:3600, H4:14400, D1:86400, W1:604800, MN:2592000 };
+      const params = new URLSearchParams(window.location.search);
+      let currentTF = params.get('tf') || 'LIVE';
+      if (!TF_LIST.includes(currentTF)) currentTF = 'LIVE';
+
+      const container = document.getElementById('chart-container');
+      const chart = LightweightCharts.createChart(container, {
+        layout: { background: { type: 'solid', color: '#0a0a0a' }, textColor: '#a1a1aa', fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
+        grid: { vertLines: { color: 'rgba(39,39,42,0.5)' }, horzLines: { color: 'rgba(39,39,42,0.5)' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: 'rgba(96,165,250,0.4)', width: 1, style: 0, labelBackgroundColor: '#60a5fa' }, horzLine: { color: 'rgba(96,165,250,0.4)', width: 1, style: 0, labelBackgroundColor: '#60a5fa' } },
+        rightPriceScale: { borderColor: '#27272a', scaleMargins: { top: 0.08, bottom: 0.2 } },
+        timeScale: { borderColor: '#27272a', timeVisible: true, secondsVisible: false, rightOffset: 5 },
+        handleScroll: { vertTouchDrag: false },
+      });
+
+      const candleSeries = chart.addCandlestickSeries({
+        upColor: '#10b981', downColor: '#ef4444', borderUpColor: '#10b981', borderDownColor: '#ef4444',
+        wickUpColor: '#10b981', wickDownColor: '#ef4444',
+      });
+      const volumeSeries = chart.addHistogramSeries({
+        priceFormat: { type: 'volume' }, priceScaleId: 'vol',
+      });
+      chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+
+      const tbPrice = document.getElementById('tb-price');
+      const tbChange = document.getElementById('tb-change');
+      const statusText = document.getElementById('status-text');
+      const statusTs = document.getElementById('status-ts');
+      const candleCountEl = document.getElementById('candle-count');
+      const oVal = document.getElementById('o-val');
+      const hVal = document.getElementById('h-val');
+      const lVal = document.getElementById('l-val');
+      const cVal = document.getElementById('c-val');
+      const vVal = document.getElementById('v-val');
+
+      document.getElementById('btn-close').addEventListener('click', () => window.close());
+
+      const tfBar = document.getElementById('tf-bar');
+      TF_LIST.forEach(tf => {
+        const btn = document.createElement('button');
+        btn.className = 'tf-btn' + (tf === currentTF ? ' active' : '');
+        btn.textContent = tf;
+        btn.addEventListener('click', () => {
+          currentTF = tf;
+          tfBar.querySelectorAll('.tf-btn').forEach(b => b.classList.toggle('active', b === btn));
+          loadChart();
+        });
+        tfBar.appendChild(btn);
+      });
+
+      function fmtPrice(p) { return '$' + Number(p).toFixed(4); }
+      function fmtVol(v) { return v >= 1e6 ? (v/1e6).toFixed(2)+'M' : v >= 1e3 ? (v/1e3).toFixed(1)+'K' : v.toFixed(0); }
+
+      function buildCandles(points, tf) {
+        if (!points || !points.length) return [];
+        const bucket = TF_SEC[tf] * 1000;
+        const map = new Map();
+        points.forEach(p => {
+          const t = Math.floor(p.timestamp / bucket) * (bucket / 1000);
+          const e = map.get(t);
+          if (!e) { map.set(t, { time: t, open: p.price, high: p.price, low: p.price, close: p.price, volume: 1 }); }
+          else { e.high = Math.max(e.high, p.price); e.low = Math.min(e.low, p.price); e.close = p.price; e.volume++; }
+        });
+        return Array.from(map.values()).sort((a, b) => a.time - b.time);
+      }
+
+      async function loadChart() {
+        try {
+          statusText.textContent = 'Loading...';
+          const res = await fetch(`${API}/api/chart?tf=${encodeURIComponent(currentTF)}`);
+          if (!res.ok) throw new Error(res.status);
+          const data = await res.json();
+          let candles;
+          if (currentTF === 'LIVE') {
+            candles = buildCandles(data.points || [], 'M1');
+          } else {
+            candles = (data.candles || []).map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume || 0 }));
+          }
+          candles.sort((a, b) => a.time - b.time);
+          candleSeries.setData(candles);
+          volumeSeries.setData(candles.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)' })));
+          candleCountEl.textContent = candles.length;
+          if (candles.length) {
+            const last = candles[candles.length - 1];
+            tbPrice.textContent = fmtPrice(last.close);
+            if (candles.length > 1) {
+              const prev = candles[candles.length - 2].close;
+              const chg = ((last.close - prev) / prev * 100);
+              tbChange.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+              tbChange.style.color = chg >= 0 ? 'var(--green)' : 'var(--red)';
+            }
+          }
+          chart.timeScale().fitContent();
+          statusText.textContent = `LVAIR/USDT | ${currentTF} | ${candles.length} candles`;
+          statusTs.textContent = new Date().toLocaleTimeString();
+        } catch (e) {
+          statusText.textContent = 'Error: ' + e.message;
+        }
+      }
+
+      chart.subscribeCrosshairMove(param => {
+        if (!param || !param.time) {
+          oVal.textContent = hVal.textContent = lVal.textContent = cVal.textContent = vVal.textContent = '—';
+          return;
+        }
+        const d = param.seriesData.get(candleSeries);
+        if (!d) return;
+        oVal.textContent = fmtPrice(d.open);
+        hVal.textContent = fmtPrice(d.high);
+        lVal.textContent = fmtPrice(d.low);
+        cVal.textContent = fmtPrice(d.close);
+        cVal.className = 'val ' + (d.close >= d.open ? 'up' : 'dn');
+        const v = param.seriesData.get(volumeSeries);
+        vVal.textContent = v ? fmtVol(v.value) : '—';
+      });
+
+      new ResizeObserver(() => { chart.applyOptions({ width: container.clientWidth, height: container.clientHeight }); }).observe(container);
+
+      loadChart();
+      setInterval(loadChart, currentTF === 'LIVE' ? 2000 : 15000);
+    })();
+  </script>
+</body>
+</html>
