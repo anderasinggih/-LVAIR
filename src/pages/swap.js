@@ -505,9 +505,7 @@ function setupChartToolbar() {
   const fsBtn = document.getElementById('chart-fullscreen-btn');
   if (fsBtn) {
     fsBtn.addEventListener('click', () => {
-      const tfMap = { LIVE:'1', M1:'1', M5:'5', M15:'15', M30:'30', H1:'60', H4:'240', D1:'D', W1:'W', MN:'M' };
-      const interval = tfMap[chartTF] || '15';
-      window.open(`chart.html?interval=${interval}`, '_blank');
+      window.open(`chart.html?tf=${chartTF}`, '_blank');
     });
   }
 }
