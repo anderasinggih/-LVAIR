@@ -449,7 +449,7 @@ let chartBoundsW = 0;
 let chartBoundsXPad = 8;
 let chartBoundsXRight = 0;
 
-const TF_LABELS = { M1: '1 Min', M5: '5 Min', M15: '15 Min', M30: '30 Min', H1: '1 Hour', H4: '4 Hour', D1: 'Daily', W1: 'Weekly', MN: 'Monthly' };
+const TF_LABELS = { S30: '30 Sec', M1: '1 Min', M5: '5 Min', M15: '15 Min', M30: '30 Min', H1: '1 Hour', H4: '4 Hour', D1: 'Daily', W1: 'Weekly', MN: 'Monthly' };
 
 function pricePrecision(range) {
   const r = Number(range);
@@ -459,7 +459,7 @@ function pricePrecision(range) {
 
 function formatChartTime(ts) {
   const d = new Date(ts);
-  if (['M1','M5','M15','M30','H1','H4'].includes(chartTF)) {
+  if (['S30','M1','M5','M15','M30','H1','H4'].includes(chartTF)) {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
   return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: '2-digit' });
@@ -469,7 +469,7 @@ function formatChartAxisTime(ts, tf) {
   const d = new Date(ts);
   const t = tf || chartTF;
   if (t === 'LIVE') return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  if (['M1','M5','M15','M30'].includes(t)) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (['S30','M1','M5','M15','M30'].includes(t)) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   if (['H1','H4'].includes(t)) return d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   if (t === 'D1') return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
   if (t === 'W1') return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
