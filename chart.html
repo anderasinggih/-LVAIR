@@ -483,7 +483,10 @@
     function updateCountdown(){const cd=$('countdown');if(curTF==='LIVE'||!TF_SEC[curTF]||!candles.length){cd.style.display='none';return;}const sec=TF_SEC[curTF],now=Date.now()/1000,rem=Math.max(0,sec-(now%sec));cd.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');const last=candles[candles.length-1],y=priceToPx(last.close);if(y>0&&y<container.clientHeight){cd.style.display='';cd.style.top=y+'px';try{cd.style.left=(contentWidth()-cd.offsetWidth-2)+'px';}catch(e){cd.style.left='50%';}}else{cd.style.display='none';}}
     setInterval(updateCountdown,1000);
     chart.timeScale().subscribeVisibleLogicalRangeChange(()=>{updateCountdown();_adjustedRange=null;});
-    (function overlayLoop(){requestAnimationFrame(()=>{redraw();overlayLoop();})();})();
+
+    let drawMode=null,drawPts=[],drawings=[],mouseX=0,mouseY=0;
+
+    (function overlayLoop(){requestAnimationFrame(()=>{redraw();overlayLoop();});})();
 
     /* ══════════════════════════════════════════════
        ── Demo Trading State ──
@@ -499,7 +502,6 @@
     /* ══════════════════════════════════════════════
        ── Drawing Tools ──
        ══════════════════════════════════════════════ */
-    let drawMode=null,drawPts=[],drawings=[],mouseX=0,mouseY=0;
     const tip=$('draw-tip');
     function showTip(x,y,text){tip.style.display='block';tip.style.left=x+'px';tip.style.top=y+'px';tip.textContent=text;}
     function hideTip(){tip.style.display='none';}
