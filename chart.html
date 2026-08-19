@@ -162,6 +162,7 @@
     <span class="tb-p">LVAIR/USDT</span>
     <span class="tb-pr" id="tb-price">$0.0000</span>
     <span class="tb-c" id="tb-change">0.00%</span>
+    <span id="demo-badge" style="display:none;background:linear-gradient(135deg,#f59e0b,#f97316);color:#000;font-family:var(--mono);font-size:.52rem;font-weight:800;padding:2px 6px;border-radius:3px;letter-spacing:.04em;white-space:nowrap;flex-shrink:0">CFD DEMO</span>
     <span class="sep">|</span>
     <span class="hl" id="tb-hi">H —</span>
     <span class="hl" id="tb-lo">L —</span>
@@ -414,7 +415,40 @@
         else if(d.type==='rect'){const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);const lx=Math.min(x1,x2),ly=Math.min(y1,y2),w=Math.abs(x2-x1),h=Math.abs(y2-y1);ctx.fillStyle='rgba(96,165,250,.06)';ctx.fillRect(lx,ly,w,h);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1;ctx.strokeRect(lx,ly,w,h);}
         else if(d.type==='fib'){const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);const lvls=[0,.236,.382,.5,.618,.786,1];const minX=Math.min(x1,x2),maxX=Math.max(x1,x2);ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(minX,Math.min(y1,y2),maxX-minX,Math.abs(y2-y1));lvls.forEach(lv=>{const y=y1+(y2-y1)*lv;const price=d.p1+(d.p2-d.p1)*lv;ctx.strokeStyle='rgba(234,179,8,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(minX,y);ctx.lineTo(maxX,y);ctx.stroke();ctx.setLineDash([]);const lbl=(lv*100).toFixed(1)+'% '+fmt(price);const tw=ctx.measureText(lbl).width;ctx.fillStyle=lv===0||lv===1?'rgba(234,179,8,.15)':'rgba(234,179,8,.08)';ctx.fillRect(minX,y-9,tw+10,18);ctx.fillStyle='rgba(234,179,8,.8)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText(lbl,minX+4,y+3);});}
         ctx.restore();});
+      drawPositionLines();
       drawPreview();
+    }
+
+    function drawPositionLines(){
+      if(!demoAccount||!demoAccount.positions||!demoAccount.positions.length)return;
+      const W=mainWrap.clientWidth,H=mainWrap.clientHeight;
+      const curPrice=candles.length?candles[candles.length-1].close:0;
+      demoAccount.positions.forEach((pos,idx)=>{
+        if(pos.status!=='open')return;
+        const y=priceToPx(pos.entryPrice);
+        if(y<0||y>H)return;
+        const isBuy=pos.side==='long';
+        const color=isBuy?'rgba(16,185,129,.7)':'rgba(239,68,68,.7)';
+        const bgColor=isBuy?'rgba(16,185,129,.1)':'rgba(239,68,68,.1)';
+        const pnl=pos.pnl||0;
+        const pnlPct=((curPrice-pos.entryPrice)/pos.entryPrice*pos.leverage*(isBuy?1:-1));
+        ctx.save();
+        ctx.strokeStyle=color;ctx.lineWidth=1;ctx.setLineDash([5,3]);
+        ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();ctx.setLineDash([]);
+        const tag=`${isBuy?'BUY':'SELL'} ${pos.leverage}x $${fmtN(pos.margin)}`;
+        const pnlText=`${pnl>=0?'+':''}$${fmtN(pnl)} (${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%)`;
+        const tagW=ctx.measureText(tag).width;
+        const pnlW=ctx.measureText(pnlText).width;
+        const totalW=tagW+pnlW+20;
+        const tagX=Math.max(4,Math.min(W-totalW-8,W/2-totalW/2));
+        ctx.fillStyle=bgColor;
+        ctx.beginPath();ctx.roundRect(tagX-4,y-20,totalW+8,18,3);ctx.fill();
+        ctx.strokeStyle=color;ctx.lineWidth=.5;ctx.beginPath();ctx.roundRect(tagX-4,y-20,totalW+8,18,3);ctx.stroke();
+        ctx.font='bold 9px JetBrains Mono';ctx.textAlign='left';
+        ctx.fillStyle=color;ctx.fillText(tag,tagX,y-7);
+        ctx.fillStyle=pnl>=0?'#10b981':'#ef4444';ctx.fillText(pnlText,tagX+tagW+8,y-7);
+        ctx.restore();
+      });
     }
 
     function drawPreview(){
@@ -483,6 +517,7 @@
       }catch(e){}
       demoRefreshing=false;
       renderDemoPanel();
+      redraw();
     }
 
     async function connectWallet(){
@@ -492,7 +527,29 @@
       localStorage.setItem('demo_wallet',v);
       const r=await apiDemo('account',{address:v});
       if(r.success){demoAccount=r.account;}
+      $('demo-badge').style.display='';
       renderDemoPanel();
+    }
+
+    async function connectMetaMask(){
+      if(!window.ethereum){
+        alert('MetaMask not detected. Install MetaMask first.');
+        return;
+      }
+      try{
+        const accounts=await window.ethereum.request({method:'eth_requestAccounts'});
+        if(accounts&&accounts.length){
+          demoAddr=accounts[0];
+          localStorage.setItem('demo_wallet',demoAddr);
+          if($('demo-addr-input'))$('demo-addr-input').value=demoAddr;
+          const r=await apiDemo('account',{address:demoAddr});
+          if(r.success){demoAccount=r.account;}
+          $('demo-badge').style.display='';
+          renderDemoPanel();
+        }
+      }catch(e){
+        console.warn('MetaMask connection failed:',e);
+      }
     }
 
     async function resetDemo(){
@@ -511,6 +568,7 @@
         demoAccount.balance=r.balance;
         demoAccount.positions.push(r.position);
         renderDemoPanel();
+        redraw();
       } else {
         alert(r.error||'Trade failed');
       }
@@ -525,13 +583,14 @@
         if(!demoAccount.history)demoAccount.history=[];
         demoAccount.history.unshift({side:'closed',pnl:r.pnl,closePrice:r.closePrice,closedAt:Date.now()});
         renderDemoPanel();
+        redraw();
       }
     }
 
     function renderDemoPanel(){
       const body=$('tp-body');
       if(!demoAddr){
-        body.innerHTML=`<div class="demo-connect"><p>Connect wallet address to start demo trading with $10,000 virtual USDT and up to 1:2000 leverage.</p><input id="demo-addr-input" placeholder="0x... wallet address" value="${demoAddr}"><button class="btn btn-primary" onclick="window._demoConnect()">Connect</button></div>`;
+        body.innerHTML=`<div class="demo-connect"><p>Connect wallet to start demo trading with $10,000 virtual USDT and up to 1:2000 leverage.</p><button class="btn btn-primary" onclick="window._demoMetaMask()" style="margin-bottom:8px;background:linear-gradient(135deg,#f6851b,#e2761b);color:#fff">🦊 Connect MetaMask</button><div style="display:flex;gap:6px;align-items:center;margin:8px 0"><div style="flex:1;height:1px;background:var(--bd)"></div><span style="font-size:.54rem;color:var(--tx3);font-family:var(--mono)">OR</span><div style="flex:1;height:1px;background:var(--bd)"></div></div><input id="demo-addr-input" placeholder="Paste wallet address (0x...)" value="${demoAddr}"><button class="btn btn-primary" onclick="window._demoConnect()">Connect Address</button></div>`;
         return;
       }
       if(!demoAccount){
@@ -562,15 +621,15 @@
             </div>
             <div class="tf-group">
               <label>Margin (USDT)</label>
-              <input type="number" class="tf-input" id="demo-margin" placeholder="100" value="100" min="1" step="any">
+              <input type="number" class="tf-input" id="demo-margin" placeholder="100" value="100" min="1" step="any" oninput="window._demoSetLev(${demoLeverage})">
             </div>
             <div class="tf-group">
               <label>Position Value</label>
               <div class="tp-val sm" id="demo-posval">$${fmtN(100*demoLeverage)}</div>
             </div>
             <div class="side-btns">
-              <button class="btn btn-long" onclick="window._demoTrade('long')">▲ Long</button>
-              <button class="btn btn-short" onclick="window._demoTrade('short')">▼ Short</button>
+              <button class="btn btn-long" onclick="window._demoTrade('long')">▲ Buy</button>
+              <button class="btn btn-short" onclick="window._demoTrade('short')">▼ Sell</button>
             </div>
           </div>`;
       } else if(demoTab==='positions'){
@@ -599,6 +658,7 @@
     }
 
     window._demoConnect=connectWallet;
+    window._demoMetaMask=connectMetaMask;
     window._demoSetLev=function(v){demoLeverage=Number(v);const el=$('demo-posval');const m=parseFloat($('demo-margin')?.value)||0;if(el)el.textContent='$'+fmtN(m*demoLeverage);const valEl=$('demo-lev-val');if(valEl)valEl.textContent=demoLeverage+'x';document.querySelectorAll('.lev-btn').forEach(b=>b.classList.toggle('active',b.textContent===demoLeverage+'x'));};
     window._demoTrade=openTrade;
     window._demoClose=closePos;
@@ -606,6 +666,17 @@
     if(demoAddr){
       showPanel();
       refreshDemoAccount();
+      $('demo-badge').style.display='';
+    } else if(window.ethereum){
+      window.ethereum.request({method:'eth_accounts'}).then(accounts=>{
+        if(accounts&&accounts.length){
+          demoAddr=accounts[0];
+          localStorage.setItem('demo_wallet',demoAddr);
+          showPanel();
+          refreshDemoAccount();
+          $('demo-badge').style.display='';
+        }
+      }).catch(()=>{});
     }
 
     $('btn-close').addEventListener('click',()=>window.close());
