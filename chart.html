@@ -29,7 +29,7 @@
     .cls-btn{background:0 0;border:1px solid var(--bd);color:var(--tx2);font-size:.66rem;padding:3px 8px;border-radius:3px;cursor:pointer;font-weight:600;flex-shrink:0;touch-action:manipulation}
     .cls-btn:hover{border-color:var(--rd);color:var(--rd)}
 
-    .toolbar{display:flex;align-items:center;gap:1px;padding:0 8px;border-bottom:1px solid var(--bd);background:var(--bgc);height:30px;flex-shrink:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .toolbar{display:flex;align-items:center;gap:1px;padding:0 8px;border-bottom:1px solid var(--bd);background:var(--bgc);height:30px;flex-shrink:0;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative;z-index:20}
     .toolbar::-webkit-scrollbar{display:none}
     .tg{display:flex;gap:1px;padding:0 4px;border-right:1px solid var(--bd);flex-shrink:0}.tg:last-child{border-right:none}
     .t-btn{background:0 0;border:none;color:var(--tx2);padding:3px 6px;border-radius:3px;cursor:pointer;font-size:.6rem;font-family:var(--mono);font-weight:500;display:flex;align-items:center;gap:3px;transition:all .1s;white-space:nowrap;touch-action:manipulation}
@@ -141,10 +141,12 @@
       .t-btn{font-size:.58rem;padding:2px 6px}.t-btn svg{width:11px;height:11px}
       .t-btn .btn-label{display:none}
       .ind-btn{font-size:.58rem;padding:2px 6px}
-      .trade-panel{width:100%;max-width:340px;position:fixed;right:0;top:0;bottom:0;z-index:50;border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .25s ease;box-shadow:-4px 0 24px rgba(0,0,0,.6)}
-      .trade-panel.open{transform:translateX(0)}
-      .tp-body{padding-bottom:env(safe-area-inset-bottom)}
-      .tp-header{padding:10px 12px}
+      .trade-panel{width:100%;max-height:70vh;position:fixed;right:0;bottom:0;left:0;top:auto;z-index:50;border-top:1px solid var(--bd);border-left:none;border-radius:12px 12px 0 0;transform:translateY(100%);transition:transform .25s ease;box-shadow:0 -4px 24px rgba(0,0,0,.6)}
+      .trade-panel.open{transform:translateY(0)}
+      .tp-header{padding:12px 14px;border-bottom:1px solid var(--bd)}
+      .tp-header .tab{font-size:.68rem;padding:4px 10px}
+      .tp-body{padding-bottom:env(safe-area-inset-bottom);max-height:calc(70vh - 44px);overflow-y:auto}
+      .tp-drag-handle{display:block!important}
       .pos-card{padding:12px}
       .side-btns .btn{padding:14px;font-size:.88rem}
       .lev-btns{gap:4px}
@@ -159,7 +161,7 @@
       .tf-btn{font-size:.54rem;padding:2px 4px}
       .toolbar{height:26px}
       .t-btn{font-size:.54rem;padding:2px 4px}.t-btn svg{width:10px;height:10px}
-      .trade-panel{max-width:100%}
+      .trade-panel{max-width:100%;max-height:75vh}
       .tf-input{padding:10px;font-size:.82rem}
       .demo-connect input{padding:10px;font-size:.82rem}
       .side-btns .btn{padding:16px;font-size:.92rem}
@@ -234,6 +236,7 @@
 
     <div id="tp-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:49" onclick="window._tpClose()"></div>
     <div class="trade-panel" id="trade-panel">
+      <div class="tp-drag-handle" style="display:none;width:36px;height:4px;background:var(--bd2);border-radius:2px;margin:6px auto 0"></div>
       <div class="tp-header">
         <span class="tab active" data-tab="trade">Trade</span>
         <span class="tab" data-tab="positions">Positions</span>
@@ -603,6 +606,12 @@
       renderDemoPanel();
       redraw();
     }
+    let _lastPosCount=0;
+    setInterval(()=>{
+      if(!demoAccount)return;
+      const pc=(demoAccount.positions||[]).filter(p=>p.status==='open').length;
+      if(pc!==_lastPosCount){_lastPosCount=pc;refreshDemoAccount();}
+    },1500);
 
     async function connectWallet(){
       const v=$('demo-addr-input')?.value?.trim();
@@ -670,6 +679,8 @@
         demoAccount.positions.push(r.position);
         renderDemoPanel();
         redraw();
+        setTimeout(refreshDemoAccount,300);
+        setTimeout(refreshDemoAccount,1000);
       } else {
         alert(r.error||'Trade failed');
       }
@@ -685,6 +696,7 @@
         demoAccount.history.unshift({side:'closed',pnl:r.pnl,closePrice:r.closePrice,closedAt:Date.now()});
         renderDemoPanel();
         redraw();
+        setTimeout(refreshDemoAccount,300);
       }
     }
 
@@ -696,6 +708,7 @@
         demoAccount.positions=demoAccount.positions.filter(p=>p.status==='open');
         renderDemoPanel();
         redraw();
+        setTimeout(refreshDemoAccount,300);
       }
     }
 
@@ -843,14 +856,9 @@
       const body=$('tp-body');
       if(!demoAddr){
         body.innerHTML=`<div class="demo-connect">
-          <div style="font-size:1.4rem;margin-bottom:6px">📊</div>
-          <p style="color:var(--tx);font-weight:700;font-size:.78rem;margin-bottom:4px">Demo Trading Account</p>
-          <p>Connect your wallet to create a demo account with <strong style="color:var(--gn)">$10,000</strong> virtual USDT and up to <strong style="color:var(--ac)">1:2000</strong> leverage.</p>
-          <p style="font-size:.58rem;color:var(--tx3);margin-top:6px">No real funds required. Practice CFD trading risk-free.</p>
-          <button class="btn btn-primary" onclick="window._demoMetaMask()" style="margin:12px 0 8px;background:linear-gradient(135deg,#f6851b,#e2761b);color:#fff">🦊 Connect MetaMask</button>
-          <div style="display:flex;gap:6px;align-items:center;margin:8px 0"><div style="flex:1;height:1px;background:var(--bd)"></div><span style="font-size:.54rem;color:var(--tx3);font-family:var(--mono)">OR</span><div style="flex:1;height:1px;background:var(--bd)"></div></div>
-          <input id="demo-addr-input" placeholder="Paste wallet address (0x...)" value="${demoAddr}">
-          <button class="btn btn-primary" onclick="window._demoConnect()">Connect Address</button>
+          <p style="color:var(--tx);font-weight:700;font-size:.78rem;margin-bottom:6px">Demo Trading</p>
+          <p>Connect your wallet from the main app to start demo trading with <strong style="color:var(--gn)">$10,000</strong> virtual USDT.</p>
+          <p style="font-size:.6rem;color:var(--tx3);margin-top:8px">Up to 1:2000 leverage. No real funds. Risk-free.</p>
         </div>`;
         return;
       }
@@ -1000,14 +1008,14 @@
     };
 
     if(demoAddr){
-      showPanel();
+      if(window.innerWidth>768)showPanel();
       refreshDemoAccount();
     } else if(window.ethereum){
       window.ethereum.request({method:'eth_accounts'}).then(accounts=>{
         if(accounts&&accounts.length){
           demoAddr=accounts[0];
           localStorage.setItem('demo_wallet',demoAddr);
-          showPanel();
+          if(window.innerWidth>768)showPanel();
           refreshDemoAccount();
         }
       }).catch(()=>{});
@@ -1015,7 +1023,7 @@
 
     $('btn-close').addEventListener('click',()=>window.close());
     loadChart();setInterval(loadChart,curTF==='LIVE'?2000:15000);
-    setInterval(refreshDemoAccount,5000);
+    setInterval(refreshDemoAccount,curTF==='LIVE'?2000:5000);
     renderDemoPanel();
   })();
   </script>
