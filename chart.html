@@ -269,8 +269,8 @@
   <script>
   (function(){
     const API=location.hostname==='localhost'||location.hostname==='127.0.0.1'?'http://127.0.0.1:3001':'';
-    const TF_LIST=['LIVE','S30','M1','M5','M15','M30','H1','H4','D1','W1','MN'];
-    const TF_SEC={S30:30,M1:60,M5:300,M15:900,M30:1800,H1:3600,H4:14400,D1:86400,W1:604800,MN:2592000};
+    const TF_LIST=['LIVE','S5','S30','M1','M5','M15','M30','H1','H4','D1','W1','MN'];
+    const TF_SEC={S5:5,S30:30,M1:60,M5:300,M15:900,M30:1800,H1:3600,H4:14400,D1:86400,W1:604800,MN:2592000};
     const p=new URLSearchParams(location.search);
     let curTF=p.get('tf')||'LIVE';
     if(!TF_LIST.includes(curTF))curTF='LIVE';

@@ -559,6 +559,7 @@ async function startFullNode() {
   });
 
   const TF_BUCKET_MS = {
+    'S5': 5 * 1000,
     'S30': 30 * 1000,
     'M1': 60 * 1000,
     'M5': 5 * 60 * 1000,
@@ -571,6 +572,7 @@ async function startFullNode() {
     'MN': 30 * 24 * 60 * 60 * 1000,
   };
   const TF_RANGE_MS = {
+    'S5': 10 * 60 * 1000,
     'S30': 2 * 60 * 60 * 1000,
     'M1': 24 * 60 * 60 * 1000,
     'M5': 7 * 24 * 60 * 60 * 1000,
