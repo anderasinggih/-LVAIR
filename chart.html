@@ -462,6 +462,8 @@
     function updateCountdown(){const cd=$('countdown');if(curTF==='LIVE'||!TF_SEC[curTF]||!candles.length){cd.style.display='none';return;}const sec=TF_SEC[curTF],now=Date.now()/1000,rem=Math.max(0,sec-(now%sec));cd.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');const last=candles[candles.length-1],y=priceToPx(last.close);if(y>0&&y<container.clientHeight){cd.style.display='';cd.style.top=y+'px';try{cd.style.left=(contentWidth()-cd.offsetWidth-2)+'px';}catch(e){cd.style.left='50%';}}else{cd.style.display='none';}}
     setInterval(updateCountdown,1000);
     chart.timeScale().subscribeVisibleLogicalRangeChange(()=>{updateCountdown();_adjustedRange=null;redraw();});
+    try{chart.priceScale('right').subscribeVisibleRangeChange&&chart.priceScale('right').subscribeVisibleRangeChange(()=>{redraw();});}catch(e){}
+    let _lastVPKey='';setInterval(()=>{try{const vp=visiblePrices();const k=vp?vp._key:'';if(k&&k!==_lastVPKey){_lastVPKey=k;redraw();}}catch(e){}},200);
 
     /* ══════════════════════════════════════════════
        ── Demo Trading State ──
@@ -855,8 +857,13 @@
       if(!demoAddr){
         body.innerHTML=`<div class="demo-connect">
           <p style="color:var(--tx);font-weight:700;font-size:.78rem;margin-bottom:6px">Demo Trading</p>
-          <p>Connect your wallet from the main app to start demo trading with <strong style="color:var(--gn)">$10,000</strong> virtual USDT.</p>
+          <p>Connect your wallet to start demo trading with <strong style="color:var(--gn)">$10,000</strong> virtual USDT.</p>
           <p style="font-size:.6rem;color:var(--tx3);margin-top:8px">Up to 1:2000 leverage. No real funds. Risk-free.</p>
+          <div style="margin-top:12px;display:flex;gap:6px">
+            <input type="text" id="demo-addr-input" class="tf-input" placeholder="0x... wallet address" style="flex:1;font-size:.56rem;padding:6px 8px;background:var(--bg2);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font-family:var(--mono)">
+            <button onclick="window._demoConnect()" style="padding:6px 10px;font-size:.56rem;border-radius:4px;border:1px solid var(--ac);background:transparent;color:var(--ac);cursor:pointer;white-space:nowrap;font-family:var(--mono)">Connect</button>
+          </div>
+          ${window.ethereum?'<button onclick="window._demoMetaMask()" style="margin-top:8px;width:100%;padding:6px 10px;font-size:.56rem;border-radius:4px;border:1px solid #e2761b;background:rgba(226,118,27,.1);color:#e2761b;cursor:pointer;font-family:var(--mono)">Connect MetaMask</button>':''}
         </div>`;
         return;
       }
