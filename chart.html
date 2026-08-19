@@ -349,6 +349,8 @@
       if($('ind-macd').checked){const md=cMACD(candles);if(md.m.length){const mv=md.m[md.m.length-1].value;const sv=md.si[md.si.length-1].value;h+=`<div>MACD <span style="color:${mv>sv?'var(--gn)':'var(--rd)'}">${mv.toFixed(4)}</span></div>`;}}
       el.innerHTML=h;
     }
+    let candles=[];let hasFitted=false;let _prevCandlesKey='';
+
     function fmt(p){return'$'+Number(p).toFixed(4)}
     function fmtV(v){return v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)}
     function fmtN(p){return Number(p).toFixed(2)}
@@ -360,11 +362,26 @@
         const res=await fetch(`${API}/api/chart?tf=${encodeURIComponent(curTF)}`);
         if(!res.ok)throw new Error(res.status);
         const data=await res.json();
-        if(curTF==='LIVE')candles=buildCandles(data.points||[],'S30');
-        else candles=(data.candles||[]).map(c=>({time:Math.floor(c.time/1000),open:c.open,high:c.high,low:c.low,close:c.close,volume:c.volume||0}));
-        candles.sort((a,b)=>a.time-b.time);
-        candleS.setData(candles);
-        volS.setData(candles.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'})));
+        let newCandles;
+        if(curTF==='LIVE')newCandles=buildCandles(data.points||[],'S30');
+        else newCandles=(data.candles||[]).map(c=>({time:Math.floor(c.time/1000),open:c.open,high:c.high,low:c.low,close:c.close,volume:c.volume||0}));
+        newCandles.sort((a,b)=>a.time-b.time);
+        const newKey=newCandles.length+':'+(newCandles.length?newCandles[newCandles.length-1].time+':'+newCandles[newCandles.length-1].close:'');
+        if(newKey!==_prevCandlesKey||!candles.length){
+          _prevCandlesKey=newKey;
+          if(!candles.length||newCandles.length<candles.length||Math.abs(newCandles.length-candles.length)>2||newCandles[0]?.time!==candles[0]?.time){
+            candles=newCandles;
+            candleS.setData(candles);
+            volS.setData(candles.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'})));
+          } else {
+            candles=newCandles;
+            for(let i=Math.max(0,candles.length-3);i<candles.length;i++){
+              const c=candles[i];
+              candleS.update({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close});
+              volS.update({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'});
+            }
+          }
+        }
         $('cnt-v').textContent=candles.length;
         if(candles.length){const last=candles[candles.length-1];$('tb-price').textContent=fmt(last.close);const hs=candles.slice(-96).map(c=>c.high);const ls=candles.slice(-96).map(c=>c.low);$('tb-hi').textContent='H '+fmt(Math.max(...hs));$('tb-lo').textContent='L '+fmt(Math.min(...ls));if(candles.length>1){const prev=candles[candles.length-2].close;const chg=((last.close-prev)/prev*100);const el=$('tb-change');el.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%';el.style.color=chg>=0?'var(--gn)':'var(--rd)';}}
         updOv();updSub();
@@ -378,7 +395,7 @@
     chart.subscribeCrosshairMove(param=>{if(!param||!param.time){$('o-v').textContent=$('h-v').textContent=$('l-v').textContent=$('c-v').textContent=$('v-v').textContent='—';return;}const d=param.seriesData.get(candleS);if(!d)return;$('o-v').textContent=fmt(d.open);$('h-v').textContent=fmt(d.high);$('l-v').textContent=fmt(d.low);$('c-v').textContent=fmt(d.close);$('c-v').className=d.close>=d.open?'up':'dn';const v=param.seriesData.get(volS);$('v-v').textContent=v?fmtV(v.value):'—';});
 
     const tfBar=$('tf-bar');
-    TF_LIST.forEach(tf=>{const b=document.createElement('button');b.className='tf-btn'+(tf===curTF?' active':'');b.textContent=tf==='S30'?'30S':tf;b.addEventListener('click',()=>{curTF=tf;tfBar.querySelectorAll('.tf-btn').forEach(x=>x.classList.toggle('active',x===b));candles=[];hasFitted=false;loadChart();});tfBar.appendChild(b);});
+    TF_LIST.forEach(tf=>{const b=document.createElement('button');b.className='tf-btn'+(tf===curTF?' active':'');b.textContent=tf==='S30'?'30S':tf;b.addEventListener('click',()=>{curTF=tf;tfBar.querySelectorAll('.tf-btn').forEach(x=>x.classList.toggle('active',x===b));candles=[];hasFitted=false;_prevCandlesKey='';_lastCandleKey='';loadChart();});tfBar.appendChild(b);});
 
     function syncOverlaySize(){
       const rect=mainWrap.getBoundingClientRect();
@@ -857,9 +874,10 @@
       }
     }
 
+    let _demoPanelBuilt=false;let _demoPanelTab='trade';
     function renderDemoPanel(){
       const body=$('tp-body');
-      if(!demoAddr){
+      if(!demoAddr){_demoPanelBuilt=false;
         body.innerHTML=`<div class="demo-connect">
           <p style="color:var(--tx);font-weight:700;font-size:.78rem;margin-bottom:6px">Demo Trading</p>
           <p>Connect your wallet to start demo trading with <strong style="color:var(--gn)">$10,000</strong> virtual USDT.</p>
@@ -872,7 +890,7 @@
         </div>`;
         return;
       }
-      if(!demoAccount){
+      if(!demoAccount){_demoPanelBuilt=false;
         body.innerHTML='<div class="demo-connect"><p>Loading...</p></div>';
         return;
       }
@@ -882,18 +900,32 @@
       const totalPnl=positions.reduce((s,p)=>s+(p.pnl||0),0);
       const marginUsed=positions.reduce((s,p)=>s+(p.margin||0),0);
       const freeMargin=balance-marginUsed+totalPnl;
+      const tabChanged=demoTab!==_demoPanelTab;
+      if(tabChanged)_demoPanelBuilt=false;
+      _demoPanelTab=demoTab;
 
       if(demoTab==='trade'){
+        if(_demoPanelBuilt&&!tabChanged){
+          const el=id=>document.getElementById(id);
+          const eBal=el('dp-bal'),ePnl=el('dp-pnl'),eMU=el('dp-mu'),eFree=el('dp-free'),ePrice=el('dp-entry');
+          if(eBal)eBal.textContent='$'+fmtN(balance);
+          if(ePnl){ePnl.textContent=(totalPnl>=0?'+':'')+'$'+fmtN(totalPnl);ePnl.style.color=totalPnl>=0?'var(--gn)':'var(--rd)';}
+          if(eMU)eMU.textContent='$'+fmtN(marginUsed);
+          if(eFree)eFree.textContent='$'+fmtN(freeMargin);
+          if(ePrice)ePrice.textContent=fmtShort(getDemoPrice());
+          return;
+        }
+        _demoPanelBuilt=true;
         const curPrice=getDemoPrice();
         body.innerHTML=`
           <div class="tp-section">
-            <div class="tp-row"><div><div class="tp-label">Balance</div><div class="tp-val">$${fmtN(balance)}</div></div><div style="text-align:right"><div class="tp-label">PnL</div><div class="tp-val sm ${totalPnl>=0?'profit':'loss'}" style="color:${totalPnl>=0?'var(--gn)':'var(--rd)'}">${totalPnl>=0?'+':''}$${fmtN(totalPnl)}</div></div></div>
-            <div class="tp-row" style="margin-top:6px"><div><div class="tp-label">Margin Used</div><div class="tp-val sm">$${fmtN(marginUsed)}</div></div><div style="text-align:right"><div class="tp-label">Free</div><div class="tp-val sm">$${fmtN(freeMargin)}</div></div></div>
+            <div class="tp-row"><div><div class="tp-label">Balance</div><div class="tp-val" id="dp-bal">$${fmtN(balance)}</div></div><div style="text-align:right"><div class="tp-label">PnL</div><div class="tp-val sm" id="dp-pnl" style="color:${totalPnl>=0?'var(--gn)':'var(--rd)'}">${totalPnl>=0?'+':''}$${fmtN(totalPnl)}</div></div></div>
+            <div class="tp-row" style="margin-top:6px"><div><div class="tp-label">Margin Used</div><div class="tp-val sm" id="dp-mu">$${fmtN(marginUsed)}</div></div><div style="text-align:right"><div class="tp-label">Free</div><div class="tp-val sm" id="dp-free">$${fmtN(freeMargin)}</div></div></div>
           </div>
           <div class="trade-form">
             <div class="tf-group">
               <label>Entry Price</label>
-              <div class="tp-val sm" style="color:var(--ac);font-family:var(--mono)">${fmtShort(curPrice)}</div>
+              <div class="tp-val sm" id="dp-entry" style="color:var(--ac);font-family:var(--mono)">${fmtShort(curPrice)}</div>
             </div>
             <div class="tf-group">
               <label>Leverage</label>
