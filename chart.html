@@ -13,26 +13,21 @@
     :root{--bg:#0a0a0a;--bgc:#111113;--bge:#18181b;--bgh:#27272a;--bd:#27272a;--bd2:#3f3f46;--tx:#fafafa;--tx2:#a1a1aa;--tx3:#71717a;--ac:#60a5fa;--gn:#10b981;--rd:#ef4444;--yl:#eab308;--pu:#a78bfa;--or:#f97316;--font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace}
     html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:var(--font)}
     body{display:flex;flex-direction:column}
-
     .topbar{display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--bd);background:var(--bgc);height:40px;flex-shrink:0}
     .tb-t{font-weight:800;font-size:.82rem}.tb-p{font-family:var(--mono);color:var(--ac);font-weight:700;font-size:.8rem}
     .tb-pr{font-family:var(--mono);font-weight:800;font-size:.92rem;margin-left:4px}
     .tb-c{font-family:var(--mono);font-size:.72rem;margin-left:4px}
-    .tb-s{flex:1}
-    .sep{color:var(--bd2);font-size:.6rem}
+    .tb-s{flex:1}.sep{color:var(--bd2);font-size:.6rem}
     .tf-bar{display:flex;gap:1px}
     .tf-btn{background:0 0;border:1px solid transparent;color:var(--tx2);font-family:var(--mono);font-size:.62rem;font-weight:600;padding:3px 6px;border-radius:3px;cursor:pointer;transition:all .1s}
     .tf-btn:hover{background:var(--bgh);color:var(--tx)}.tf-btn.active{background:var(--ac);color:#000}
     .cls-btn{background:0 0;border:1px solid var(--bd);color:var(--tx2);font-size:.68rem;padding:3px 8px;border-radius:3px;cursor:pointer;font-weight:600}
     .cls-btn:hover{border-color:var(--rd);color:var(--rd)}
-
     .toolbar{display:flex;align-items:center;gap:1px;padding:0 12px;border-bottom:1px solid var(--bd);background:var(--bgc);height:32px;flex-shrink:0}
     .tg{display:flex;gap:1px;padding:0 5px;border-right:1px solid var(--bd)}.tg:last-child{border-right:none}
     .t-btn{background:0 0;border:none;color:var(--tx2);padding:3px 7px;border-radius:3px;cursor:pointer;font-size:.62rem;font-family:var(--mono);font-weight:500;display:flex;align-items:center;gap:3px;transition:all .1s;white-space:nowrap}
     .t-btn:hover{background:var(--bgh);color:var(--tx)}.t-btn.active{background:var(--ac);color:#000}
-    .t-btn svg{width:12px;height:12px}
-    .t-sep{flex:1}
-
+    .t-btn svg{width:12px;height:12px}.t-sep{flex:1}
     .ind-wrap{position:relative}
     .ind-btn{background:0 0;border:none;color:var(--tx2);padding:3px 8px;border-radius:3px;cursor:pointer;font-size:.62rem;font-family:var(--mono);font-weight:600;display:flex;align-items:center;gap:4px;transition:all .1s}
     .ind-btn:hover{background:var(--bgh);color:var(--tx)}.ind-btn.open{background:var(--ac);color:#000}
@@ -42,7 +37,6 @@
     .ind-opt{display:flex;align-items:center;gap:6px;padding:2px 0;cursor:pointer;font-size:.68rem;color:var(--tx2);user-select:none}.ind-opt input{accent-color:var(--ac)}.ind-opt:hover{color:var(--tx)}
     .ind-cl{width:10px;height:3px;border-radius:2px;flex-shrink:0}
     .ind-vals{font-family:var(--mono);font-size:.6rem;color:var(--tx2);line-height:1.4;margin-top:6px;padding-top:6px;border-top:1px solid var(--bd)}
-
     .chart-area{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
     .main-wrap{flex:1;position:relative;min-height:0}
     #main-chart{width:100%;height:100%}
@@ -50,16 +44,11 @@
     #draw-overlay.drawing{pointer-events:auto;cursor:crosshair}
     .sub-wrap{flex-shrink:0;border-top:1px solid var(--bd);position:relative}
     .sub-lbl{position:absolute;top:3px;left:6px;font-size:.55rem;color:var(--tx3);font-family:var(--mono);z-index:2;pointer-events:none}
-
     .drag-handle{height:5px;flex-shrink:0;cursor:row-resize;position:relative;z-index:10;background:transparent}
     .drag-handle::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28px;height:2px;background:var(--bd2);border-radius:1px;transition:background .15s}
-    .drag-handle:hover::after{background:var(--ac)}
-    .drag-handle:active::after{background:var(--ac)}
-
+    .drag-handle:hover::after,.drag-handle:active::after{background:var(--ac)}
     .countdown{position:absolute;z-index:10;pointer-events:none;background:var(--ac);color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;transform:translateY(-50%);white-space:nowrap;display:none;line-height:1.4}
-
     .draw-tip{position:absolute;z-index:6;pointer-events:none;background:var(--bge);border:1px solid var(--bd);border-radius:3px;padding:2px 7px;font-family:var(--mono);font-size:.6rem;color:var(--tx2);white-space:nowrap;display:none;transform:translate(-50%,-130%)}
-
     .ohlcv-bar{display:flex;gap:12px;padding:2px 12px;border-top:1px solid var(--bd);background:var(--bgc);height:24px;flex-shrink:0;align-items:center}
     .ohlcv-bar span{font-family:var(--mono);font-size:.6rem;color:var(--tx2)}.ohlcv-bar .l{color:var(--tx3);margin-right:1px}.ohlcv-bar .up{color:var(--gn)}.ohlcv-bar .dn{color:var(--rd)}
     .status-bar{display:flex;align-items:center;gap:6px;padding:1px 12px;border-top:1px solid var(--bd);background:var(--bgc);height:20px;flex-shrink:0}
@@ -81,19 +70,18 @@
     <span class="sep" style="margin-left:4px">|</span>
     <button class="cls-btn" id="btn-close"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> Close</button>
   </div>
-
   <div class="toolbar">
     <div class="tg">
       <button class="t-btn active" id="tool-cross" title="Crosshair (C)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg></button>
     </div>
     <div class="tg">
-      <button class="t-btn" id="tool-trend" title="Trendline (2 clicks)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="4"/></svg> Trend</button>
-      <button class="t-btn" id="tool-hline" title="Horizontal Line (1 click)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="12" x2="22" y2="12"/></svg> H-Line</button>
-      <button class="t-btn" id="tool-vline" title="Vertical Line (1 click)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/></svg> V-Line</button>
-      <button class="t-btn" id="tool-fib" title="Fibonacci (2 clicks)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="4" x2="21" y2="4"/><line x1="3" y1="9.6" x2="21" y2="9.6"/><line x1="3" y1="14.4" x2="21" y2="14.4"/><line x1="3" y1="20" x2="21" y2="20"/></svg> Fib</button>
-      <button class="t-btn" id="tool-rect" title="Rectangle (2 clicks)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="1"/></svg> Rect</button>
+      <button class="t-btn" id="tool-trend" title="Trendline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="4"/></svg> Trend</button>
+      <button class="t-btn" id="tool-hline" title="Horizontal Line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="12" x2="22" y2="12"/></svg> H-Line</button>
+      <button class="t-btn" id="tool-vline" title="Vertical Line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/></svg> V-Line</button>
+      <button class="t-btn" id="tool-fib" title="Fibonacci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="4" x2="21" y2="4"/><line x1="3" y1="9.6" x2="21" y2="9.6"/><line x1="3" y1="14.4" x2="21" y2="14.4"/><line x1="3" y1="20" x2="21" y2="20"/></svg> Fib</button>
+      <button class="t-btn" id="tool-rect" title="Rectangle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="1"/></svg> Rect</button>
     </div>
-    <div class="tg"><button class="t-btn" id="tool-clear" title="Clear all drawings">Clear</button></div>
+    <div class="tg"><button class="t-btn" id="tool-clear" title="Clear drawings">Clear</button></div>
     <span class="t-sep"></span>
     <div class="ind-wrap">
       <button class="ind-btn" id="ind-toggle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg> Indicators <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg></button>
@@ -110,7 +98,6 @@
       </div>
     </div>
   </div>
-
   <div class="chart-area" id="chart-area">
     <div class="main-wrap" id="main-wrap">
       <div id="main-chart"></div>
@@ -129,7 +116,6 @@
       <div id="macd-chart" style="width:100%;height:100%"></div>
     </div>
   </div>
-
   <div class="ohlcv-bar">
     <span><span class="l">O</span><span id="o-v">—</span></span>
     <span><span class="l">H</span><span id="h-v">—</span></span>
@@ -155,31 +141,25 @@
     if(!TF_LIST.includes(curTF))curTF='LIVE';
     let candles=[];
     let hasFitted=false;
-
     const $=id=>document.getElementById(id);
     const container=$('main-chart');
     const ov=$('draw-overlay');
     const ctx=ov.getContext('2d');
 
-    /* ── Layout ── */
     let rsiHeight=120,macdHeight=120;
     function layoutSubCharts(){
       const rsiOn=$('ind-rsi').checked,macdOn=$('ind-macd').checked;
-      $('rsi-panel').style.display=rsiOn?'block':'none';
-      $('rsi-panel').style.height=rsiOn?rsiHeight+'px':'0';
-      $('macd-panel').style.display=macdOn?'block':'none';
-      $('macd-panel').style.height=macdOn?macdHeight+'px':'0';
-      $('drag-rsi').style.display=rsiOn?'block':'none';
-      $('drag-macd').style.display=macdOn?'block':'none';
+      $('rsi-panel').style.display=rsiOn?'block':'none';$('rsi-panel').style.height=rsiOn?rsiHeight+'px':'0';
+      $('macd-panel').style.display=macdOn?'block':'none';$('macd-panel').style.height=macdOn?macdHeight+'px':'0';
+      $('drag-rsi').style.display=rsiOn?'block':'none';$('drag-macd').style.display=macdOn?'block':'none';
     }
 
-    /* ── Main Chart ── */
     const chart=LightweightCharts.createChart(container,{
       layout:{background:{type:'solid',color:'#0a0a0a'},textColor:'#a1a1aa',fontFamily:"'JetBrains Mono',monospace",fontSize:10},
       grid:{vertLines:{color:'rgba(39,39,42,.4)'},horzLines:{color:'rgba(39,39,42,.4)'}},
       crosshair:{mode:LightweightCharts.CrosshairMode.Normal,vertLine:{color:'rgba(96,165,250,.3)',width:1,style:0,labelBackgroundColor:'#60a5fa'},horzLine:{color:'rgba(96,165,250,.3)',width:1,style:0,labelBackgroundColor:'#60a5fa'}},
       rightPriceScale:{borderColor:'#27272a',scaleMargins:{top:.08,bottom:.15}},
-      timeScale:{borderColor:'#27272a',timeVisible:true,secondsVisible:false,rightOffset:5,fixLeftEdge:true,fixRightEdge:false},
+      timeScale:{borderColor:'#27272a',timeVisible:true,secondsVisible:false,rightOffset:5,fixLeftEdge:true},
       handleScroll:{vertTouchDrag:false},
     });
     const candleS=chart.addCandlestickSeries({upColor:'#10b981',downColor:'#ef4444',borderUpColor:'#10b981',borderDownColor:'#ef4444',wickUpColor:'#10b981',wickDownColor:'#ef4444'});
@@ -207,26 +187,21 @@
       if($('ind-bb').checked){const bb=cBB(candles);bbU.setData(bb.u);bbD.setData(bb.l);bbU.applyOptions({visible:true});bbD.applyOptions({visible:true});}else{bbU.applyOptions({visible:false});bbD.applyOptions({visible:false});}
     }
 
-    /* ── Sub-charts (RSI / MACD) ── */
     let rsiChart=null,rsiSeries=null,macdChart=null,macdLineS=null,macdSigS=null,macdHistS=null;
     function makeSubChart(id){
-      const el=$(id);
-      const c=LightweightCharts.createChart(el,{layout:{background:{type:'solid',color:'#0a0a0a'},textColor:'#71717a',fontFamily:"'JetBrains Mono',monospace",fontSize:9},grid:{vertLines:{color:'rgba(39,39,42,.3)'},horzLines:{color:'rgba(39,39,42,.3)'}},rightPriceScale:{borderColor:'#27272a',scaleMargins:{top:.08,bottom:.08}},timeScale:{borderColor:'#27272a',visible:false},handleScroll:{vertTouchDrag:false}});
-      new ResizeObserver(()=>{try{c.applyOptions({width:el.clientWidth,height:el.clientHeight});}catch(e){}}).observe(el);
-      return c;
+      const el=$(id);const c=LightweightCharts.createChart(el,{layout:{background:{type:'solid',color:'#0a0a0a'},textColor:'#71717a',fontFamily:"'JetBrains Mono',monospace",fontSize:9},grid:{vertLines:{color:'rgba(39,39,42,.3)'},horzLines:{color:'rgba(39,39,42,.3)'}},rightPriceScale:{borderColor:'#27272a',scaleMargins:{top:.08,bottom:.08}},timeScale:{borderColor:'#27272a',visible:false},handleScroll:{vertTouchDrag:false}});
+      new ResizeObserver(()=>{try{c.applyOptions({width:el.clientWidth,height:el.clientHeight});}catch(e){}}).observe(el);return c;
     }
     function syncSub(src,dst){src.timeScale().subscribeVisibleLogicalRangeChange(r=>{if(r)try{dst.timeScale().setVisibleLogicalRange(r);}catch(e){}});}
     function updSub(){
       layoutSubCharts();
       if($('ind-rsi').checked){
         if(!rsiChart){rsiChart=makeSubChart('rsi-chart');rsiSeries=rsiChart.addLineSeries({color:'#10b981',lineWidth:1,priceLineVisible:false});rsiChart.addPriceLine({price:70,color:'rgba(239,68,68,.3)',lineWidth:1,lineStyle:2,axisLabelVisible:true,title:'70'});rsiChart.addPriceLine({price:30,color:'rgba(16,185,129,.3)',lineWidth:1,lineStyle:2,axisLabelVisible:true,title:'30'});syncSub(chart,rsiChart);}
-        rsiSeries.setData(cRSI(candles));
-        try{rsiChart.applyOptions({width:$('rsi-chart').clientWidth,height:$('rsi-chart').clientHeight});}catch(e){}
+        rsiSeries.setData(cRSI(candles));try{rsiChart.applyOptions({width:$('rsi-chart').clientWidth,height:$('rsi-chart').clientHeight});}catch(e){}
       }
       if($('ind-macd').checked){
         if(!macdChart){macdChart=makeSubChart('macd-chart');macdHistS=macdChart.addHistogramSeries({priceLineVisible:false});macdLineS=macdChart.addLineSeries({color:'#60a5fa',lineWidth:1,priceLineVisible:false});macdSigS=macdChart.addLineSeries({color:'#f97316',lineWidth:1,priceLineVisible:false});syncSub(chart,macdChart);}
-        const md=cMACD(candles);macdHistS.setData(md.h);macdLineS.setData(md.m);macdSigS.setData(md.si);
-        try{macdChart.applyOptions({width:$('macd-chart').clientWidth,height:$('macd-chart').clientHeight});}catch(e){}
+        const md=cMACD(candles);macdHistS.setData(md.h);macdLineS.setData(md.m);macdSigS.setData(md.si);try{macdChart.applyOptions({width:$('macd-chart').clientWidth,height:$('macd-chart').clientHeight});}catch(e){}
       }
       updIndVals();
     }
@@ -239,7 +214,6 @@
       if($('ind-macd').checked){const md=cMACD(candles);if(md.m.length){const mv=md.m[md.m.length-1].value;const sv=md.si[md.si.length-1].value;h+=`<div>MACD <span style="color:${mv>sv?'var(--gn)':'var(--rd)'}">${mv.toFixed(4)}</span></div>`;}}
       el.innerHTML=h;
     }
-
     function fmt(p){return'$'+Number(p).toFixed(4)}
     function fmtV(v){return v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)}
     function buildCandles(pts,tf){if(!pts||!pts.length)return[];const b=TF_SEC[tf]*1000;const m=new Map();pts.forEach(p=>{const t=Math.floor(p.timestamp/b)*(b/1000);const e=m.get(t);if(!e)m.set(t,{time:t,open:p.price,high:p.price,low:p.price,close:p.price,volume:1});else{e.high=Math.max(e.high,p.price);e.low=Math.min(e.low,p.price);e.close=p.price;e.volume++;}});return Array.from(m.values()).sort((a,b)=>a.time-b.time);}
@@ -258,7 +232,6 @@
         if(candles.length){const last=candles[candles.length-1];$('tb-price').textContent=fmt(last.close);const hs=candles.slice(-96).map(c=>c.high);const ls=candles.slice(-96).map(c=>c.low);$('tb-hi').textContent='H '+fmt(Math.max(...hs));$('tb-lo').textContent='L '+fmt(Math.min(...ls));if(candles.length>1){const prev=candles[candles.length-2].close;const chg=((last.close-prev)/prev*100);const el=$('tb-change');el.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%';el.style.color=chg>=0?'var(--gn)':'var(--rd)';}}
         updOv();updSub();
         if(!hasFitted){chart.timeScale().fitContent();hasFitted=true;}
-        updateCountdown();
         $('st-text').textContent=`LVAIR/USDT | ${curTF} | ${candles.length}`;
         $('st-ts').textContent=new Date().toLocaleTimeString();
       }catch(e){$('st-text').textContent='Error: '+e.message;}
@@ -271,40 +244,77 @@
 
     new ResizeObserver(()=>{layoutSubCharts();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}}).observe($('chart-area'));
 
-    /* ── Indicators dropdown ── */
     $('ind-toggle').addEventListener('click',e=>{e.stopPropagation();$('ind-dd').classList.toggle('show');$('ind-toggle').classList.toggle('open');});
     document.addEventListener('click',e=>{if(!$('ind-dd').contains(e.target)&&e.target!==$('ind-toggle')){$('ind-dd').classList.remove('show');$('ind-toggle').classList.remove('open');}});
     ['ind-ma20','ind-ma50','ind-ma200','ind-bb','ind-rsi','ind-macd'].forEach(id=>{$(id).addEventListener('change',()=>{updOv();updSub();});});
 
-    /* ══════════════════════════════════════════════
-       ── Resizable Panels (drag handles) ──
-       ══════════════════════════════════════════════ */
+    /* ── Resizable Panels ── */
     let dragTarget=null,dragStartY=0,dragStartH=0;
-    function initDrag(handleId,target,getHeight,setHeight){
-      const h=$(handleId);
-      h.addEventListener('mousedown',e=>{
-        e.preventDefault();dragTarget=target;dragStartY=e.clientY;dragStartH=getHeight();
-        document.addEventListener('mousemove',onDragMove);
-        document.addEventListener('mouseup',onDragEnd);
-        document.body.style.cursor='row-resize';
-        document.body.style.userSelect='none';
+    function initDrag(handleId,target,getter,setter){
+      $(handleId).addEventListener('mousedown',e=>{
+        e.preventDefault();dragTarget=target;dragStartY=e.clientY;dragStartH=getter();
+        document.addEventListener('mousemove',onDragMove);document.addEventListener('mouseup',onDragEnd);
+        document.body.style.cursor='row-resize';document.body.style.userSelect='none';
       });
     }
     function onDragMove(e){
       if(!dragTarget)return;
       const dy=dragStartY-e.clientY;
-      if(dragTarget==='rsi'){rsiHeight=Math.max(60,Math.min(350,dragStartH+dy));$('rsi-panel').style.height=rsiHeight+'px';}
-      if(dragTarget==='macd'){macdHeight=Math.max(60,Math.min(350,dragStartH+dy));$('macd-panel').style.height=macdHeight+'px';}
+      if(dragTarget==='rsi')$('rsi-panel').style.height=(rsiHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';
+      if(dragTarget==='macd')$('macd-panel').style.height=(macdHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';
       resizeAll();
     }
     function onDragEnd(){dragTarget=null;document.removeEventListener('mousemove',onDragMove);document.removeEventListener('mouseup',onDragEnd);document.body.style.cursor='';document.body.style.userSelect='';}
-    initDrag('drag-rsi','rsi',()=>rsiHeight,v=>{rsiHeight=v;$('rsi-panel').style.height=v+'px';});
-    initDrag('drag-macd','macd',()=>macdHeight,v=>{macdHeight=v;$('macd-panel').style.height=v+'px';});
-
+    initDrag('drag-rsi','rsi',()=>rsiHeight,v=>{rsiHeight=v;});initDrag('drag-macd','macd',()=>macdHeight,v=>{macdHeight=v;});
     function resizeAll(){
       try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}
       if(rsiChart&&$('ind-rsi').checked)try{rsiChart.applyOptions({width:$('rsi-chart').clientWidth,height:$('rsi-chart').clientHeight});}catch(e){}
       if(macdChart&&$('ind-macd').checked)try{macdChart.applyOptions({width:$('macd-chart').clientWidth,height:$('macd-chart').clientHeight});}catch(e){}
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       COORDINATE SYSTEM — pure manual, no LWC coordinate methods
+       Round-trip guaranteed: pxToTime(timeToPx(t)) === t
+       ══════════════════════════════════════════════════════════════ */
+    const SM={top:.08,bottom:.15};
+
+    function contentWidth(){
+      try{const w=chart.priceScale('right').width();if(w>0)return container.clientWidth-w;}catch(e){}
+      return Math.max(100,container.clientWidth-60);
+    }
+    function contentMetrics(){
+      const H=container.clientHeight;
+      const top=H*SM.top,bot=H*(1-SM.bottom),h=bot-top;
+      return{W:container.clientWidth,H,top,bot,h,cw:contentWidth()};
+    }
+    function visiblePrices(){
+      const r=chart.timeScale().getVisibleLogicalRange();
+      if(!r||!candles.length)return null;
+      const s=Math.max(0,Math.floor(r.from)),e=Math.min(candles.length-1,Math.ceil(r.to));
+      const vis=candles.slice(s,e+1);if(!vis.length)return null;
+      let hi=-Infinity,lo=Infinity;
+      for(const c of vis){if(c.high>hi)hi=c.high;if(c.low<lo)lo=c.low;}
+      const pad=(hi-lo)*0.1||hi*0.001;
+      return{hi:hi+pad,lo:lo-pad};
+    }
+
+    function priceToPx(price){
+      const m=contentMetrics(),vp=visiblePrices();if(!vp)return m.H/2;
+      return m.top+((vp.hi-price)/(vp.hi-vp.lo))*m.h;
+    }
+    function pxToPrice(py){
+      const m=contentMetrics(),vp=visiblePrices();if(!vp)return null;
+      return vp.hi-((py-m.top)/m.h)*(vp.hi-vp.lo);
+    }
+    function timeToPx(time){
+      const r=chart.timeScale().getVisibleLogicalRange();if(!r||!candles.length)return 0;
+      const idx=candles.findIndex(c=>c.time===time);if(idx<0)return 0;
+      return((idx-r.from)/(r.to-r.from))*contentWidth();
+    }
+    function pxToTime(px){
+      const r=chart.timeScale().getVisibleLogicalRange();if(!r||!candles.length)return null;
+      const idx=Math.round(r.from+(px/contentWidth())*(r.to-r.from));
+      return candles[Math.min(Math.max(0,idx),candles.length-1)]?.time??null;
     }
 
     /* ══════════════════════════════════════════════
@@ -313,103 +323,27 @@
     function updateCountdown(){
       const cd=$('countdown');
       if(curTF==='LIVE'||!TF_SEC[curTF]||!candles.length){cd.style.display='none';return;}
-      const sec=TF_SEC[curTF];
-      const now=Date.now()/1000;
-      const remaining=Math.max(0,sec-(now%sec));
-      const m=Math.floor(remaining/60);
-      const s=Math.floor(remaining%60);
-      cd.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-      const last=candles[candles.length-1];
-      try{
-        const y=candleS.priceToCoordinate(last.close);
-        if(y!==null&&y>0){
-          cd.style.display='';
-          cd.style.top=y+'px';
-          const psW=chart.priceScale('right').width();
-          cd.style.right=(psW+6)+'px';
-        }else{cd.style.display='none';}
-      }catch(e){cd.style.display='none';}
+      const sec=TF_SEC[curTF],now=Date.now()/1000,rem=Math.max(0,sec-(now%sec));
+      cd.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');
+      const last=candles[candles.length-1],y=priceToPx(last.close);
+      if(y>0&&y<container.clientHeight){cd.style.display='';cd.style.top=y+'px';
+        try{cd.style.left=(contentWidth()-cd.offsetWidth-2)+'px';}catch(e){cd.style.left='50%';}
+      }else{cd.style.display='none';}
     }
     setInterval(updateCountdown,1000);
-    chart.timeScale().subscribeVisibleLogicalRangeChange(()=>{updateCountdown();});
+    chart.timeScale().subscribeVisibleLogicalRangeChange(()=>updateCountdown());
 
     /* ══════════════════════════════════════════════
-       ── Drawing Tools (TradingView-style) ──
+       ── Drawing Tools ──
        ══════════════════════════════════════════════ */
     let drawMode=null,drawPts=[],drawings=[],mouseX=0,mouseY=0;
 
     function resizeOv(){const r=ov.parentElement.getBoundingClientRect();ov.width=r.width*devicePixelRatio;ov.height=r.height*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);redraw();}
     new ResizeObserver(resizeOv).observe(ov.parentElement);resizeOv();
 
-    function timeToPx(time){
-      try{const x=chart.timeScale().timeToCoordinate(time);if(x!==null)return x;}catch(e){}
-      return 0;
-    }
-    function priceToPx(price){
-      try{const y=candleS.priceToCoordinate(price);if(y!==null)return y;}catch(e){}
-      return 0;
-    }
-    function pxToPrice(py){
-      try{const p=candleS.coordinateToPrice(py);if(p!==null&&p!==undefined)return p;}catch(e){}
-      return null;
-    }
-    function pxToTime(px){
-      try{
-        if(typeof chart.timeScale().coordinateToTime==='function'){
-          const t=chart.timeScale().coordinateToTime(px);
-          if(t!==null)return t;
-        }
-      }catch(e){}
-      const range=chart.timeScale().getVisibleLogicalRange();
-      if(!range||!candles.length)return null;
-      const rect=container.getBoundingClientRect();
-      const frac=px/rect.width;
-      const idx=Math.round(range.from+frac*(range.to-range.from));
-      if(idx>=0&&idx<candles.length)return candles[idx].time;
-      return null;
-    }
-
     const tip=$('draw-tip');
     function showTip(x,y,text){tip.style.display='block';tip.style.left=x+'px';tip.style.top=y+'px';tip.textContent=text;}
     function hideTip(){tip.style.display='none';}
-
-    function drawPreview(){
-      if(!drawMode||drawPts.length===0)return;
-      const W=ov.clientWidth,H=ov.clientHeight;
-      ctx.save();
-      ctx.strokeStyle='rgba(96,165,250,.7)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.globalAlpha=.8;
-
-      if(drawMode==='trend'&&drawPts.length===1){
-        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
-        ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(mouseX,mouseY);ctx.stroke();
-        ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(x1,y1,3,0,Math.PI*2);ctx.fill();
-        ctx.beginPath();ctx.arc(mouseX,mouseY,3,0,Math.PI*2);ctx.fill();
-      }else if(drawMode==='hline'){
-        ctx.beginPath();ctx.moveTo(0,mouseY);ctx.lineTo(W,mouseY);ctx.stroke();
-        const price=pxToPrice(mouseY);
-        if(price!==null){showTip(mouseX,mouseY,fmt(price));}
-      }else if(drawMode==='vline'){
-        ctx.beginPath();ctx.moveTo(mouseX,0);ctx.lineTo(mouseX,H);ctx.stroke();
-        const time=pxToTime(mouseX);
-        if(time){showTip(mouseX,mouseY,new Date(time*1000).toLocaleString());}
-      }else if(drawMode==='fib'&&drawPts.length===1){
-        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
-        const dy=mouseY-y1;
-        [0,.236,.382,.5,.618,.786,1].forEach(lv=>{
-          const y=y1+dy*lv;
-          ctx.setLineDash([3,3]);ctx.strokeStyle='rgba(234,179,8,.5)';
-          ctx.beginPath();ctx.moveTo(Math.min(x1,mouseX),y);ctx.lineTo(Math.max(x1,mouseX),y);ctx.stroke();
-          ctx.setLineDash([]);ctx.fillStyle='rgba(234,179,8,.7)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';
-          const p1=pxToPrice(y1),p2=pxToPrice(mouseY);
-          if(p1!==null&&p2!==null){const price=p1-(p1-p2)*lv;ctx.fillText((lv*100).toFixed(1)+'% '+fmt(price),Math.min(x1,mouseX)+4,y-3);}
-        });
-      }else if(drawMode==='rect'&&drawPts.length===1){
-        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
-        const lx=Math.min(x1,mouseX),ly=Math.min(y1,mouseY),w=Math.abs(mouseX-x1),h=Math.abs(mouseY-y1);
-        ctx.fillStyle='rgba(96,165,250,.04)';ctx.fillRect(lx,ly,w,h);ctx.strokeRect(lx,ly,w,h);
-      }
-      ctx.restore();
-    }
 
     function redraw(){
       const W=ov.clientWidth,H=ov.clientHeight;
@@ -418,92 +352,89 @@
         ctx.save();
         if(d.type==='trend'){
           const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);
-          if(x1&&x2){ctx.strokeStyle='#60a5fa';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
-            ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(x1,y1,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x2,y2,3,0,Math.PI*2);ctx.fill();}
+          ctx.strokeStyle='#60a5fa';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+          ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(x1,y1,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x2,y2,3,0,Math.PI*2);ctx.fill();
         }else if(d.type==='hline'){
-          const y=priceToPx(d.price);
-          if(y){ctx.strokeStyle='rgba(96,165,250,.6)';ctx.lineWidth=1;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();ctx.setLineDash([]);
-            ctx.fillStyle='rgba(96,165,250,.12)';const tw=ctx.measureText('$'+d.price.toFixed(4)).width;ctx.fillRect(W-tw-16,y-9,tw+12,18);
-            ctx.fillStyle='rgba(96,165,250,.9)';ctx.font='bold 9px JetBrains Mono';ctx.textAlign='right';ctx.fillText('$'+d.price.toFixed(4),W-4,y+3);}
+          const y=priceToPx(d.price);ctx.strokeStyle='rgba(96,165,250,.6)';ctx.lineWidth=1;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();ctx.setLineDash([]);
+          ctx.fillStyle='rgba(96,165,250,.12)';const lbl='$'+d.price.toFixed(4);const tw=ctx.measureText(lbl).width;ctx.fillRect(W-tw-16,y-9,tw+12,18);
+          ctx.fillStyle='rgba(96,165,250,.9)';ctx.font='bold 9px JetBrains Mono';ctx.textAlign='right';ctx.fillText(lbl,W-4,y+3);
         }else if(d.type==='vline'){
-          const x=timeToPx(d.time);
-          if(x){ctx.strokeStyle='rgba(96,165,250,.6)';ctx.lineWidth=1;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();ctx.setLineDash([]);}
+          const x=timeToPx(d.time);ctx.strokeStyle='rgba(96,165,250,.6)';ctx.lineWidth=1;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();ctx.setLineDash([]);
         }else if(d.type==='rect'){
           const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);
-          if(x1&&x2){const lx=Math.min(x1,x2),ly=Math.min(y1,y2),w=Math.abs(x2-x1),h=Math.abs(y2-y1);ctx.fillStyle='rgba(96,165,250,.06)';ctx.fillRect(lx,ly,w,h);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1;ctx.strokeRect(lx,ly,w,h);}
+          const lx=Math.min(x1,x2),ly=Math.min(y1,y2),w=Math.abs(x2-x1),h=Math.abs(y2-y1);
+          ctx.fillStyle='rgba(96,165,250,.06)';ctx.fillRect(lx,ly,w,h);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1;ctx.strokeRect(lx,ly,w,h);
         }else if(d.type==='fib'){
           const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);
-          if(x1&&x2){const lvls=[0,.236,.382,.5,.618,.786,1];const dy=y2-y1;const dp=d.p2-d.p1;
-            ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1));
-            lvls.forEach(lv=>{const y=y1+dy*lv;const price=d.p2-dp*lv;
-              ctx.strokeStyle='rgba(234,179,8,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(Math.min(x1,x2),y);ctx.lineTo(Math.max(x1,x2),y);ctx.stroke();
-              ctx.setLineDash([]);const bg=lv===0||lv===1?'rgba(234,179,8,.15)':'rgba(234,179,8,.08)';ctx.fillStyle=bg;
-              const label=(lv*100).toFixed(1)+'% '+fmt(price);const tw=ctx.measureText(label).width;ctx.fillRect(Math.min(x1,x2),y-9,tw+10,18);
-              ctx.fillStyle='rgba(234,179,8,.8)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText(label,Math.min(x1,x2)+4,y+3);});}
+          const lvls=[0,.236,.382,.5,.618,.786,1];const dp=d.p2-d.p1;
+          ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1));
+          lvls.forEach(lv=>{const y=y1+(y2-y1)*lv;const price=d.p2-dp*lv;
+            ctx.strokeStyle='rgba(234,179,8,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(Math.min(x1,x2),y);ctx.lineTo(Math.max(x1,x2),y);ctx.stroke();ctx.setLineDash([]);
+            const lbl=(lv*100).toFixed(1)+'% '+fmt(price);const tw=ctx.measureText(lbl).width;
+            ctx.fillStyle=lv===0||lv===1?'rgba(234,179,8,.15)':'rgba(234,179,8,.08)';ctx.fillRect(Math.min(x1,x2),y-9,tw+10,18);
+            ctx.fillStyle='rgba(234,179,8,.8)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText(lbl,Math.min(x1,x2)+4,y+3);
+          });
         }
         ctx.restore();
       });
       drawPreview();
     }
 
+    function drawPreview(){
+      if(!drawMode||!drawPts.length)return;
+      const W=ov.clientWidth,H=ov.clientHeight;
+      ctx.save();ctx.strokeStyle='rgba(96,165,250,.7)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.globalAlpha=.8;
+      if(drawMode==='trend'&&drawPts.length===1){
+        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
+        ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(mouseX,mouseY);ctx.stroke();
+        ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(x1,y1,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(mouseX,mouseY,3,0,Math.PI*2);ctx.fill();
+      }else if(drawMode==='hline'){
+        ctx.beginPath();ctx.moveTo(0,mouseY);ctx.lineTo(W,mouseY);ctx.stroke();
+        const price=pxToPrice(mouseY);if(price!==null)showTip(mouseX,mouseY,fmt(price));
+      }else if(drawMode==='vline'){
+        ctx.beginPath();ctx.moveTo(mouseX,0);ctx.lineTo(mouseX,H);ctx.stroke();
+        const time=pxToTime(mouseX);if(time)showTip(mouseX,mouseY,new Date(time*1000).toLocaleString());
+      }else if(drawMode==='fib'&&drawPts.length===1){
+        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p),dy=mouseY-y1;
+        [0,.236,.382,.5,.618,.786,1].forEach(lv=>{const y=y1+dy*lv;
+          ctx.strokeStyle='rgba(234,179,8,.5)';ctx.beginPath();ctx.moveTo(Math.min(x1,mouseX),y);ctx.lineTo(Math.max(x1,mouseX),y);ctx.stroke();
+          const p1=pxToPrice(y1),p2=pxToPrice(mouseY);
+          if(p1!==null&&p2!==null){const price=p1-(p1-p2)*lv;ctx.setLineDash([]);ctx.fillStyle='rgba(234,179,8,.7)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText((lv*100).toFixed(1)+'% '+fmt(price),Math.min(x1,mouseX)+4,y-3);}
+        });
+      }else if(drawMode==='rect'&&drawPts.length===1){
+        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
+        ctx.fillStyle='rgba(96,165,250,.04)';ctx.fillRect(Math.min(x1,mouseX),Math.min(y1,mouseY),Math.abs(mouseX-x1),Math.abs(mouseY-y1));
+        ctx.strokeRect(Math.min(x1,mouseX),Math.min(y1,mouseY),Math.abs(mouseX-x1),Math.abs(mouseY-y1));
+      }
+      ctx.restore();
+    }
+
     ov.addEventListener('mousemove',e=>{
       const r=ov.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;
-      if(drawMode){
-        redraw();
-        if(drawMode==='hline'||drawMode==='vline'){
-          const price=pxToPrice(mouseY);const time=pxToTime(mouseX);
-          let label='';if(price!==null)label=fmt(price);else if(time)label=new Date(time*1000).toLocaleString();
-          showTip(mouseX,mouseY,label);
-        }else{hideTip();}
-      }
+      if(drawMode){redraw();if(drawMode==='hline'){const p=pxToPrice(mouseY);if(p!==null)showTip(mouseX,mouseY,fmt(p));}else if(drawMode==='vline'){const t=pxToTime(mouseX);if(t)showTip(mouseX,mouseY,new Date(t*1000).toLocaleString());}else{hideTip();}}
     });
 
     ov.addEventListener('mousedown',e=>{
-      if(!drawMode)return;
-      if(e.button===2){drawPts=[];hideTip();redraw();return;}
-      e.preventDefault();
-      const r=ov.getBoundingClientRect();const px=e.clientX-r.left,py=e.clientY-r.top;
-      const time=pxToTime(px),price=pxToPrice(py);
-      if(drawMode==='hline'){
-        if(price===null)return;
-        drawings.push({type:'hline',price});hideTip();redraw();return;
-      }
-      if(drawMode==='vline'){
-        if(!time)return;
-        drawings.push({type:'vline',time});hideTip();redraw();return;
-      }
-      if(time===null||price===null)return;
+      if(!drawMode)return;if(e.button===2){drawPts=[];hideTip();redraw();return;}
+      e.preventDefault();const r=ov.getBoundingClientRect();const px=e.clientX-r.left,py=e.clientY-r.top;
+      if(drawMode==='hline'){const price=pxToPrice(py);if(price===null)return;drawings.push({type:'hline',price});hideTip();redraw();return;}
+      if(drawMode==='vline'){const time=pxToTime(px);if(!time)return;drawings.push({type:'vline',time});hideTip();redraw();return;}
+      const time=pxToTime(px),price=pxToPrice(py);if(time===null||price===null)return;
       drawPts.push({t:time,p:price});
-      if(drawPts.length===2){
-        drawings.push({type:drawMode,t1:drawPts[0].t,p1:drawPts[0].p,t2:drawPts[1].t,p2:drawPts[1].p});
-        drawPts=[];hideTip();redraw();
-      }
+      if(drawPts.length===2){drawings.push({type:drawMode,t1:drawPts[0].t,p1:drawPts[0].p,t2:drawPts[1].t,p2:drawPts[1].p});drawPts=[];hideTip();redraw();}
     });
     ov.addEventListener('contextmenu',e=>{e.preventDefault();drawPts=[];hideTip();redraw();});
-    document.addEventListener('keydown',e=>{
-      if(e.key==='Escape'){drawPts=[];hideTip();redraw();}
-      if((e.key==='Delete'||e.key==='Backspace')&&drawings.length){drawings.pop();redraw();}
-    });
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){drawPts=[];hideTip();redraw();}if((e.key==='Delete'||e.key==='Backspace')&&drawings.length){drawings.pop();redraw();}});
 
-    function setTool(t){
-      drawMode=t;drawPts=[];hideTip();
-      document.querySelectorAll('.t-btn').forEach(b=>b.classList.remove('active'));
-      if(t){ov.classList.add('drawing');$('tool-'+t).classList.add('active');}
-      else{ov.classList.remove('drawing');$('tool-cross').classList.add('active');}
-      redraw();
-    }
-    $('tool-cross').addEventListener('click',()=>setTool(null));
-    $('tool-trend').addEventListener('click',()=>setTool('trend'));
-    $('tool-hline').addEventListener('click',()=>setTool('hline'));
-    $('tool-vline').addEventListener('click',()=>setTool('vline'));
-    $('tool-fib').addEventListener('click',()=>setTool('fib'));
-    $('tool-rect').addEventListener('click',()=>setTool('rect'));
+    function setTool(t){drawMode=t;drawPts=[];hideTip();document.querySelectorAll('.t-btn').forEach(b=>b.classList.remove('active'));if(t){ov.classList.add('drawing');$('tool-'+t).classList.add('active');}else{ov.classList.remove('drawing');$('tool-cross').classList.add('active');}redraw();}
+    $('tool-cross').addEventListener('click',()=>setTool(null));$('tool-trend').addEventListener('click',()=>setTool('trend'));
+    $('tool-hline').addEventListener('click',()=>setTool('hline'));$('tool-vline').addEventListener('click',()=>setTool('vline'));
+    $('tool-fib').addEventListener('click',()=>setTool('fib'));$('tool-rect').addEventListener('click',()=>setTool('rect'));
     $('tool-clear').addEventListener('click',()=>{drawings=[];drawPts=[];hideTip();redraw();});
     setTool(null);
 
     $('btn-close').addEventListener('click',()=>window.close());
-    loadChart();
-    setInterval(loadChart,curTF==='LIVE'?2000:15000);
+    loadChart();setInterval(loadChart,curTF==='LIVE'?2000:15000);
   })();
   </script>
 </body>
