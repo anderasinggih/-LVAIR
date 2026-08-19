@@ -46,7 +46,8 @@
     .ind-cl{width:10px;height:3px;border-radius:2px;flex-shrink:0}
     .ind-vals{font-family:var(--mono);font-size:.58rem;color:var(--tx2);line-height:1.4;margin-top:6px;padding-top:6px;border-top:1px solid var(--bd)}
 
-    .chart-area{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative}
+    .body-row{flex:1;display:flex;min-height:0;overflow:hidden}
+    .chart-area{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;position:relative}
     .main-wrap{flex:1;position:relative;min-height:0}
     #main-chart{width:100%;height:100%}
     #draw-overlay{position:absolute;top:0;left:0;pointer-events:none;z-index:5}
@@ -65,21 +66,85 @@
     .status-bar span{font-family:var(--mono);font-size:.52rem;color:var(--tx3)}
     .dot{width:4px;height:4px;border-radius:50%;background:var(--gn);display:inline-block}
 
+    /* ── Demo Trading Panel ── */
+    .trade-panel{width:280px;border-left:1px solid var(--bd);background:var(--bgc);flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;transition:width .2s}
+    .trade-panel.collapsed{width:0;border-left:none}
+    .tp-header{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--bd);flex-shrink:0}
+    .tp-header .tab{font-size:.6rem;font-family:var(--mono);font-weight:600;color:var(--tx3);cursor:pointer;padding:3px 8px;border-radius:3px;transition:all .1s;touch-action:manipulation}
+    .tp-header .tab.active{background:var(--ac);color:#000}
+    .tp-header .tab:hover{color:var(--tx)}
+    .tp-header .spacer{flex:1}
+    .tp-body{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bd) transparent}
+    .tp-body::-webkit-scrollbar{width:4px}
+    .tp-body::-webkit-scrollbar-track{background:transparent}
+    .tp-body::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+    .tp-section{padding:8px 10px;border-bottom:1px solid var(--bd)}
+    .tp-label{font-size:.52rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:var(--mono)}
+    .tp-val{font-family:var(--mono);font-weight:700;font-size:.82rem;color:var(--tx)}
+    .tp-val.sm{font-size:.7rem}
+    .tp-row{display:flex;gap:8px;align-items:center}
+    .tp-row .tp-val{flex:1}
+
+    .demo-connect{padding:16px 12px;text-align:center}
+    .demo-connect p{font-size:.68rem;color:var(--tx3);margin-bottom:10px;line-height:1.5}
+    .demo-connect input{width:100%;padding:8px 10px;background:var(--bge);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-family:var(--mono);font-size:.72rem;margin-bottom:8px;outline:none}
+    .demo-connect input:focus{border-color:var(--ac)}
+    .demo-connect .btn{width:100%;padding:8px;border:none;border-radius:6px;font-family:var(--mono);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .1s;touch-action:manipulation}
+    .demo-connect .btn-primary{background:var(--ac);color:#000}.demo-connect .btn-primary:hover{opacity:.9}
+
+    .trade-form{padding:8px 10px}
+    .tf-group{margin-bottom:8px}
+    .tf-group label{display:block;font-size:.54rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;font-family:var(--mono)}
+    .tf-input{width:100%;padding:6px 8px;background:var(--bge);border:1px solid var(--bd);border-radius:4px;color:var(--tx);font-family:var(--mono);font-size:.72rem;outline:none}
+    .tf-input:focus{border-color:var(--ac)}
+    .tf-row{display:flex;gap:6px}
+    .tf-row .tf-group{flex:1}
+
+    .lev-btns{display:flex;gap:3px;flex-wrap:wrap}
+    .lev-btn{padding:3px 6px;background:var(--bge);border:1px solid var(--bd);border-radius:3px;color:var(--tx2);font-family:var(--mono);font-size:.56rem;font-weight:600;cursor:pointer;transition:all .1s;touch-action:manipulation}
+    .lev-btn:hover{border-color:var(--ac);color:var(--tx)}.lev-btn.active{background:var(--ac);color:#000;border-color:var(--ac)}
+
+    .side-btns{display:flex;gap:6px;margin-top:8px}
+    .side-btns .btn{flex:1;padding:10px;border:none;border-radius:6px;font-family:var(--mono);font-size:.76rem;font-weight:800;cursor:pointer;transition:all .1s;touch-action:manipulation;text-transform:uppercase;letter-spacing:.04em}
+    .btn-long{background:var(--gn);color:#000}.btn-long:hover{opacity:.9}
+    .btn-short{background:var(--rd);color:#fff}.btn-short:hover{opacity:.9}
+    .btn-close-pos{background:var(--yl);color:#000;font-size:.6rem;padding:4px 8px;border:none;border-radius:3px;font-family:var(--mono);font-weight:700;cursor:pointer;touch-action:manipulation}
+
+    .pos-card{background:var(--bge);border:1px solid var(--bd);border-radius:6px;padding:8px;margin-bottom:6px}
+    .pos-hd{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+    .pos-side{font-size:.56rem;font-weight:800;padding:2px 6px;border-radius:3px;text-transform:uppercase;font-family:var(--mono)}
+    .pos-side.long{background:rgba(16,185,129,.15);color:var(--gn)}.pos-side.short{background:rgba(239,68,68,.15);color:var(--rd)}
+    .pos-lev{font-size:.56rem;color:var(--tx3);font-family:var(--mono)}
+    .pos-row{display:flex;justify-content:space-between;font-size:.58rem;font-family:var(--mono);color:var(--tx2);margin-bottom:2px}
+    .pos-row .val{color:var(--tx);font-weight:600}
+    .pos-pnl{font-family:var(--mono);font-size:.72rem;font-weight:700;margin-top:4px}
+    .pos-pnl.profit{color:var(--gn)}.pos-pnl.loss{color:var(--rd)}
+
+    .hist-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--bd);font-family:var(--mono);font-size:.56rem}
+    .hist-item:last-child{border-bottom:none}
+    .hist-side{font-weight:700;padding:1px 4px;border-radius:2px;font-size:.52rem;text-transform:uppercase}
+    .hist-side.long{color:var(--gn)}.hist-side.short{color:var(--rd)}.hist-side.liq{color:var(--or)}
+    .hist-pnl{font-weight:700}
+    .hist-pnl.profit{color:var(--gn)}.hist-pnl.loss{color:var(--rd)}
+    .hist-empty{font-size:.6rem;color:var(--tx3);text-align:center;padding:16px 0;font-family:var(--mono)}
+
+    @media(max-width:900px){
+      .trade-panel{width:240px}
+    }
     @media(max-width:768px){
       .topbar{height:36px;padding:0 6px;gap:6px}
       .tb-t{font-size:.72rem}.tb-p{font-size:.7rem}.tb-pr{font-size:.82rem}.tb-c{font-size:.64rem}
       .hl{display:none}
-      .tf-bar{gap:1px}
-      .tf-btn{font-size:.56rem;padding:2px 4px}
+      .tf-bar{gap:1px}.tf-btn{font-size:.56rem;padding:2px 4px}
       .cls-btn{font-size:.6rem;padding:2px 6px}
       .toolbar{height:28px;padding:0 6px;gap:0}
       .t-btn{font-size:.56rem;padding:2px 5px}.t-btn svg{width:11px;height:11px}
       .t-btn .btn-label{display:none}
       .ind-btn{font-size:.56rem;padding:2px 6px}
-      .ohlcv-bar{height:20px;gap:8px;padding:1px 6px}
-      .ohlcv-bar span{font-size:.52rem}
-      .status-bar{height:16px}
-      .status-bar span{font-size:.5rem}
+      .trade-panel{width:100%;position:absolute;right:0;top:0;bottom:0;z-index:50;border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .2s}
+      .trade-panel.open{transform:translateX(0)}
+      .ohlcv-bar{height:20px;gap:8px;padding:1px 6px}.ohlcv-bar span{font-size:.52rem}
+      .status-bar{height:16px}.status-bar span{font-size:.5rem}
     }
     @media(max-width:480px){
       .topbar{height:34px;gap:4px}
@@ -88,7 +153,6 @@
       .tf-btn{font-size:.52rem;padding:2px 3px}
       .toolbar{height:26px}
       .t-btn{font-size:.52rem;padding:2px 4px}.t-btn svg{width:10px;height:10px}
-      .ohlc{font-size:.5rem}
     }
   </style>
 </head>
@@ -104,7 +168,8 @@
     <span class="tb-s"></span>
     <div class="tf-bar" id="tf-bar"></div>
     <span class="sep" style="margin-left:2px">|</span>
-    <button class="cls-btn" id="btn-close"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> Close</button>
+    <button class="cls-btn" id="btn-trade-toggle" title="Demo Trading"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Trade</button>
+    <button class="cls-btn" id="btn-close"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
   </div>
   <div class="toolbar">
     <div class="tg">
@@ -134,22 +199,35 @@
       </div>
     </div>
   </div>
-  <div class="chart-area" id="chart-area">
-    <div class="main-wrap" id="main-wrap">
-      <div id="main-chart"></div>
-      <canvas id="draw-overlay"></canvas>
-      <div class="countdown" id="countdown"></div>
-      <div class="draw-tip" id="draw-tip"></div>
+  <div class="body-row">
+    <div class="chart-area" id="chart-area">
+      <div class="main-wrap" id="main-wrap">
+        <div id="main-chart"></div>
+        <canvas id="draw-overlay"></canvas>
+        <div class="countdown" id="countdown"></div>
+        <div class="draw-tip" id="draw-tip"></div>
+      </div>
+      <div class="drag-handle" id="drag-rsi" style="display:none"></div>
+      <div class="sub-wrap" id="rsi-panel" style="display:none;height:120px">
+        <span class="sub-lbl">RSI (14)</span>
+        <div id="rsi-chart" style="width:100%;height:100%"></div>
+      </div>
+      <div class="drag-handle" id="drag-macd" style="display:none"></div>
+      <div class="sub-wrap" id="macd-panel" style="display:none;height:120px">
+        <span class="sub-lbl">MACD (12,26,9)</span>
+        <div id="macd-chart" style="width:100%;height:100%"></div>
+      </div>
     </div>
-    <div class="drag-handle" id="drag-rsi" style="display:none"></div>
-    <div class="sub-wrap" id="rsi-panel" style="display:none;height:120px">
-      <span class="sub-lbl">RSI (14)</span>
-      <div id="rsi-chart" style="width:100%;height:100%"></div>
-    </div>
-    <div class="drag-handle" id="drag-macd" style="display:none"></div>
-    <div class="sub-wrap" id="macd-panel" style="display:none;height:120px">
-      <span class="sub-lbl">MACD (12,26,9)</span>
-      <div id="macd-chart" style="width:100%;height:100%"></div>
+
+    <div class="trade-panel" id="trade-panel">
+      <div class="tp-header">
+        <span class="tab active" data-tab="trade">Trade</span>
+        <span class="tab" data-tab="positions">Positions</span>
+        <span class="tab" data-tab="history">History</span>
+        <span class="spacer"></span>
+        <span class="tab" id="tp-close" title="Close panel" style="color:var(--rd)">&times;</span>
+      </div>
+      <div class="tp-body" id="tp-body"></div>
     </div>
   </div>
   <div class="ohlcv-bar">
@@ -252,6 +330,8 @@
     }
     function fmt(p){return'$'+Number(p).toFixed(4)}
     function fmtV(v){return v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)}
+    function fmtN(p){return Number(p).toFixed(2)}
+    function fmtShort(p){return'$'+Number(p).toFixed(4)}
     function buildCandles(pts,tf){if(!pts||!pts.length)return[];const b=TF_SEC[tf]*1000;const m=new Map();pts.forEach(p=>{const t=Math.floor(p.timestamp/b)*(b/1000);const e=m.get(t);if(!e)m.set(t,{time:t,open:p.price,high:p.price,low:p.price,close:p.price,volume:1});else{e.high=Math.max(e.high,p.price);e.low=Math.min(e.low,p.price);e.close=p.price;e.volume++;}});return Array.from(m.values()).sort((a,b)=>a.time-b.time);}
 
     async function loadChart(){
@@ -270,6 +350,7 @@
         if(!hasFitted){chart.timeScale().fitContent();hasFitted=true;}
         $('st-text').textContent=`LVAIR/USDT | ${curTF} | ${candles.length}`;
         $('st-ts').textContent=new Date().toLocaleTimeString();
+        refreshDemoAccount();
       }catch(e){$('st-text').textContent='Error: '+e.message;}
     }
 
@@ -281,10 +362,8 @@
     function syncOverlaySize(){
       const rect=mainWrap.getBoundingClientRect();
       const dpr=window.devicePixelRatio||1;
-      ov.width=rect.width*dpr;
-      ov.height=rect.height*dpr;
-      ov.style.width=rect.width+'px';
-      ov.style.height=rect.height+'px';
+      ov.width=rect.width*dpr;ov.height=rect.height*dpr;
+      ov.style.width=rect.width+'px';ov.style.height=rect.height+'px';
       ctx.setTransform(dpr,0,0,dpr,0,0);
     }
     new ResizeObserver(()=>{layoutSubCharts();syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}}).observe($('chart-area'));
@@ -295,99 +374,26 @@
 
     let dragTarget=null,dragStartY=0,dragStartH=0;
     function initDrag(handleId,target,getter,setter){
-      $(handleId).addEventListener('mousedown',e=>{
-        e.preventDefault();dragTarget=target;dragStartY=e.clientY;dragStartH=getter();
-        document.addEventListener('mousemove',onDragMove);document.addEventListener('mouseup',onDragEnd);
-        document.body.style.cursor='row-resize';document.body.style.userSelect='none';
-      });
-      $(handleId).addEventListener('touchstart',e=>{
-        e.preventDefault();dragTarget=target;dragStartY=e.touches[0].clientY;dragStartH=getter();
-        document.addEventListener('touchmove',onDragTouchMove,{passive:false});document.addEventListener('touchend',onDragTouchEnd);
-      },{passive:false});
+      $(handleId).addEventListener('mousedown',e=>{e.preventDefault();dragTarget=target;dragStartY=e.clientY;dragStartH=getter();document.addEventListener('mousemove',onDragMove);document.addEventListener('mouseup',onDragEnd);document.body.style.cursor='row-resize';document.body.style.userSelect='none';});
+      $(handleId).addEventListener('touchstart',e=>{e.preventDefault();dragTarget=target;dragStartY=e.touches[0].clientY;dragStartH=getter();document.addEventListener('touchmove',onDragTouchMove,{passive:false});document.addEventListener('touchend',onDragTouchEnd);},{passive:false});
     }
-    function onDragMove(e){
-      if(!dragTarget)return;
-      const dy=dragStartY-e.clientY;
-      if(dragTarget==='rsi')$('rsi-panel').style.height=(rsiHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';
-      if(dragTarget==='macd')$('macd-panel').style.height=(macdHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';
-      resizeAll();
-    }
-    function onDragTouchMove(e){
-      e.preventDefault();
-      if(!dragTarget)return;
-      const dy=dragStartY-e.touches[0].clientY;
-      if(dragTarget==='rsi')$('rsi-panel').style.height=(rsiHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';
-      if(dragTarget==='macd')$('macd-panel').style.height=(macdHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';
-      resizeAll();
-    }
+    function onDragMove(e){if(!dragTarget)return;const dy=dragStartY-e.clientY;if(dragTarget==='rsi')$('rsi-panel').style.height=(rsiHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';if(dragTarget==='macd')$('macd-panel').style.height=(macdHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';resizeAll();}
+    function onDragTouchMove(e){e.preventDefault();if(!dragTarget)return;const dy=dragStartY-e.touches[0].clientY;if(dragTarget==='rsi')$('rsi-panel').style.height=(rsiHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';if(dragTarget==='macd')$('macd-panel').style.height=(macdHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';resizeAll();}
     function onDragEnd(){dragTarget=null;document.removeEventListener('mousemove',onDragMove);document.removeEventListener('mouseup',onDragEnd);document.body.style.cursor='';document.body.style.userSelect='';}
     function onDragTouchEnd(){dragTarget=null;document.removeEventListener('touchmove',onDragTouchMove);document.removeEventListener('touchend',onDragTouchEnd);}
     initDrag('drag-rsi','rsi',()=>rsiHeight,v=>{rsiHeight=v;});initDrag('drag-macd','macd',()=>macdHeight,v=>{macdHeight=v;});
-    function resizeAll(){
-      syncOverlaySize();
-      try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}
-      if(rsiChart&&$('ind-rsi').checked)try{rsiChart.applyOptions({width:$('rsi-chart').clientWidth,height:$('rsi-chart').clientHeight});}catch(e){}
-      if(macdChart&&$('ind-macd').checked)try{macdChart.applyOptions({width:$('macd-chart').clientWidth,height:$('macd-chart').clientHeight});}catch(e){}
-    }
+    function resizeAll(){syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}if(rsiChart&&$('ind-rsi').checked)try{rsiChart.applyOptions({width:$('rsi-chart').clientWidth,height:$('rsi-chart').clientHeight});}catch(e){}if(macdChart&&$('ind-macd').checked)try{macdChart.applyOptions({width:$('macd-chart').clientWidth,height:$('macd-chart').clientHeight});}catch(e){}}
 
-    /* ══════════════════════════════════════════════════════════════
-       COORDINATE SYSTEM — pure manual, no LWC coordinate methods
-       Uses mainWrap (parent of both chart and overlay) for alignment
-       ══════════════════════════════════════════════════════════════ */
     const SM={top:.08,bottom:.15};
+    function contentWidth(){try{const w=chart.priceScale('right').width();if(w>0)return container.clientWidth-w;}catch(e){}return Math.max(100,container.clientWidth-60);}
+    function contentMetrics(){const H=container.clientHeight;const top=H*SM.top,bot=H*(1-SM.bottom),h=bot-top;return{W:container.clientWidth,H,top,bot,h,cw:contentWidth()};}
+    function visiblePrices(){const r=chart.timeScale().getVisibleLogicalRange();if(!r||!candles.length)return null;const s=Math.max(0,Math.floor(r.from)),e=Math.min(candles.length-1,Math.ceil(r.to));const vis=candles.slice(s,e+1);if(!vis.length)return null;let hi=-Infinity,lo=Infinity;for(const c of vis){if(c.high>hi)hi=c.high;if(c.low<lo)lo=c.low;}const pad=(hi-lo)*0.1||hi*0.001;return{hi:hi+pad,lo:lo-pad};}
+    function priceToPx(price){const m=contentMetrics(),vp=visiblePrices();if(!vp)return m.H/2;return m.top+((vp.hi-price)/(vp.hi-vp.lo))*m.h;}
+    function pxToPrice(py){const m=contentMetrics(),vp=visiblePrices();if(!vp)return null;return vp.hi-((py-m.top)/m.h)*(vp.hi-vp.lo);}
+    function timeToPx(time){const r=chart.timeScale().getVisibleLogicalRange();if(!r||!candles.length)return 0;const idx=candles.findIndex(c=>c.time===time);if(idx<0)return 0;return((idx-r.from)/(r.to-r.from))*contentWidth();}
+    function pxToTime(px){const r=chart.timeScale().getVisibleLogicalRange();if(!r||!candles.length)return null;const idx=Math.round(r.from+(px/contentWidth())*(r.to-r.from));return candles[Math.min(Math.max(0,idx),candles.length-1)]?.time??null;}
 
-    function contentWidth(){
-      try{const w=chart.priceScale('right').width();if(w>0)return container.clientWidth-w;}catch(e){}
-      return Math.max(100,container.clientWidth-60);
-    }
-    function contentMetrics(){
-      const H=container.clientHeight;
-      const top=H*SM.top,bot=H*(1-SM.bottom),h=bot-top;
-      return{W:container.clientWidth,H,top,bot,h,cw:contentWidth()};
-    }
-    function visiblePrices(){
-      const r=chart.timeScale().getVisibleLogicalRange();
-      if(!r||!candles.length)return null;
-      const s=Math.max(0,Math.floor(r.from)),e=Math.min(candles.length-1,Math.ceil(r.to));
-      const vis=candles.slice(s,e+1);if(!vis.length)return null;
-      let hi=-Infinity,lo=Infinity;
-      for(const c of vis){if(c.high>hi)hi=c.high;if(c.low<lo)lo=c.low;}
-      const pad=(hi-lo)*0.1||hi*0.001;
-      return{hi:hi+pad,lo:lo-pad};
-    }
-
-    function priceToPx(price){
-      const m=contentMetrics(),vp=visiblePrices();if(!vp)return m.H/2;
-      return m.top+((vp.hi-price)/(vp.hi-vp.lo))*m.h;
-    }
-    function pxToPrice(py){
-      const m=contentMetrics(),vp=visiblePrices();if(!vp)return null;
-      return vp.hi-((py-m.top)/m.h)*(vp.hi-vp.lo);
-    }
-    function timeToPx(time){
-      const r=chart.timeScale().getVisibleLogicalRange();if(!r||!candles.length)return 0;
-      const idx=candles.findIndex(c=>c.time===time);if(idx<0)return 0;
-      return((idx-r.from)/(r.to-r.from))*contentWidth();
-    }
-    function pxToTime(px){
-      const r=chart.timeScale().getVisibleLogicalRange();if(!r||!candles.length)return null;
-      const idx=Math.round(r.from+(px/contentWidth())*(r.to-r.from));
-      return candles[Math.min(Math.max(0,idx),candles.length-1)]?.time??null;
-    }
-
-    /* ══════════════════════════════════════════════
-       ── Candle Countdown Timer ──
-       ══════════════════════════════════════════════ */
-    function updateCountdown(){
-      const cd=$('countdown');
-      if(curTF==='LIVE'||!TF_SEC[curTF]||!candles.length){cd.style.display='none';return;}
-      const sec=TF_SEC[curTF],now=Date.now()/1000,rem=Math.max(0,sec-(now%sec));
-      cd.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');
-      const last=candles[candles.length-1],y=priceToPx(last.close);
-      if(y>0&&y<container.clientHeight){cd.style.display='';cd.style.top=y+'px';
-        try{cd.style.left=(contentWidth()-cd.offsetWidth-2)+'px';}catch(e){cd.style.left='50%';}
-      }else{cd.style.display='none';}
-    }
+    function updateCountdown(){const cd=$('countdown');if(curTF==='LIVE'||!TF_SEC[curTF]||!candles.length){cd.style.display='none';return;}const sec=TF_SEC[curTF],now=Date.now()/1000,rem=Math.max(0,sec-(now%sec));cd.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');const last=candles[candles.length-1],y=priceToPx(last.close);if(y>0&&y<container.clientHeight){cd.style.display='';cd.style.top=y+'px';try{cd.style.left=(contentWidth()-cd.offsetWidth-2)+'px';}catch(e){cd.style.left='50%';}}else{cd.style.display='none';}}
     setInterval(updateCountdown,1000);
     chart.timeScale().subscribeVisibleLogicalRangeChange(()=>updateCountdown());
 
@@ -395,44 +401,19 @@
        ── Drawing Tools ──
        ══════════════════════════════════════════════ */
     let drawMode=null,drawPts=[],drawings=[],mouseX=0,mouseY=0;
-
     const tip=$('draw-tip');
     function showTip(x,y,text){tip.style.display='block';tip.style.left=x+'px';tip.style.top=y+'px';tip.textContent=text;}
     function hideTip(){tip.style.display='none';}
 
     function redraw(){
-      const W=mainWrap.clientWidth,H=mainWrap.clientHeight;
-      ctx.clearRect(0,0,W,H);
-      drawings.forEach(d=>{
-        ctx.save();
-        if(d.type==='trend'){
-          const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);
-          ctx.strokeStyle='#60a5fa';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
-          ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(x1,y1,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x2,y2,3,0,Math.PI*2);ctx.fill();
-        }else if(d.type==='hline'){
-          const y=priceToPx(d.price);ctx.strokeStyle='rgba(96,165,250,.6)';ctx.lineWidth=1;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();ctx.setLineDash([]);
-          ctx.fillStyle='rgba(96,165,250,.12)';const lbl='$'+d.price.toFixed(4);const tw=ctx.measureText(lbl).width;ctx.fillRect(W-tw-16,y-9,tw+12,18);
-          ctx.fillStyle='rgba(96,165,250,.9)';ctx.font='bold 9px JetBrains Mono';ctx.textAlign='right';ctx.fillText(lbl,W-4,y+3);
-        }else if(d.type==='vline'){
-          const x=timeToPx(d.time);ctx.strokeStyle='rgba(96,165,250,.6)';ctx.lineWidth=1;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();ctx.setLineDash([]);
-        }else if(d.type==='rect'){
-          const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);
-          const lx=Math.min(x1,x2),ly=Math.min(y1,y2),w=Math.abs(x2-x1),h=Math.abs(y2-y1);
-          ctx.fillStyle='rgba(96,165,250,.06)';ctx.fillRect(lx,ly,w,h);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1;ctx.strokeRect(lx,ly,w,h);
-        }else if(d.type==='fib'){
-          const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);
-          const lvls=[0,.236,.382,.5,.618,.786,1];
-          const minX=Math.min(x1,x2),maxX=Math.max(x1,x2),minY=Math.min(y1,y2),maxY=Math.max(y1,y2);
-          ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(minX,minY,maxX-minX,maxY-minY);
-          lvls.forEach(lv=>{const y=y1+(y2-y1)*lv;const price=d.p1+(d.p2-d.p1)*lv;
-            ctx.strokeStyle='rgba(234,179,8,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(minX,y);ctx.lineTo(maxX,y);ctx.stroke();ctx.setLineDash([]);
-            const lbl=(lv*100).toFixed(1)+'% '+fmt(price);const tw=ctx.measureText(lbl).width;
-            ctx.fillStyle=lv===0||lv===1?'rgba(234,179,8,.15)':'rgba(234,179,8,.08)';ctx.fillRect(minX,y-9,tw+10,18);
-            ctx.fillStyle='rgba(234,179,8,.8)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText(lbl,minX+4,y+3);
-          });
-        }
-        ctx.restore();
-      });
+      const W=mainWrap.clientWidth,H=mainWrap.clientHeight;ctx.clearRect(0,0,W,H);
+      drawings.forEach(d=>{ctx.save();
+        if(d.type==='trend'){const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(x1,y1,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x2,y2,3,0,Math.PI*2);ctx.fill();}
+        else if(d.type==='hline'){const y=priceToPx(d.price);ctx.strokeStyle='rgba(96,165,250,.6)';ctx.lineWidth=1;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(96,165,250,.12)';const lbl='$'+d.price.toFixed(4);const tw=ctx.measureText(lbl).width;ctx.fillRect(W-tw-16,y-9,tw+12,18);ctx.fillStyle='rgba(96,165,250,.9)';ctx.font='bold 9px JetBrains Mono';ctx.textAlign='right';ctx.fillText(lbl,W-4,y+3);}
+        else if(d.type==='vline'){const x=timeToPx(d.time);ctx.strokeStyle='rgba(96,165,250,.6)';ctx.lineWidth=1;ctx.setLineDash([6,3]);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();ctx.setLineDash([]);}
+        else if(d.type==='rect'){const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);const lx=Math.min(x1,x2),ly=Math.min(y1,y2),w=Math.abs(x2-x1),h=Math.abs(y2-y1);ctx.fillStyle='rgba(96,165,250,.06)';ctx.fillRect(lx,ly,w,h);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1;ctx.strokeRect(lx,ly,w,h);}
+        else if(d.type==='fib'){const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);const lvls=[0,.236,.382,.5,.618,.786,1];const minX=Math.min(x1,x2),maxX=Math.max(x1,x2);ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(minX,Math.min(y1,y2),maxX-minX,Math.abs(y2-y1));lvls.forEach(lv=>{const y=y1+(y2-y1)*lv;const price=d.p1+(d.p2-d.p1)*lv;ctx.strokeStyle='rgba(234,179,8,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(minX,y);ctx.lineTo(maxX,y);ctx.stroke();ctx.setLineDash([]);const lbl=(lv*100).toFixed(1)+'% '+fmt(price);const tw=ctx.measureText(lbl).width;ctx.fillStyle=lv===0||lv===1?'rgba(234,179,8,.15)':'rgba(234,179,8,.08)';ctx.fillRect(minX,y-9,tw+10,18);ctx.fillStyle='rgba(234,179,8,.8)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText(lbl,minX+4,y+3);});}
+        ctx.restore();});
       drawPreview();
     }
 
@@ -440,78 +421,19 @@
       if(!drawMode||!drawPts.length)return;
       const W=mainWrap.clientWidth,H=mainWrap.clientHeight;
       ctx.save();ctx.strokeStyle='rgba(96,165,250,.7)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.globalAlpha=.8;
-      if(drawMode==='trend'&&drawPts.length===1){
-        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
-        ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(mouseX,mouseY);ctx.stroke();
-        ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(x1,y1,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(mouseX,mouseY,3,0,Math.PI*2);ctx.fill();
-        const price2=pxToPrice(mouseY),time2=pxToTime(mouseX);
-        if(price2!==null&&time2)showTip(mouseX,mouseY,fmt(price2)+' @ '+new Date(time2*1000).toLocaleTimeString());
-      }else if(drawMode==='hline'){
-        ctx.beginPath();ctx.moveTo(0,mouseY);ctx.lineTo(W,mouseY);ctx.stroke();
-        const price=pxToPrice(mouseY);if(price!==null)showTip(mouseX,mouseY,fmt(price));
-      }else if(drawMode==='vline'){
-        ctx.beginPath();ctx.moveTo(mouseX,0);ctx.lineTo(mouseX,H);ctx.stroke();
-        const time=pxToTime(mouseX);if(time)showTip(mouseX,mouseY,new Date(time*1000).toLocaleString());
-      }else if(drawMode==='fib'&&drawPts.length===1){
-        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
-        const p1=drawPts[0].p;
-        const p2=pxToPrice(mouseY);
-        if(p2===null){ctx.restore();return;}
-        const minX=Math.min(x1,mouseX),maxX=Math.max(x1,mouseX);
-        ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(minX,Math.min(y1,mouseY),maxX-minX,Math.abs(mouseY-y1));
-        [0,.236,.382,.5,.618,.786,1].forEach(lv=>{
-          const y=y1+(mouseY-y1)*lv;
-          const price=p1+(p2-p1)*lv;
-          ctx.strokeStyle='rgba(234,179,8,.5)';ctx.beginPath();ctx.moveTo(minX,y);ctx.lineTo(maxX,y);ctx.stroke();
-          ctx.setLineDash([]);ctx.fillStyle='rgba(234,179,8,.7)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';
-          ctx.fillText((lv*100).toFixed(1)+'% '+fmt(price),minX+4,y-3);
-        });
-      }else if(drawMode==='rect'&&drawPts.length===1){
-        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
-        const lx=Math.min(x1,mouseX),ly=Math.min(y1,mouseY),w=Math.abs(mouseX-x1),h=Math.abs(mouseY-y1);
-        ctx.fillStyle='rgba(96,165,250,.04)';ctx.fillRect(lx,ly,w,h);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1;ctx.strokeRect(lx,ly,w,h);
-      }
+      if(drawMode==='trend'&&drawPts.length===1){const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(mouseX,mouseY);ctx.stroke();ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(x1,y1,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(mouseX,mouseY,3,0,Math.PI*2);ctx.fill();}
+      else if(drawMode==='hline'){ctx.beginPath();ctx.moveTo(0,mouseY);ctx.lineTo(W,mouseY);ctx.stroke();const price=pxToPrice(mouseY);if(price!==null)showTip(mouseX,mouseY,fmt(price));}
+      else if(drawMode==='vline'){ctx.beginPath();ctx.moveTo(mouseX,0);ctx.lineTo(mouseX,H);ctx.stroke();const time=pxToTime(mouseX);if(time)showTip(mouseX,mouseY,new Date(time*1000).toLocaleString());}
+      else if(drawMode==='fib'&&drawPts.length===1){const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);const p1=drawPts[0].p;const p2=pxToPrice(mouseY);if(p2===null){ctx.restore();return;}const minX=Math.min(x1,mouseX),maxX=Math.max(x1,mouseX);ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(minX,Math.min(y1,mouseY),maxX-minX,Math.abs(mouseY-y1));[0,.236,.382,.5,.618,.786,1].forEach(lv=>{const y=y1+(mouseY-y1)*lv;const price=p1+(p2-p1)*lv;ctx.strokeStyle='rgba(234,179,8,.5)';ctx.beginPath();ctx.moveTo(minX,y);ctx.lineTo(maxX,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(234,179,8,.7)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText((lv*100).toFixed(1)+'% '+fmt(price),minX+4,y-3);});}
+      else if(drawMode==='rect'&&drawPts.length===1){const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);const lx=Math.min(x1,mouseX),ly=Math.min(y1,mouseY),w=Math.abs(mouseX-x1),h=Math.abs(mouseY-y1);ctx.fillStyle='rgba(96,165,250,.04)';ctx.fillRect(lx,ly,w,h);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1;ctx.strokeRect(lx,ly,w,h);}
       ctx.restore();
     }
 
-    function getCanvasXY(e){
-      const r=mainWrap.getBoundingClientRect();
-      return{x:e.clientX-r.left,y:e.clientY-r.top};
-    }
-
-    ov.addEventListener('mousemove',e=>{
-      const xy=getCanvasXY(e);mouseX=xy.x;mouseY=xy.y;
-      if(drawMode){redraw();if(drawMode==='hline'){const p=pxToPrice(mouseY);if(p!==null)showTip(mouseX,mouseY,fmt(p));}else if(drawMode==='vline'){const t=pxToTime(mouseX);if(t)showTip(mouseX,mouseY,new Date(t*1000).toLocaleString());}else{hideTip();}}
-    });
-    ov.addEventListener('touchmove',e=>{
-      if(!drawMode)return;
-      e.preventDefault();
-      const t=e.touches[0];const xy=getCanvasXY(t);mouseX=xy.x;mouseY=xy.y;
-      redraw();
-      if(drawMode==='hline'){const p=pxToPrice(mouseY);if(p!==null)showTip(mouseX,mouseY,fmt(p));}
-      else if(drawMode==='vline'){const t2=pxToTime(mouseX);if(t2)showTip(mouseX,mouseY,new Date(t2*1000).toLocaleString());}
-      else{hideTip();}
-    },{passive:false});
-
-    ov.addEventListener('mousedown',e=>{
-      if(!drawMode)return;if(e.button===2){drawPts=[];hideTip();redraw();return;}
-      e.preventDefault();const xy=getCanvasXY(e);
-      if(drawMode==='hline'){const price=pxToPrice(xy.y);if(price===null)return;drawings.push({type:'hline',price});hideTip();redraw();return;}
-      if(drawMode==='vline'){const time=pxToTime(xy.x);if(!time)return;drawings.push({type:'vline',time});hideTip();redraw();return;}
-      const time=pxToTime(xy.x),price=pxToPrice(xy.y);if(time===null||price===null)return;
-      drawPts.push({t:time,p:price});
-      if(drawPts.length===2){drawings.push({type:drawMode,t1:drawPts[0].t,p1:drawPts[0].p,t2:drawPts[1].t,p2:drawPts[1].p});drawPts=[];hideTip();redraw();}
-    });
-    ov.addEventListener('touchend',e=>{
-      if(!drawMode)return;
-      e.preventDefault();
-      const time=pxToTime(mouseX),price=pxToPrice(mouseY);
-      if(drawMode==='hline'){if(price!==null){drawings.push({type:'hline',price});hideTip();redraw();}return;}
-      if(drawMode==='vline'){if(time){drawings.push({type:'vline',time});hideTip();redraw();}return;}
-      if(time===null||price===null)return;
-      drawPts.push({t:time,p:price});
-      if(drawPts.length===2){drawings.push({type:drawMode,t1:drawPts[0].t,p1:drawPts[0].p,t2:drawPts[1].t,p2:drawPts[1].p});drawPts=[];hideTip();redraw();}
-    },{passive:false});
+    function getCanvasXY(e){const r=mainWrap.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+    ov.addEventListener('mousemove',e=>{const xy=getCanvasXY(e);mouseX=xy.x;mouseY=xy.y;if(drawMode){redraw();if(drawMode==='hline'){const p=pxToPrice(mouseY);if(p!==null)showTip(mouseX,mouseY,fmt(p));}else if(drawMode==='vline'){const t=pxToTime(mouseX);if(t)showTip(mouseX,mouseY,new Date(t*1000).toLocaleString());}else{hideTip();}}});
+    ov.addEventListener('touchmove',e=>{if(!drawMode)return;e.preventDefault();const t=e.touches[0];const xy=getCanvasXY(t);mouseX=xy.x;mouseY=xy.y;redraw();if(drawMode==='hline'){const p=pxToPrice(mouseY);if(p!==null)showTip(mouseX,mouseY,fmt(p));}else if(drawMode==='vline'){const t2=pxToTime(mouseX);if(t2)showTip(mouseX,mouseY,new Date(t2*1000).toLocaleString());}else{hideTip();}},{passive:false});
+    ov.addEventListener('mousedown',e=>{if(!drawMode)return;if(e.button===2){drawPts=[];hideTip();redraw();return;}e.preventDefault();const xy=getCanvasXY(e);if(drawMode==='hline'){const price=pxToPrice(xy.y);if(price===null)return;drawings.push({type:'hline',price});hideTip();redraw();return;}if(drawMode==='vline'){const time=pxToTime(xy.x);if(!time)return;drawings.push({type:'vline',time});hideTip();redraw();return;}const time=pxToTime(xy.x),price=pxToPrice(xy.y);if(time===null||price===null)return;drawPts.push({t:time,p:price});if(drawPts.length===2){drawings.push({type:drawMode,t1:drawPts[0].t,p1:drawPts[0].p,t2:drawPts[1].t,p2:drawPts[1].p});drawPts=[];hideTip();redraw();}});
+    ov.addEventListener('touchend',e=>{if(!drawMode)return;e.preventDefault();const time=pxToTime(mouseX),price=pxToPrice(mouseY);if(drawMode==='hline'){if(price!==null){drawings.push({type:'hline',price});hideTip();redraw();}return;}if(drawMode==='vline'){if(time){drawings.push({type:'vline',time});hideTip();redraw();}return;}if(time===null||price===null)return;drawPts.push({t:time,p:price});if(drawPts.length===2){drawings.push({type:drawMode,t1:drawPts[0].t,p1:drawPts[0].p,t2:drawPts[1].t,p2:drawPts[1].p});drawPts=[];hideTip();redraw();}},{passive:false});
     ov.addEventListener('contextmenu',e=>{e.preventDefault();drawPts=[];hideTip();redraw();});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'){drawPts=[];hideTip();redraw();}if((e.key==='Delete'||e.key==='Backspace')&&drawings.length){drawings.pop();redraw();}});
 
@@ -522,8 +444,174 @@
     $('tool-clear').addEventListener('click',()=>{drawings=[];drawPts=[];hideTip();redraw();});
     setTool(null);
 
+    /* ══════════════════════════════════════════════
+       ── Demo Trading Panel ──
+       ══════════════════════════════════════════════ */
+    let demoAddr=localStorage.getItem('demo_wallet')||'';
+    let demoAccount=null;
+    let demoTab='trade';
+    let demoLeverage=10;
+    let demoSide='long';
+    let demoRefreshing=false;
+
+    function showPanel(){$('trade-panel').classList.remove('collapsed');$('trade-panel').classList.add('open');}
+    function hidePanel(){$('trade-panel').classList.add('collapsed');$('trade-panel').classList.remove('open');}
+    $('btn-trade-toggle').addEventListener('click',()=>{$('trade-panel').classList.contains('collapsed')?showPanel():hidePanel();setTimeout(()=>{syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}},250);});
+    $('tp-close').addEventListener('click',()=>{hidePanel();setTimeout(()=>{syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}},250);});
+
+    document.querySelectorAll('.tp-header .tab[data-tab]').forEach(tab=>{
+      tab.addEventListener('click',()=>{
+        demoTab=tab.dataset.tab;
+        document.querySelectorAll('.tp-header .tab[data-tab]').forEach(t=>t.classList.toggle('active',t===tab));
+        renderDemoPanel();
+      });
+    });
+
+    async function apiDemo(method,body){
+      try{
+        const res=await fetch(`${API}/api/demo/${method}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        return await res.json();
+      }catch(e){return{success:false,error:e.message};}
+    }
+
+    async function refreshDemoAccount(){
+      if(!demoAddr||demoRefreshing)return;
+      demoRefreshing=true;
+      try{
+        const r=await apiDemo('account',{address:demoAddr});
+        if(r.success){demoAccount=r.account;}
+      }catch(e){}
+      demoRefreshing=false;
+      renderDemoPanel();
+    }
+
+    async function connectWallet(){
+      const v=$('demo-addr-input')?.value?.trim();
+      if(!v)return;
+      demoAddr=v;
+      localStorage.setItem('demo_wallet',v);
+      const r=await apiDemo('account',{address:v});
+      if(r.success){demoAccount=r.account;}
+      renderDemoPanel();
+    }
+
+    async function resetDemo(){
+      if(!demoAddr)return;
+      await apiDemo('reset',{address:demoAddr});
+      demoAccount=null;
+      await refreshDemoAccount();
+    }
+
+    async function openTrade(side){
+      if(!demoAddr||!demoAccount)return;
+      const margin=parseFloat($('demo-margin')?.value);
+      if(!margin||margin<=0)return;
+      const r=await apiDemo('open',{address:demoAddr,side,margin,leverage:demoLeverage});
+      if(r.success){
+        demoAccount.balance=r.balance;
+        demoAccount.positions.push(r.position);
+        renderDemoPanel();
+      } else {
+        alert(r.error||'Trade failed');
+      }
+    }
+
+    async function closePos(posId){
+      if(!demoAddr)return;
+      const r=await apiDemo('close',{address:demoAddr,positionId:posId});
+      if(r.success){
+        demoAccount.balance=r.balance;
+        demoAccount.positions=demoAccount.positions.filter(p=>p.id!==posId);
+        if(!demoAccount.history)demoAccount.history=[];
+        demoAccount.history.unshift({side:'closed',pnl:r.pnl,closePrice:r.closePrice,closedAt:Date.now()});
+        renderDemoPanel();
+      }
+    }
+
+    function renderDemoPanel(){
+      const body=$('tp-body');
+      if(!demoAddr){
+        body.innerHTML=`<div class="demo-connect"><p>Connect wallet address to start demo trading with $10,000 virtual USDT and up to 1:2000 leverage.</p><input id="demo-addr-input" placeholder="0x... wallet address" value="${demoAddr}"><button class="btn btn-primary" onclick="window._demoConnect()">Connect</button></div>`;
+        return;
+      }
+      if(!demoAccount){
+        body.innerHTML='<div class="demo-connect"><p>Loading...</p></div>';
+        return;
+      }
+      const price=demoAccount.price||0;
+      const balance=demoAccount.balance||0;
+      const positions=demoAccount.positions||[];
+      const totalPnl=positions.reduce((s,p)=>s+(p.pnl||0),0);
+      const marginUsed=positions.reduce((s,p)=>s+(p.margin||0),0);
+      const freeMargin=balance-marginUsed+totalPnl;
+
+      if(demoTab==='trade'){
+        body.innerHTML=`
+          <div class="tp-section">
+            <div class="tp-row"><div><div class="tp-label">Balance</div><div class="tp-val">$${fmtN(balance)}</div></div><div style="text-align:right"><div class="tp-label">PnL</div><div class="tp-val sm ${totalPnl>=0?'profit':'loss'}" style="color:${totalPnl>=0?'var(--gn)':'var(--rd)'}">${totalPnl>=0?'+':''}$${fmtN(totalPnl)}</div></div></div>
+            <div class="tp-row" style="margin-top:6px"><div><div class="tp-label">Margin Used</div><div class="tp-val sm">$${fmtN(marginUsed)}</div></div><div style="text-align:right"><div class="tp-label">Free</div><div class="tp-val sm">$${fmtN(freeMargin)}</div></div></div>
+          </div>
+          <div class="trade-form">
+            <div class="tf-group">
+              <label>Leverage</label>
+              <input type="range" class="tf-input" id="demo-lev-range" min="1" max="2000" value="${demoLeverage}" style="padding:0" oninput="window._demoSetLev(this.value)">
+              <div style="display:flex;justify-content:space-between;font-size:.54rem;color:var(--tx3);font-family:var(--mono);margin-top:2px"><span>1x</span><span id="demo-lev-val">${demoLeverage}x</span><span>2000x</span></div>
+              <div class="lev-btns" style="margin-top:4px">
+                ${[1,5,10,25,50,100,200,500,1000,2000].map(l=>`<span class="lev-btn ${l===demoLeverage?'active':''}" onclick="window._demoSetLev(${l})">${l}x</span>`).join('')}
+              </div>
+            </div>
+            <div class="tf-group">
+              <label>Margin (USDT)</label>
+              <input type="number" class="tf-input" id="demo-margin" placeholder="100" value="100" min="1" step="any">
+            </div>
+            <div class="tf-group">
+              <label>Position Value</label>
+              <div class="tp-val sm" id="demo-posval">$${fmtN(100*demoLeverage)}</div>
+            </div>
+            <div class="side-btns">
+              <button class="btn btn-long" onclick="window._demoTrade('long')">▲ Long</button>
+              <button class="btn btn-short" onclick="window._demoTrade('short')">▼ Short</button>
+            </div>
+          </div>`;
+      } else if(demoTab==='positions'){
+        const posHtml=positions.length?positions.map(p=>{
+          const curPnl=demoAccount.price?p.pnl:0;
+          const liq=p.liquidationPrice||0;
+          return`<div class="pos-card">
+            <div class="pos-hd"><span class="pos-side ${p.side}">${p.side}</span><span class="pos-lev">${p.leverage}x</span></div>
+            <div class="pos-row"><span>Entry</span><span class="val">${fmtShort(p.entryPrice)}</span></div>
+            <div class="pos-row"><span>Current</span><span class="val">${fmtShort(price)}</span></div>
+            <div class="pos-row"><span>Margin</span><span class="val">$${fmtN(p.margin)}</span></div>
+            <div class="pos-row"><span>Liq. Price</span><span class="val" style="color:var(--or)">${fmtShort(liq)}</span></div>
+            <div class="pos-pnl ${curPnl>=0?'profit':'loss'}">${curPnl>=0?'+':''}$${fmtN(curPnl)}</div>
+            <button class="btn-close-pos" onclick="window._demoClose('${p.id}')" style="margin-top:6px;width:100%">Close Position</button>
+          </div>`;
+        }).join(''):'<div class="hist-empty">No open positions</div>';
+        body.innerHTML=`<div class="tp-section">${posHtml}</div>`;
+      } else if(demoTab==='history'){
+        const hist=demoAccount.history||[];
+        const histHtml=hist.length?hist.map(h=>{
+          const isLiq=h.type==='liquidation';
+          return`<div class="hist-item"><span class="hist-side ${isLiq?'liq':(h.side||'')}">${isLiq?'LIQ':(h.side||'?')}</span><span>${fmtShort(h.entryPrice||0)} → ${fmtShort(h.closePrice||0)}</span><span class="hist-pnl ${(h.pnl||0)>=0?'profit':'loss'}">${(h.pnl||0)>=0?'+':''}$${fmtN(h.pnl||0)}</span></div>`;
+        }).join(''):'<div class="hist-empty">No trade history</div>';
+        body.innerHTML=`<div class="tp-section">${histHtml}</div>`;
+      }
+    }
+
+    window._demoConnect=connectWallet;
+    window._demoSetLev=function(v){demoLeverage=Number(v);const el=$('demo-posval');const m=parseFloat($('demo-margin')?.value)||0;if(el)el.textContent='$'+fmtN(m*demoLeverage);const valEl=$('demo-lev-val');if(valEl)valEl.textContent=demoLeverage+'x';document.querySelectorAll('.lev-btn').forEach(b=>b.classList.toggle('active',b.textContent===demoLeverage+'x'));};
+    window._demoTrade=openTrade;
+    window._demoClose=closePos;
+
+    if(demoAddr){
+      showPanel();
+      refreshDemoAccount();
+    }
+
     $('btn-close').addEventListener('click',()=>window.close());
     loadChart();setInterval(loadChart,curTF==='LIVE'?2000:15000);
+    setInterval(refreshDemoAccount,5000);
+    renderDemoPanel();
   })();
   </script>
 </body>

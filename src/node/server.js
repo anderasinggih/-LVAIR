@@ -7,6 +7,7 @@ import cors from 'cors';
 import { Blockchain } from '../core/blockchain.js';
 import { AMMPool } from '../core/amm.js';
 import { TradingBotEngine } from '../core/market-maker.js';
+import { DemoTradingEngine } from './demo-trading.js';
 
 const VALID_BOT_MODES = TradingBotEngine.MODES;
 import { NodeStorageEngine } from './storage.js';
@@ -140,6 +141,8 @@ async function startFullNode() {
   ammPool.priceHistory = pool.priceHistory;
   ammPool.trades = pool.trades;
   blockchain.claimedAddresses = rebuildClaimedAddresses(blockchain.chain);
+
+  const demoEngine = new DemoTradingEngine(storage, ammPool);
 
   const txIndex = new Map();
   for (const block of blockchain.chain) {
@@ -302,7 +305,7 @@ async function startFullNode() {
     savePeersFile(Array.from(new Set(all)));
   }, 30000);
 
-  const minerTimer = setInterval(() => { minePending(null); }, MINER_INTERVAL);
+  const minerTimer = setInterval(() => { minePending(null); demoEngine.checkLiquidations(); }, MINER_INTERVAL);
 
   if (ENABLE_BOT) {
     botEngine = new TradingBotEngine({
@@ -970,6 +973,84 @@ async function startFullNode() {
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }
+  });
+
+  /* ══════════════════════════════════════════════
+     DEMO TRADING API
+     ══════════════════════════════════════════════ */
+
+  app.post('/api/demo/account', async (req, res) => {
+    try {
+      const { address } = req.body || {};
+      if (!address) return res.status(400).json({ success: false, error: 'Address required' });
+      const acc = await demoEngine.getOrCreate(address);
+      const price = demoEngine.getCurrentPrice();
+      const positionsWithPnl = acc.positions.map(p => ({
+        ...p,
+        currentPrice: price,
+        pnl: p.status === 'open' ? demoEngine.calculatePnL(p, price) : p.pnl,
+        liquidationPrice: demoEngine.calculateLiquidationPrice(p)
+      }));
+      res.json({ success: true, account: { ...acc, positions: positionsWithPnl, price } });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.get('/api/demo/account/:address', async (req, res) => {
+    try {
+      const acc = await demoEngine.getAccount(req.params.address);
+      if (!acc) return res.json({ success: true, account: null });
+      const price = demoEngine.getCurrentPrice();
+      const positionsWithPnl = acc.positions.map(p => ({
+        ...p,
+        currentPrice: price,
+        pnl: p.status === 'open' ? demoEngine.calculatePnL(p, price) : p.pnl,
+        liquidationPrice: demoEngine.calculateLiquidationPrice(p)
+      }));
+      res.json({ success: true, account: { ...acc, positions: positionsWithPnl, price } });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/demo/open', async (req, res) => {
+    try {
+      const { address, side, margin, leverage } = req.body || {};
+      if (!address || !side || !margin) return res.status(400).json({ success: false, error: 'address, side, margin required' });
+      const result = await demoEngine.openPosition(address, side, Number(margin), Number(leverage) || 10);
+      logEvent('DEMO_TRADE', 'tag-demo', `Demo ${side.toUpperCase()} $${margin} x${leverage || 10} @ $${result.position.entryPrice.toFixed(4)}`);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/demo/close', async (req, res) => {
+    try {
+      const { address, positionId } = req.body || {};
+      if (!address || !positionId) return res.status(400).json({ success: false, error: 'address, positionId required' });
+      const result = await demoEngine.closePosition(address, positionId);
+      logEvent('DEMO_CLOSE', 'tag-demo', `Demo position closed: PnL $${result.pnl.toFixed(4)}`);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/demo/reset', async (req, res) => {
+    try {
+      const { address } = req.body || {};
+      if (!address) return res.status(400).json({ success: false, error: 'Address required' });
+      const acc = await demoEngine.resetAccount(address);
+      res.json({ success: true, account: acc });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.get('/api/demo/price', (req, res) => {
+    res.json({ price: demoEngine.getCurrentPrice(), timestamp: Date.now() });
   });
 
   const httpServer = app.listen(HTTP_PORT, () => {
