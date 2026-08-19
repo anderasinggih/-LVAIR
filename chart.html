@@ -1085,7 +1085,7 @@
         try{
           const msg=JSON.parse(ev.data);
           if(msg.type!=='tick'||curTF!=='LIVE')return;
-          const t=Math.floor(msg.timestamp/30000);
+          const t=Math.floor(msg.timestamp/30000)*30;
           const last=candles.length?candles[candles.length-1]:null;
           if(last&&last.time===t){
             last.close=msg.price;
