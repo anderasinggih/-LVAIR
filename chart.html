@@ -1079,13 +1079,14 @@
       chartWs.onopen=function(){
         setWsStatus('connected');
         if(wsReconnectTimer){clearTimeout(wsReconnectTimer);wsReconnectTimer=null;}
-        if(curTF==='LIVE')loadChart();
+        loadChart();
       };
       chartWs.onmessage=function(ev){
         try{
           const msg=JSON.parse(ev.data);
-          if(msg.type!=='tick'||curTF!=='LIVE')return;
-          const t=Math.floor(msg.timestamp/30000)*30;
+          if(msg.type!=='tick')return;
+          const bucketMs=TF_SEC[curTF]?(TF_SEC[curTF]*1000):30000;
+          const t=Math.floor(msg.timestamp/bucketMs)*(bucketMs/1000);
           const last=candles.length?candles[candles.length-1]:null;
           if(last&&last.time===t){
             last.close=msg.price;
