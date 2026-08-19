@@ -260,7 +260,7 @@
     <span style="margin-left:auto"><span class="l">Candles</span><span id="cnt-v">0</span></span>
   </div>
   <div class="status-bar">
-    <span><span class="dot"></span></span>
+    <span id="ws-status" style="display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:.5rem;color:var(--tx3)"><span class="dot" id="ws-dot" style="background:var(--yl)"></span><span id="ws-label">connecting</span></span>
     <span id="st-text">LVAIR/USDT</span>
     <span style="margin-left:auto" id="st-ts"></span>
   </div>
@@ -1062,11 +1062,25 @@
     setInterval(refreshDemoAccount,curTF==='LIVE'?2000:5000);
     renderDemoPanel();
 
-    let chartWs=null;
+    let chartWs=null;let wsReconnectTimer=null;
+    function setWsStatus(state){
+      const dot=$('ws-dot'),lbl=$('ws-label');
+      if(!dot||!lbl)return;
+      if(state==='connected'){dot.style.background='var(--gn)';lbl.textContent='live';}
+      else if(state==='reconnecting'){dot.style.background='var(--yl)';lbl.textContent='reconnecting...';}
+      else{dot.style.background='var(--rd)';lbl.textContent='disconnected';}
+    }
     function connectChartWs(){
+      if(chartWs){try{chartWs.close();}catch(e){}chartWs=null;}
       const proto=location.protocol==='https:'?'wss:':'ws:';
       const url=`${proto}//${location.host}/ws/chart`;
-      try{chartWs=new WebSocket(url);}catch(e){setTimeout(connectChartWs,3000);return;}
+      setWsStatus('reconnecting');
+      try{chartWs=new WebSocket(url);}catch(e){wsReconnectTimer=setTimeout(connectChartWs,3000);return;}
+      chartWs.onopen=function(){
+        setWsStatus('connected');
+        if(wsReconnectTimer){clearTimeout(wsReconnectTimer);wsReconnectTimer=null;}
+        if(curTF==='LIVE')loadChart();
+      };
       chartWs.onmessage=function(ev){
         try{
           const msg=JSON.parse(ev.data);
@@ -1091,7 +1105,7 @@
           $('st-ts').textContent=new Date().toLocaleTimeString();
         }catch(e){}
       };
-      chartWs.onclose=function(){setTimeout(connectChartWs,2000);};
+      chartWs.onclose=function(){setWsStatus('reconnecting');wsReconnectTimer=setTimeout(connectChartWs,2000);};
       chartWs.onerror=function(){chartWs.close();};
     }
     connectChartWs();
