@@ -101,7 +101,7 @@ export class DemoTradingEngine {
     return { tpPrice, slPrice };
   }
 
-  async openPosition(address, side, marginAmount, leverage, tpPct = 0, slPct = 0) {
+  async openPosition(address, side, marginAmount, leverage, tpPct = 0, slPct = 0, clientPrice = 0) {
     await this._loading;
     const addr = address.toLowerCase();
     const acc = this.accounts.get(addr);
@@ -111,8 +111,15 @@ export class DemoTradingEngine {
     if (marginAmount > acc.balance) throw new Error('Insufficient balance');
     if (!['long', 'short'].includes(side)) throw new Error('Side must be long or short');
 
-    const price = this.getCurrentPrice();
-    if (!price || price <= 0) throw new Error('Price not available');
+    const ammPrice = this.getCurrentPrice();
+    if (!ammPrice || ammPrice <= 0) throw new Error('Price not available');
+
+    let price = ammPrice;
+    if (clientPrice > 0) {
+      const slippage = Math.abs(clientPrice - ammPrice) / ammPrice;
+      if (slippage > 0.05) throw new Error(`Slippage too high: ${(slippage * 100).toFixed(1)}% (max 5%)`);
+      price = clientPrice;
+    }
 
     const fee = marginAmount * FEE_RATE;
     const positionSize = marginAmount * leverage;
@@ -151,7 +158,7 @@ export class DemoTradingEngine {
     return { position, balance: acc.balance, fee };
   }
 
-  async closePosition(address, positionId) {
+  async closePosition(address, positionId, clientPrice = 0) {
     await this._loading;
     const addr = address.toLowerCase();
     const acc = this.accounts.get(addr);
@@ -160,8 +167,15 @@ export class DemoTradingEngine {
     const pos = acc.positions.find(p => p.id === positionId && p.status === 'open');
     if (!pos) throw new Error('Position not found or already closed');
 
-    const price = this.getCurrentPrice();
-    if (!price || price <= 0) throw new Error('Price not available');
+    const ammPrice = this.getCurrentPrice();
+    if (!ammPrice || ammPrice <= 0) throw new Error('Price not available');
+
+    let price = ammPrice;
+    if (clientPrice > 0) {
+      const slippage = Math.abs(clientPrice - ammPrice) / ammPrice;
+      if (slippage > 0.05) throw new Error(`Slippage too high: ${(slippage * 100).toFixed(1)}% (max 5%)`);
+      price = clientPrice;
+    }
 
     const pnl = this.calculatePnL(pos, price);
     const closeFee = pos.margin * FEE_RATE;

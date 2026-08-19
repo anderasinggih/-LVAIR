@@ -1016,9 +1016,9 @@ async function startFullNode() {
 
   app.post('/api/demo/open', async (req, res) => {
     try {
-      const { address, side, margin, leverage, tpPct, slPct } = req.body || {};
+      const { address, side, margin, leverage, tpPct, slPct, price: clientPrice } = req.body || {};
       if (!address || !side || !margin) return res.status(400).json({ success: false, error: 'address, side, margin required' });
-      const result = await demoEngine.openPosition(address, side, Number(margin), Number(leverage) || 10, Number(tpPct) || 0, Number(slPct) || 0);
+      const result = await demoEngine.openPosition(address, side, Number(margin), Number(leverage) || 10, Number(tpPct) || 0, Number(slPct) || 0, Number(clientPrice) || 0);
       logEvent('DEMO_TRADE', 'tag-demo', `Demo ${side.toUpperCase()} $${margin} x${leverage || 10} @ $${result.position.entryPrice.toFixed(4)} TP:${tpPct||0}% SL:${slPct||0}%`);
       res.json({ success: true, ...result });
     } catch (err) {
@@ -1028,9 +1028,9 @@ async function startFullNode() {
 
   app.post('/api/demo/close', async (req, res) => {
     try {
-      const { address, positionId } = req.body || {};
+      const { address, positionId, price: clientPrice } = req.body || {};
       if (!address || !positionId) return res.status(400).json({ success: false, error: 'address, positionId required' });
-      const result = await demoEngine.closePosition(address, positionId);
+      const result = await demoEngine.closePosition(address, positionId, Number(clientPrice) || 0);
       logEvent('DEMO_CLOSE', 'tag-demo', `Demo position closed: PnL $${result.pnl.toFixed(4)}`);
       res.json({ success: true, ...result });
     } catch (err) {

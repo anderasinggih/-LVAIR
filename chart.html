@@ -402,11 +402,18 @@
     function resizeAll(){syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}if(rsiChart&&$('ind-rsi').checked)try{rsiChart.applyOptions({width:$('rsi-chart').clientWidth,height:$('rsi-chart').clientHeight});}catch(e){}if(macdChart&&$('ind-macd').checked)try{macdChart.applyOptions({width:$('macd-chart').clientWidth,height:$('macd-chart').clientHeight});}catch(e){}}
 
     const SM={top:.08,bottom:.15};
-    let _lastPriceRange=null;
     let _adjustedRange=null;
     function contentWidth(){try{const w=chart.priceScale('right').width();if(w>0)return container.clientWidth-w;}catch(e){}return Math.max(100,container.clientWidth-60);}
     function contentMetrics(){const H=container.clientHeight;const top=H*SM.top,bot=H*(1-SM.bottom),h=bot-top;return{W:container.clientWidth,H,top,bot,h,cw:contentWidth()};}
-    function candlePrices(){
+    function visiblePrices(){
+      if(_adjustedRange){return _adjustedRange;}
+      try{
+        const vr=chart.priceScale('right').getVisibleRange();
+        if(vr&&vr.to!==vr.from){
+          const hi=vr.to,lo=vr.from;
+          return{hi,lo,h:hi-lo,_key:hi.toFixed(8)+lo.toFixed(8)};
+        }
+      }catch(e){}
       const r=chart.timeScale().getVisibleLogicalRange();
       if(!r||!candles.length)return null;
       const s=Math.max(0,Math.floor(r.from)),e=Math.min(candles.length-1,Math.ceil(r.to));
@@ -415,17 +422,7 @@
       let hi=-Infinity,lo=Infinity;
       for(const c of vis){if(c.high>hi)hi=c.high;if(c.low<lo)lo=c.low;}
       const pad=(hi-lo)*0.1||hi*0.001;
-      return{hi:hi+pad,lo:lo-pad};
-    }
-    function visiblePrices(){
-      if(_adjustedRange){return _adjustedRange;}
-      const cp=candlePrices();
-      if(!cp)return null;
-      const key=cp.hi.toFixed(8)+cp.lo.toFixed(8);
-      if(_lastPriceRange&&_lastPriceRange._key===key){return _lastPriceRange;}
-      const out={hi:cp.hi,lo:cp.lo,h:cp.hi-cp.lo,_key:key};
-      _lastPriceRange=out;
-      return out;
+      return{hi:hi+pad,lo:lo-pad,h:hi-lo+2*pad,_key:'fallback'};
     }
     function priceToPx(price){const m=contentMetrics(),vp=visiblePrices();if(!vp)return m.H/2;return m.top+((vp.hi-price)/vp.h)*m.h;}
     function pxToPrice(py){const m=contentMetrics(),vp=visiblePrices();if(!vp)return null;return vp.hi-((py-m.top)/m.h)*vp.h;}
@@ -437,11 +434,10 @@
       const onDown=(e)=>{
         const rect=container.getBoundingClientRect();
         const x=(e.clientX||e.touches?.[0]?.clientX||0)-rect.left;
-        if(x<rect.width*0.85)return;
+        if(x<rect.width*0.82)return;
         isDragging=true;
         dragStartY=e.clientY||e.touches?.[0]?.clientY||0;
-        const cp=candlePrices();
-        if(cp){dragStartHi=cp.hi;dragStartLo=cp.lo;}
+        try{const vr=chart.priceScale('right').getVisibleRange();if(vr){dragStartHi=vr.to;dragStartLo=vr.from;}}catch(e){}
       };
       const onMove=(e)=>{
         if(!isDragging)return;
@@ -454,7 +450,7 @@
         _adjustedRange={hi:dragStartHi+shift,lo:dragStartLo+shift,h:range,_key:'adj'};
         redraw();
       };
-      const onUp=()=>{if(isDragging){isDragging=false;_lastPriceRange=null;}};
+      const onUp=()=>{if(isDragging){isDragging=false;_adjustedRange=null;redraw();}};
       container.addEventListener('mousedown',onDown);
       window.addEventListener('mousemove',onMove);
       window.addEventListener('mouseup',onUp);
@@ -465,7 +461,7 @@
 
     function updateCountdown(){const cd=$('countdown');if(curTF==='LIVE'||!TF_SEC[curTF]||!candles.length){cd.style.display='none';return;}const sec=TF_SEC[curTF],now=Date.now()/1000,rem=Math.max(0,sec-(now%sec));cd.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');const last=candles[candles.length-1],y=priceToPx(last.close);if(y>0&&y<container.clientHeight){cd.style.display='';cd.style.top=y+'px';try{cd.style.left=(contentWidth()-cd.offsetWidth-2)+'px';}catch(e){cd.style.left='50%';}}else{cd.style.display='none';}}
     setInterval(updateCountdown,1000);
-    chart.timeScale().subscribeVisibleLogicalRangeChange(()=>{updateCountdown();_lastPriceRange=null;_adjustedRange=null;redraw();});
+    chart.timeScale().subscribeVisibleLogicalRangeChange(()=>{updateCountdown();_adjustedRange=null;redraw();});
 
     /* ══════════════════════════════════════════════
        ── Demo Trading State ──
@@ -673,7 +669,8 @@
           tpPct=Math.max(0,tpPct);slPct=Math.max(0,slPct);
         }
       }
-      const r=await apiDemo('open',{address:demoAddr,side,margin,leverage:demoLeverage,tpPct,slPct});
+      const curPrice=getDemoPrice();
+      const r=await apiDemo('open',{address:demoAddr,side,margin,leverage:demoLeverage,tpPct,slPct,price:curPrice});
       if(r.success){
         demoAccount.balance=r.balance;
         demoAccount.positions.push(r.position);
@@ -688,7 +685,8 @@
 
     async function closePos(posId){
       if(!demoAddr)return;
-      const r=await apiDemo('close',{address:demoAddr,positionId:posId});
+      const curPrice=getDemoPrice();
+      const r=await apiDemo('close',{address:demoAddr,positionId:posId,price:curPrice});
       if(r.success){
         demoAccount.balance=r.balance;
         demoAccount.positions=demoAccount.positions.filter(p=>p.id!==posId);
