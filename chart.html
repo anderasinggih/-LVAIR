@@ -407,6 +407,7 @@
     let demoLeverage=10;
     let demoSide='long';
     let demoRefreshing=false;
+    let editingPosId=null;
 
     /* ══════════════════════════════════════════════
        ── Drawing Tools ──
@@ -572,8 +573,21 @@
       if(!demoAddr||!demoAccount)return;
       const margin=parseFloat($('demo-margin')?.value);
       if(!margin||margin<=0)return;
-      const tpPct=parseFloat($('demo-tp')?.value)||0;
-      const slPct=parseFloat($('demo-sl')?.value)||0;
+      const mode=$('tpsl-mode')?.dataset?.mode||'pct';
+      let tpPct=parseFloat($('demo-tp')?.value)||0;
+      let slPct=parseFloat($('demo-sl')?.value)||0;
+      if(mode==='price'){
+        const price=getDemoPrice();
+        if(price>0){
+          const tpPrice=tpPct;
+          const slPrice=slPct;
+          if(tpPrice>0) tpPct=side==='long'?((tpPrice-price)/(price/demoLeverage))*100:((price-tpPrice)/(price/demoLeverage))*100;
+          else tpPct=0;
+          if(slPrice>0) slPct=side==='long'?((price-slPrice)/(price/demoLeverage))*100:((slPrice-price)/(price/demoLeverage))*100;
+          else slPct=0;
+          tpPct=Math.max(0,tpPct);slPct=Math.max(0,slPct);
+        }
+      }
       const r=await apiDemo('open',{address:demoAddr,side,margin,leverage:demoLeverage,tpPct,slPct});
       if(r.success){
         demoAccount.balance=r.balance;
@@ -599,21 +613,78 @@
     }
 
     async function editTpSl(posId,currentTp,currentSl){
-      const tp=prompt('Take Profit % (0 = disabled):',currentTp);
-      if(tp===null)return;
-      const sl=prompt('Stop Loss % (0 = disabled):',currentSl);
-      if(sl===null)return;
-      const r=await apiDemo('tpsl',{address:demoAddr,positionId:posId,tpPct:Number(tp)||0,slPct:Number(sl)||0});
-      if(r.success){
-        const idx=demoAccount.positions.findIndex(p=>p.id===posId);
-        if(idx>=0)demoAccount.positions[idx]=r.position;
-        renderDemoPanel();
-        redraw();
+      editingPosId=editingPosId===posId?null:posId;
+      renderDemoPanel();
+    }
+
+    async function saveTpSl(posId){
+      const posMode=document.getElementById('edit-posmode-'+posId)?.dataset?.mode||'pct';
+      const tpIn=document.getElementById('edit-tp-'+posId);
+      const slIn=document.getElementById('edit-sl-'+posId);
+      const tpVal=parseFloat(tpIn?.value)||0;
+      const slVal=parseFloat(slIn?.value)||0;
+      const pos=demoAccount.positions.find(p=>p.id===posId);
+      const price=demoAccount.price||0;
+      if(posMode==='price'&&pos&&price>0){
+        const r=await apiDemo('tpsl',{address:demoAddr,positionId:posId,tpPct:0,slPct:0,tpPrice:tpVal,slPrice:slVal});
+        if(r.success){
+          const idx=demoAccount.positions.findIndex(p=>p.id===posId);
+          if(idx>=0)demoAccount.positions[idx]=r.position;
+          editingPosId=null;
+          renderDemoPanel();
+          redraw();
+        }
+      } else {
+        const r=await apiDemo('tpsl',{address:demoAddr,positionId:posId,tpPct:tpVal,slPct:slVal});
+        if(r.success){
+          const idx=demoAccount.positions.findIndex(p=>p.id===posId);
+          if(idx>=0)demoAccount.positions[idx]=r.position;
+          editingPosId=null;
+          renderDemoPanel();
+          redraw();
+        }
       }
     }
 
+    window._toggleEditTpSlMode=function(posId,currentTp,currentSl){
+      const mode=document.getElementById('edit-posmode-'+posId)?.dataset?.mode||'pct';
+      const newMode=mode==='pct'?'price':'pct';
+      const modeEl=document.getElementById('edit-posmode-'+posId);
+      const tpIn=document.getElementById('edit-tp-'+posId);
+      const slIn=document.getElementById('edit-sl-'+posId);
+      const tpLbl=document.getElementById('edit-tp-lbl-'+posId);
+      const slLbl=document.getElementById('edit-sl-lbl-'+posId);
+      const pos=demoAccount?.positions.find(p=>p.id===posId);
+      if(!pos)return;
+      const price=demoAccount?.price||0;
+      if(modeEl)modeEl.dataset.mode=newMode;
+      if(newMode==='price'){
+        if(modeEl)modeEl.textContent='Switch to %';
+        if(tpLbl)tpLbl.textContent='TP Price';
+        if(slLbl)slLbl.textContent='SL Price';
+        const tpPct=currentTp;
+        const slPct=currentSl;
+        if(tpIn&&tpPct>0){
+          tpIn.value=pos.side==='long'?pos.entryPrice*(1+(tpPct/100)/pos.leverage):pos.entryPrice*(1-(tpPct/100)/pos.leverage);
+        } else if(tpIn)tpIn.value=0;
+        if(slIn&&slPct>0){
+          slIn.value=pos.side==='long'?pos.entryPrice*(1-(slPct/100)/pos.leverage):pos.entryPrice*(1+(slPct/100)/pos.leverage);
+        } else if(slIn)slIn.value=0;
+      } else {
+        if(modeEl)modeEl.textContent='Switch to Price';
+        if(tpLbl)tpLbl.textContent='TP %';
+        if(slLbl)slLbl.textContent='SL %';
+        tpIn.value=currentTp;
+        slIn.value=currentSl;
+      }
+    };
+
+    function getDemoPrice(){
+      return demoAccount?.price||(candles.length?candles[candles.length-1].close:0);
+    }
+
     function updateTpSlPreview(){
-      const price=candles.length?candles[candles.length-1].close:0;
+      const price=getDemoPrice();
       const tpPct=parseFloat($('demo-tp')?.value)||0;
       const slPct=parseFloat($('demo-sl')?.value)||0;
       const tpEl=$('demo-tp-price');
@@ -629,6 +700,55 @@
           const slPrice=demoSide==='long'?price*(1-(slPct/100)/demoLeverage):price*(1+(slPct/100)/demoLeverage);
           slEl.textContent=fmtShort(slPrice);
         } else slEl.textContent='Off';
+      }
+    }
+
+    function toggleTpSlMode(){
+      const mode=$('tpsl-mode')?.dataset?.mode||'pct';
+      const newMode=mode==='pct'?'price':'pct';
+      if($('tpsl-mode'))$('tpsl-mode').dataset.mode=newMode;
+      const tpIn=$('demo-tp'),slIn=$('demo-sl'),lblTp=$('tpsl-tp-lbl'),lblSl=$('tpsl-sl-lbl');
+      const price=getDemoPrice();
+      if(newMode==='price'){
+        if(lblTp)lblTp.textContent='TP Price';
+        if(lblSl)lblSl.textContent='SL Price';
+        const tpPct=parseFloat(tpIn?.value)||0;
+        const slPct=parseFloat(slIn?.value)||0;
+        if(tpIn&&tpPct>0&&price>0){
+          tpIn.value=demoSide==='long'?price*(1+(tpPct/100)/demoLeverage):price*(1-(tpPct/100)/demoLeverage);
+        }
+        if(slIn&&slPct>0&&price>0){
+          slIn.value=demoSide==='long'?price*(1-(slPct/100)/demoLeverage):price*(1+(slPct/100)/demoLeverage);
+        }
+      } else {
+        if(lblTp)lblTp.textContent='Take Profit %';
+        if(lblSl)lblSl.textContent='Stop Loss %';
+        const tpVal=parseFloat(tpIn?.value)||0;
+        const slVal=parseFloat(slIn?.value)||0;
+        if(tpIn&&tpVal>0&&price>0){
+          const raw=(tpVal-price)/(price/demoLeverage)*100;
+          tpIn.value=Math.max(0,raw);
+        }
+        if(slIn&&slVal>0&&price>0){
+          const raw=(price-slVal)/(price/demoLeverage)*100;
+          slIn.value=Math.max(0,raw);
+        }
+      }
+      updateTpSlPreview();
+    }
+
+    function onTpSlInput(){
+      const mode=$('tpsl-mode')?.dataset?.mode||'pct';
+      if(mode==='price'){
+        const price=getDemoPrice();
+        const tpVal=parseFloat($('demo-tp')?.value)||0;
+        const slVal=parseFloat($('demo-sl')?.value)||0;
+        const tpEl=$('demo-tp-price');
+        const slEl=$('demo-sl-price');
+        if(tpEl)tpEl.textContent=tpVal>0?fmtShort(tpVal):'Off';
+        if(slEl)slEl.textContent=slVal>0?fmtShort(slVal):'Off';
+      } else {
+        updateTpSlPreview();
       }
     }
 
@@ -650,12 +770,17 @@
       const freeMargin=balance-marginUsed+totalPnl;
 
       if(demoTab==='trade'){
+        const curPrice=getDemoPrice();
         body.innerHTML=`
           <div class="tp-section">
             <div class="tp-row"><div><div class="tp-label">Balance</div><div class="tp-val">$${fmtN(balance)}</div></div><div style="text-align:right"><div class="tp-label">PnL</div><div class="tp-val sm ${totalPnl>=0?'profit':'loss'}" style="color:${totalPnl>=0?'var(--gn)':'var(--rd)'}">${totalPnl>=0?'+':''}$${fmtN(totalPnl)}</div></div></div>
             <div class="tp-row" style="margin-top:6px"><div><div class="tp-label">Margin Used</div><div class="tp-val sm">$${fmtN(marginUsed)}</div></div><div style="text-align:right"><div class="tp-label">Free</div><div class="tp-val sm">$${fmtN(freeMargin)}</div></div></div>
           </div>
           <div class="trade-form">
+            <div class="tf-group">
+              <label>Entry Price</label>
+              <div class="tp-val sm" style="color:var(--ac);font-family:var(--mono)">${fmtShort(curPrice)}</div>
+            </div>
             <div class="tf-group">
               <label>Leverage</label>
               <input type="range" class="tf-input" id="demo-lev-range" min="1" max="2000" value="${demoLeverage}" style="padding:0" oninput="window._demoSetLev(this.value)">
@@ -672,15 +797,16 @@
               <label>Position Value</label>
               <div class="tp-val sm" id="demo-posval">$${fmtN(100*demoLeverage)}</div>
             </div>
-            <div class="tf-row">
-              <div class="tf-group">
-                <label>Take Profit %</label>
-                <input type="number" class="tf-input" id="demo-tp" placeholder="50" value="${demoAccount.settings?.defaultTpPct||50}" min="0" step="any">
+            <div class="tf-group">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <label id="tpsl-tp-lbl">Take Profit %</label>
+                <span id="tpsl-mode" data-mode="pct" onclick="toggleTpSlMode()" style="cursor:pointer;font-size:.5rem;color:var(--ac);font-family:var(--mono);border:1px solid var(--bd);border-radius:4px;padding:1px 5px">Switch to Price</span>
               </div>
-              <div class="tf-group">
-                <label>Stop Loss %</label>
-                <input type="number" class="tf-input" id="demo-sl" placeholder="25" value="${demoAccount.settings?.defaultSlPct||25}" min="0" step="any">
-              </div>
+              <input type="number" class="tf-input" id="demo-tp" placeholder="50" value="${demoAccount.settings?.defaultTpPct||50}" min="0" step="any" oninput="onTpSlInput()">
+            </div>
+            <div class="tf-group">
+              <label id="tpsl-sl-lbl">Stop Loss %</label>
+              <input type="number" class="tf-input" id="demo-sl" placeholder="25" value="${demoAccount.settings?.defaultSlPct||25}" min="0" step="any" oninput="onTpSlInput()">
             </div>
             <div class="tp-row" style="margin-bottom:8px">
               <div style="font-size:.52rem;color:var(--tx3);font-family:var(--mono)">TP: <span id="demo-tp-price" style="color:var(--gn)">—</span></div>
@@ -698,13 +824,28 @@
           const tpP=p.tpPrice||0;
           const slP=p.slPrice||0;
           const pnlPct=((price-p.entryPrice)/p.entryPrice*p.leverage*(p.side==='long'?1:-1));
+          const isEditing=editingPosId===p.id;
+          if(isEditing){
+            return`<div class="pos-card" style="border:1px solid var(--ac)">
+              <div class="pos-hd"><span class="pos-side ${p.side}">${p.side==='long'?'BUY':'SELL'}</span><span class="pos-lev">${p.leverage}x</span><span style="font-size:.5rem;color:var(--ac);margin-left:auto">Editing TP/SL</span></div>
+              <div class="pos-row"><span>Entry</span><span class="val">${fmtShort(p.entryPrice)}</span></div>
+              <div class="pos-row"><span>Current</span><span class="val">${fmtShort(price)}</span></div>
+              <div class="pos-row"><span id="edit-tp-lbl-${p.id}">TP %</span><input type="number" class="tf-input" id="edit-tp-${p.id}" value="${p.tpPct||0}" min="0" step="any" style="width:80px;font-size:.54rem;padding:2px 4px"></div>
+              <div class="pos-row"><span id="edit-sl-lbl-${p.id}">SL %</span><input type="number" class="tf-input" id="edit-sl-${p.id}" value="${p.slPct||0}" min="0" step="any" style="width:80px;font-size:.54rem;padding:2px 4px"></div>
+              <div style="margin-top:4px"><span id="edit-posmode-${p.id}" data-mode="pct" onclick="window._toggleEditTpSlMode('${p.id}',${p.tpPct||0},${p.slPct||0})" style="cursor:pointer;font-size:.5rem;color:var(--ac);font-family:var(--mono);border:1px solid var(--bd);border-radius:4px;padding:1px 5px">Switch to Price</span></div>
+              <div style="display:flex;gap:4px;margin-top:6px">
+                <button class="btn-close-pos" onclick="window._demoSaveTpSl('${p.id}')" style="flex:1;background:var(--gn);color:#000">Save</button>
+                <button class="btn-close-pos" onclick="window._demoEditTpSl('${p.id}')" style="flex:1">Cancel</button>
+              </div>
+            </div>`;
+          }
           return`<div class="pos-card">
             <div class="pos-hd"><span class="pos-side ${p.side}">${p.side==='long'?'BUY':'SELL'}</span><span class="pos-lev">${p.leverage}x</span></div>
             <div class="pos-row"><span>Entry</span><span class="val">${fmtShort(p.entryPrice)}</span></div>
             <div class="pos-row"><span>Current</span><span class="val">${fmtShort(price)}</span></div>
             <div class="pos-row"><span>Margin</span><span class="val">$${fmtN(p.margin)}</span></div>
-            ${tpP?`<div class="pos-row"><span>Take Profit</span><span class="val" style="color:var(--gn)">${fmtShort(tpP)} (${p.tpPct}%)</span></div>`:''}
-            ${slP?`<div class="pos-row"><span>Stop Loss</span><span class="val" style="color:var(--rd)">${fmtShort(slP)} (${p.slPct}%)</span></div>`:''}
+            ${tpP?`<div class="pos-row"><span>Take Profit</span><span class="val" style="color:var(--gn)">${fmtShort(tpP)} (${p.tpPct}%)</span></div>`:'<div class="pos-row"><span>Take Profit</span><span class="val" style="color:var(--tx3)">Off</span></div>'}
+            ${slP?`<div class="pos-row"><span>Stop Loss</span><span class="val" style="color:var(--rd)">${fmtShort(slP)} (${p.slPct}%)</span></div>`:'<div class="pos-row"><span>Stop Loss</span><span class="val" style="color:var(--tx3)">Off</span></div>'}
             <div class="pos-row"><span>Liq. Price</span><span class="val" style="color:var(--or)">${fmtShort(liq)}</span></div>
             <div class="pos-pnl ${curPnl>=0?'profit':'loss'}">${curPnl>=0?'+':''}$${fmtN(curPnl)} (${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%)</div>
             <div style="display:flex;gap:4px;margin-top:6px">
@@ -734,11 +875,12 @@
     window._demoTrade=openTrade;
     window._demoClose=closePos;
     window._demoEditTpSl=editTpSl;
+    window._demoSaveTpSl=saveTpSl;
 
     function hookTpSlInputs(){
       const tpIn=$('demo-tp'),slIn=$('demo-sl');
-      if(tpIn)tpIn.addEventListener('input',updateTpSlPreview);
-      if(slIn)slIn.addEventListener('input',updateTpSlPreview);
+      if(tpIn)tpIn.addEventListener('input',onTpSlInput);
+      if(slIn)slIn.addEventListener('input',onTpSlInput);
     }
     const _origRender=renderDemoPanel;
     renderDemoPanel=function(){_origRender();hookTpSlInputs();updateTpSlPreview();};

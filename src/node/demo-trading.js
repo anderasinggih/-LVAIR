@@ -193,7 +193,7 @@ export class DemoTradingEngine {
     return { pnl: totalPnl, balance: acc.balance, closePrice: price };
   }
 
-  async updatePositionTpSl(address, positionId, tpPct, slPct) {
+  async updatePositionTpSl(address, positionId, tpPct, slPct, tpPrice, slPrice) {
     await this._loading;
     const addr = address.toLowerCase();
     const acc = this.accounts.get(addr);
@@ -202,11 +202,26 @@ export class DemoTradingEngine {
     const pos = acc.positions.find(p => p.id === positionId && p.status === 'open');
     if (!pos) throw new Error('Position not found');
 
-    pos.tpPct = Math.max(0, Number(tpPct) || 0);
-    pos.slPct = Math.max(0, Number(slPct) || 0);
-    const { tpPrice, slPrice } = this.calculateTpSlPrices(pos, pos.tpPct, pos.slPct);
-    pos.tpPrice = tpPrice;
-    pos.slPrice = slPrice;
+    const entry = pos.entryPrice;
+    const leverage = pos.leverage;
+    const isLong = pos.side === 'long';
+
+    if (tpPrice !== undefined && tpPrice !== null && Number(tpPrice) > 0) {
+      const tp = Number(tpPrice);
+      pos.tpPct = Math.abs((isLong ? (tp - entry) : (entry - tp)) / (entry / leverage)) * 100;
+    } else {
+      pos.tpPct = Math.max(0, Number(tpPct) || 0);
+    }
+    if (slPrice !== undefined && slPrice !== null && Number(slPrice) > 0) {
+      const sl = Number(slPrice);
+      pos.slPct = Math.abs((isLong ? (entry - sl) : (sl - entry)) / (entry / leverage)) * 100;
+    } else {
+      pos.slPct = Math.max(0, Number(slPct) || 0);
+    }
+
+    const { tpPrice: calculatedTp, slPrice: calculatedSl } = this.calculateTpSlPrices(pos, pos.tpPct, pos.slPct);
+    pos.tpPrice = calculatedTp;
+    pos.slPrice = calculatedSl;
 
     await this._saveAll();
     return pos;

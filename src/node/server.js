@@ -1040,9 +1040,9 @@ async function startFullNode() {
 
   app.post('/api/demo/tpsl', async (req, res) => {
     try {
-      const { address, positionId, tpPct, slPct } = req.body || {};
+      const { address, positionId, tpPct, slPct, tpPrice, slPrice } = req.body || {};
       if (!address || !positionId) return res.status(400).json({ success: false, error: 'address, positionId required' });
-      const pos = await demoEngine.updatePositionTpSl(address, positionId, Number(tpPct) || 0, Number(slPct) || 0);
+      const pos = await demoEngine.updatePositionTpSl(address, positionId, Number(tpPct) || 0, Number(slPct) || 0, tpPrice, slPrice);
       res.json({ success: true, position: pos });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
