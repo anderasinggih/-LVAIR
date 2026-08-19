@@ -244,10 +244,10 @@
         <span class="spacer"></span>
         <span class="tab" id="tp-close" title="Close panel" style="color:var(--rd)">&times;</span>
       </div>
-      ${demoAddr?`<div style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-bottom:1px solid var(--bd);font-family:var(--mono);font-size:.5rem;color:var(--tx3);background:rgba(255,255,255,.02)">
-        <span style="color:var(--tx2)">${demoAddr.substring(0,6)}...${demoAddr.substring(demoAddr.length-4)}</span>
+      <div id="wallet-bar" style="display:none;padding:4px 10px;border-bottom:1px solid var(--bd);font-family:var(--mono);font-size:.5rem;color:var(--tx3);background:rgba(255,255,255,.02)">
+        <span id="wallet-bar-addr" style="color:var(--tx2)"></span>
         <span style="margin-left:auto;cursor:pointer;color:var(--ac)" onclick="window._demoDisconnect()" title="Switch wallet">switch</span>
-      </div>`:''}
+      </div>
       <div class="tp-body" id="tp-body"></div>
     </div>
   </div>
@@ -349,13 +349,13 @@
       if($('ind-macd').checked){const md=cMACD(candles);if(md.m.length){const mv=md.m[md.m.length-1].value;const sv=md.si[md.si.length-1].value;h+=`<div>MACD <span style="color:${mv>sv?'var(--gn)':'var(--rd)'}">${mv.toFixed(4)}</span></div>`;}}
       el.innerHTML=h;
     }
-    let candles=[];let hasFitted=false;let _prevCandlesKey='';
-
     function fmt(p){return'$'+Number(p).toFixed(4)}
     function fmtV(v){return v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)}
     function fmtN(p){return Number(p).toFixed(2)}
     function fmtShort(p){return'$'+Number(p).toFixed(4)}
     function buildCandles(pts,tf){if(!pts||!pts.length)return[];const b=TF_SEC[tf]*1000;const m=new Map();pts.forEach(p=>{const t=Math.floor(p.timestamp/b)*(b/1000);const e=m.get(t);if(!e)m.set(t,{time:t,open:p.price,high:p.price,low:p.price,close:p.price,volume:1});else{e.high=Math.max(e.high,p.price);e.low=Math.min(e.low,p.price);e.close=p.price;e.volume++;}});return Array.from(m.values()).sort((a,b)=>a.time-b.time);}
+
+    let _prevCandlesKey='';
 
     async function loadChart(){
       try{$('st-text').textContent='Loading...';
@@ -595,6 +595,7 @@
        ══════════════════════════════════════════════ */
 
     function showPanel(){$('trade-panel').classList.remove('collapsed');$('trade-panel').classList.add('open');if(window.innerWidth<=768)$('tp-backdrop').style.display='block';}
+    function updateWalletBar(){const bar=$('wallet-bar'),addrEl=$('wallet-bar-addr');if(!bar||!addrEl)return;if(demoAddr){bar.style.display='flex';bar.style.alignItems='center';bar.style.justifyContent='space-between';addrEl.textContent=demoAddr.substring(0,6)+'...'+demoAddr.substring(demoAddr.length-4);}else{bar.style.display='none';}}
     function hidePanel(){$('trade-panel').classList.add('collapsed');$('trade-panel').classList.remove('open');$('tp-backdrop').style.display='none';}
     $('btn-trade-toggle').addEventListener('click',()=>{$('trade-panel').classList.contains('collapsed')?showPanel():hidePanel();setTimeout(()=>{syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}},250);});
     $('tp-close').addEventListener('click',()=>{hidePanel();setTimeout(()=>{syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}},250);});
@@ -639,6 +640,7 @@
       demoAddr=v;
       localStorage.setItem('demo_wallet',v);
       localStorage.setItem('LVAIR_CONNECTED_WALLET_ADDR',v);
+      updateWalletBar();
       showPanel();
       const bdy=$('tp-body');if(bdy)bdy.innerHTML='<div class="demo-connect"><p>Creating demo account...</p></div>';
       const r=await apiDemo('account',{address:v});
@@ -658,6 +660,7 @@
           localStorage.setItem('demo_wallet',demoAddr);
           localStorage.setItem('LVAIR_CONNECTED_WALLET_ADDR',demoAddr);
           if($('demo-addr-input'))$('demo-addr-input').value=demoAddr;
+          updateWalletBar();
           showPanel();
           const body=$('tp-body');if(body)body.innerHTML='<div class="demo-connect"><p>Creating demo account...</p></div>';
           const r=await apiDemo('account',{address:demoAddr});
@@ -1052,6 +1055,7 @@
     };
 
     if(demoAddr){
+      updateWalletBar();
       if(window.innerWidth>768)showPanel();
       refreshDemoAccount();
     } else if(window.ethereum){
@@ -1060,6 +1064,7 @@
           demoAddr=accounts[0];
           localStorage.setItem('demo_wallet',demoAddr);
           localStorage.setItem('LVAIR_CONNECTED_WALLET_ADDR',demoAddr);
+          updateWalletBar();
           if(window.innerWidth>768)showPanel();
           refreshDemoAccount();
         }
