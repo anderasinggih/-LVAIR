@@ -355,8 +355,6 @@
     function fmtShort(p){return'$'+Number(p).toFixed(4)}
     function buildCandles(pts,tf){if(!pts||!pts.length)return[];const b=TF_SEC[tf]*1000;const m=new Map();pts.forEach(p=>{const t=Math.floor(p.timestamp/b)*(b/1000);const e=m.get(t);if(!e)m.set(t,{time:t,open:p.price,high:p.price,low:p.price,close:p.price,volume:1});else{e.high=Math.max(e.high,p.price);e.low=Math.min(e.low,p.price);e.close=p.price;e.volume++;}});return Array.from(m.values()).sort((a,b)=>a.time-b.time);}
 
-    let _prevCandlesKey='';
-
     async function loadChart(){
       try{$('st-text').textContent='Loading...';
         const res=await fetch(`${API}/api/chart?tf=${encodeURIComponent(curTF)}`);
@@ -366,22 +364,9 @@
         if(curTF==='LIVE')newCandles=buildCandles(data.points||[],'S30');
         else newCandles=(data.candles||[]).map(c=>({time:Math.floor(c.time/1000),open:c.open,high:c.high,low:c.low,close:c.close,volume:c.volume||0}));
         newCandles.sort((a,b)=>a.time-b.time);
-        const newKey=newCandles.length+':'+(newCandles.length?newCandles[newCandles.length-1].time+':'+newCandles[newCandles.length-1].close:'');
-        if(newKey!==_prevCandlesKey||!candles.length){
-          _prevCandlesKey=newKey;
-          if(!candles.length||newCandles.length<candles.length||Math.abs(newCandles.length-candles.length)>2||newCandles[0]?.time!==candles[0]?.time){
-            candles=newCandles;
-            candleS.setData(candles);
-            volS.setData(candles.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'})));
-          } else {
-            candles=newCandles;
-            for(let i=Math.max(0,candles.length-3);i<candles.length;i++){
-              const c=candles[i];
-              candleS.update({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close});
-              volS.update({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'});
-            }
-          }
-        }
+        candles=newCandles;
+        candleS.setData(candles);
+        volS.setData(candles.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'})));
         $('cnt-v').textContent=candles.length;
         if(candles.length){const last=candles[candles.length-1];$('tb-price').textContent=fmt(last.close);const hs=candles.slice(-96).map(c=>c.high);const ls=candles.slice(-96).map(c=>c.low);$('tb-hi').textContent='H '+fmt(Math.max(...hs));$('tb-lo').textContent='L '+fmt(Math.min(...ls));if(candles.length>1){const prev=candles[candles.length-2].close;const chg=((last.close-prev)/prev*100);const el=$('tb-change');el.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%';el.style.color=chg>=0?'var(--gn)':'var(--rd)';}}
         updOv();updSub();
@@ -395,7 +380,7 @@
     chart.subscribeCrosshairMove(param=>{if(!param||!param.time){$('o-v').textContent=$('h-v').textContent=$('l-v').textContent=$('c-v').textContent=$('v-v').textContent='—';return;}const d=param.seriesData.get(candleS);if(!d)return;$('o-v').textContent=fmt(d.open);$('h-v').textContent=fmt(d.high);$('l-v').textContent=fmt(d.low);$('c-v').textContent=fmt(d.close);$('c-v').className=d.close>=d.open?'up':'dn';const v=param.seriesData.get(volS);$('v-v').textContent=v?fmtV(v.value):'—';});
 
     const tfBar=$('tf-bar');
-    TF_LIST.forEach(tf=>{const b=document.createElement('button');b.className='tf-btn'+(tf===curTF?' active':'');b.textContent=tf==='S30'?'30S':tf;b.addEventListener('click',()=>{curTF=tf;tfBar.querySelectorAll('.tf-btn').forEach(x=>x.classList.toggle('active',x===b));candles=[];hasFitted=false;_prevCandlesKey='';_lastCandleKey='';loadChart();});tfBar.appendChild(b);});
+    TF_LIST.forEach(tf=>{const b=document.createElement('button');b.className='tf-btn'+(tf===curTF?' active':'');b.textContent=tf==='S30'?'30S':tf;b.addEventListener('click',()=>{curTF=tf;tfBar.querySelectorAll('.tf-btn').forEach(x=>x.classList.toggle('active',x===b));candles=[];hasFitted=false;loadChart();});tfBar.appendChild(b);});
 
     function syncOverlaySize(){
       const rect=mainWrap.getBoundingClientRect();
@@ -491,7 +476,7 @@
     /* ══════════════════════════════════════════════
        ── Demo Trading State ──
        ══════════════════════════════════════════════ */
-    let demoAddr=localStorage.getItem('demo_wallet')||localStorage.getItem('LVAIR_CONNECTED_WALLET_ADDR')||'';
+    let demoAddr=localStorage.getItem('LVAIR_CONNECTED_WALLET_ADDR')||localStorage.getItem('demo_wallet')||'';
     let demoAccount=null;
     let demoTab='trade';
     let demoLeverage=10;
@@ -1073,7 +1058,7 @@
 
     $('btn-close').addEventListener('click',()=>window.close());
     loadChart();
-    setInterval(loadChart,curTF==='LIVE'?15000:15000);
+    if(curTF!=='LIVE')setInterval(loadChart,15000);
     setInterval(refreshDemoAccount,curTF==='LIVE'?2000:5000);
     renderDemoPanel();
 
