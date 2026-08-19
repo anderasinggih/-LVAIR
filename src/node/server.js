@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
+import { WebSocketServer, WebSocket } from 'ws';
 import { Blockchain } from '../core/blockchain.js';
 import { AMMPool } from '../core/amm.js';
 import { TradingBotEngine } from '../core/market-maker.js';
@@ -1095,6 +1096,28 @@ async function startFullNode() {
     console.log(`[SECURITY] CORS origins: ${ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS.join(', ') : 'ALL (open)'}`);
     logEvent('NODE_BOOT', 'tag-sync', `LVAIR Core Node booted on port ${HTTP_PORT} (P2P ${P2P_PORT})`);
   });
+
+  const chartWss = new WebSocketServer({ server: httpServer, path: '/ws/chart' });
+  const chartClients = new Set();
+  chartWss.on('connection', ws => {
+    chartClients.add(ws);
+    ws.on('close', () => chartClients.delete(ws));
+    ws.on('error', () => chartClients.delete(ws));
+  });
+  function broadcastChartTick(tick) {
+    const msg = JSON.stringify(tick);
+    for (const ws of chartClients) {
+      if (ws.readyState === WebSocket.OPEN) try { ws.send(msg); } catch (e) {}
+    }
+  }
+  const _origPush = ammPool.priceHistory.push.bind(ammPool.priceHistory);
+  ammPool.priceHistory.push = function (...args) {
+    const result = _origPush(...args);
+    for (const entry of args) {
+      broadcastChartTick({ type: 'tick', timestamp: entry.timestamp, price: entry.price });
+    }
+    return result;
+  };
 
   async function gracefulShutdown(signal) {
     console.log(`\n[${signal}] Shutting down gracefully...`);

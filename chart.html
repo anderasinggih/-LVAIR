@@ -1072,9 +1072,44 @@
     }
 
     $('btn-close').addEventListener('click',()=>window.close());
-    loadChart();setInterval(loadChart,curTF==='LIVE'?2000:15000);
+    loadChart();
+    setInterval(loadChart,curTF==='LIVE'?15000:15000);
     setInterval(refreshDemoAccount,curTF==='LIVE'?2000:5000);
     renderDemoPanel();
+
+    let chartWs=null;
+    function connectChartWs(){
+      const proto=location.protocol==='https:'?'wss:':'ws:';
+      const url=`${proto}//${location.host}/ws/chart`;
+      try{chartWs=new WebSocket(url);}catch(e){setTimeout(connectChartWs,3000);return;}
+      chartWs.onmessage=function(ev){
+        try{
+          const msg=JSON.parse(ev.data);
+          if(msg.type!=='tick'||curTF!=='LIVE')return;
+          const t=Math.floor(msg.timestamp/30000);
+          const last=candles.length?candles[candles.length-1]:null;
+          if(last&&last.time===t){
+            last.close=msg.price;
+            if(msg.price>last.high)last.high=msg.price;
+            if(msg.price<last.low)last.low=msg.price;
+            last.volume=(last.volume||0)+1;
+            candleS.update({time:last.time,open:last.open,high:last.high,low:last.low,close:last.close});
+            volS.update({time:last.time,value:last.volume,color:last.close>=last.open?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'});
+          } else {
+            const newCandle={time:t,open:last?last.close:msg.price,high:msg.price,low:msg.price,close:msg.price,volume:1};
+            candles.push(newCandle);
+            candleS.update({time:newCandle.time,open:newCandle.open,high:newCandle.high,low:newCandle.low,close:newCandle.close});
+            volS.update({time:newCandle.time,value:newCandle.volume,color:'rgba(16,185,129,.25)'});
+          }
+          if(candles.length){const l=candles[candles.length-1];$('tb-price').textContent=fmt(l.close);if(candles.length>1){const p=candles[candles.length-2].close;const chg=((l.close-p)/p*100);const el=$('tb-change');el.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%';el.style.color=chg>=0?'var(--gn)':'var(--rd)';}}
+          $('cnt-v').textContent=candles.length;
+          $('st-ts').textContent=new Date().toLocaleTimeString();
+        }catch(e){}
+      };
+      chartWs.onclose=function(){setTimeout(connectChartWs,2000);};
+      chartWs.onerror=function(){chartWs.close();};
+    }
+    connectChartWs();
   })();
   </script>
 </body>
