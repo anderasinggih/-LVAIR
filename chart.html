@@ -399,6 +399,16 @@
     chart.timeScale().subscribeVisibleLogicalRangeChange(()=>updateCountdown());
 
     /* ══════════════════════════════════════════════
+       ── Demo Trading State ──
+       ══════════════════════════════════════════════ */
+    let demoAddr=localStorage.getItem('demo_wallet')||'';
+    let demoAccount=null;
+    let demoTab='trade';
+    let demoLeverage=10;
+    let demoSide='long';
+    let demoRefreshing=false;
+
+    /* ══════════════════════════════════════════════
        ── Drawing Tools ──
        ══════════════════════════════════════════════ */
     let drawMode=null,drawPts=[],drawings=[],mouseX=0,mouseY=0;
@@ -425,28 +435,33 @@
       const curPrice=candles.length?candles[candles.length-1].close:0;
       demoAccount.positions.forEach((pos,idx)=>{
         if(pos.status!=='open')return;
-        const y=priceToPx(pos.entryPrice);
-        if(y<0||y>H)return;
         const isBuy=pos.side==='long';
         const color=isBuy?'rgba(16,185,129,.7)':'rgba(239,68,68,.7)';
         const bgColor=isBuy?'rgba(16,185,129,.1)':'rgba(239,68,68,.1)';
         const pnl=pos.pnl||0;
         const pnlPct=((curPrice-pos.entryPrice)/pos.entryPrice*pos.leverage*(isBuy?1:-1));
+        const y=priceToPx(pos.entryPrice);
+        if(y<0||y>H)return;
         ctx.save();
         ctx.strokeStyle=color;ctx.lineWidth=1;ctx.setLineDash([5,3]);
         ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();ctx.setLineDash([]);
         const tag=`${isBuy?'BUY':'SELL'} ${pos.leverage}x $${fmtN(pos.margin)}`;
         const pnlText=`${pnl>=0?'+':''}$${fmtN(pnl)} (${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%)`;
+        ctx.font='bold 9px JetBrains Mono';
         const tagW=ctx.measureText(tag).width;
         const pnlW=ctx.measureText(pnlText).width;
         const totalW=tagW+pnlW+20;
-        const tagX=Math.max(4,Math.min(W-totalW-8,W/2-totalW/2));
+        const tagX=Math.max(4,Math.min(W-totalW-8,8+idx*12));
         ctx.fillStyle=bgColor;
         ctx.beginPath();ctx.roundRect(tagX-4,y-20,totalW+8,18,3);ctx.fill();
         ctx.strokeStyle=color;ctx.lineWidth=.5;ctx.beginPath();ctx.roundRect(tagX-4,y-20,totalW+8,18,3);ctx.stroke();
-        ctx.font='bold 9px JetBrains Mono';ctx.textAlign='left';
+        ctx.textAlign='left';
         ctx.fillStyle=color;ctx.fillText(tag,tagX,y-7);
         ctx.fillStyle=pnl>=0?'#10b981':'#ef4444';ctx.fillText(pnlText,tagX+tagW+8,y-7);
+        if(pos.tpPrice>0){const yTp=priceToPx(pos.tpPrice);if(yTp>0&&yTp<H){ctx.strokeStyle='rgba(16,185,129,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(0,yTp);ctx.lineTo(W,yTp);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(16,185,129,.7)';ctx.font='8px JetBrains Mono';ctx.textAlign='right';ctx.fillText('TP '+fmtShort(pos.tpPrice),W-4,yTp-3);}}
+        if(pos.slPrice>0){const ySl=priceToPx(pos.slPrice);if(ySl>0&&ySl<H){ctx.strokeStyle='rgba(239,68,68,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(0,ySl);ctx.lineTo(W,ySl);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(239,68,68,.7)';ctx.font='8px JetBrains Mono';ctx.textAlign='right';ctx.fillText('SL '+fmtShort(pos.slPrice),W-4,ySl+10);}}
+        const yLiq=priceToPx(pos.liquidationPrice);
+        if(pos.liquidationPrice>0&&yLiq>0&&yLiq<H){ctx.strokeStyle='rgba(249,115,22,.3)';ctx.lineWidth=1;ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(0,yLiq);ctx.lineTo(W,yLiq);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(249,115,22,.5)';ctx.font='8px JetBrains Mono';ctx.textAlign='right';ctx.fillText('LIQ '+fmtShort(pos.liquidationPrice),W-4,yLiq+10);}
         ctx.restore();
       });
     }
@@ -481,12 +496,6 @@
     /* ══════════════════════════════════════════════
        ── Demo Trading Panel ──
        ══════════════════════════════════════════════ */
-    let demoAddr=localStorage.getItem('demo_wallet')||'';
-    let demoAccount=null;
-    let demoTab='trade';
-    let demoLeverage=10;
-    let demoSide='long';
-    let demoRefreshing=false;
 
     function showPanel(){$('trade-panel').classList.remove('collapsed');$('trade-panel').classList.add('open');}
     function hidePanel(){$('trade-panel').classList.add('collapsed');$('trade-panel').classList.remove('open');}
@@ -563,7 +572,9 @@
       if(!demoAddr||!demoAccount)return;
       const margin=parseFloat($('demo-margin')?.value);
       if(!margin||margin<=0)return;
-      const r=await apiDemo('open',{address:demoAddr,side,margin,leverage:demoLeverage});
+      const tpPct=parseFloat($('demo-tp')?.value)||0;
+      const slPct=parseFloat($('demo-sl')?.value)||0;
+      const r=await apiDemo('open',{address:demoAddr,side,margin,leverage:demoLeverage,tpPct,slPct});
       if(r.success){
         demoAccount.balance=r.balance;
         demoAccount.positions.push(r.position);
@@ -584,6 +595,40 @@
         demoAccount.history.unshift({side:'closed',pnl:r.pnl,closePrice:r.closePrice,closedAt:Date.now()});
         renderDemoPanel();
         redraw();
+      }
+    }
+
+    async function editTpSl(posId,currentTp,currentSl){
+      const tp=prompt('Take Profit % (0 = disabled):',currentTp);
+      if(tp===null)return;
+      const sl=prompt('Stop Loss % (0 = disabled):',currentSl);
+      if(sl===null)return;
+      const r=await apiDemo('tpsl',{address:demoAddr,positionId:posId,tpPct:Number(tp)||0,slPct:Number(sl)||0});
+      if(r.success){
+        const idx=demoAccount.positions.findIndex(p=>p.id===posId);
+        if(idx>=0)demoAccount.positions[idx]=r.position;
+        renderDemoPanel();
+        redraw();
+      }
+    }
+
+    function updateTpSlPreview(){
+      const price=candles.length?candles[candles.length-1].close:0;
+      const tpPct=parseFloat($('demo-tp')?.value)||0;
+      const slPct=parseFloat($('demo-sl')?.value)||0;
+      const tpEl=$('demo-tp-price');
+      const slEl=$('demo-sl-price');
+      if(tpEl){
+        if(tpPct>0&&price>0){
+          const tpPrice=demoSide==='long'?price*(1+(tpPct/100)/demoLeverage):price*(1-(tpPct/100)/demoLeverage);
+          tpEl.textContent=fmtShort(tpPrice);
+        } else tpEl.textContent='Off';
+      }
+      if(slEl){
+        if(slPct>0&&price>0){
+          const slPrice=demoSide==='long'?price*(1-(slPct/100)/demoLeverage):price*(1+(slPct/100)/demoLeverage);
+          slEl.textContent=fmtShort(slPrice);
+        } else slEl.textContent='Off';
       }
     }
 
@@ -627,6 +672,20 @@
               <label>Position Value</label>
               <div class="tp-val sm" id="demo-posval">$${fmtN(100*demoLeverage)}</div>
             </div>
+            <div class="tf-row">
+              <div class="tf-group">
+                <label>Take Profit %</label>
+                <input type="number" class="tf-input" id="demo-tp" placeholder="50" value="${demoAccount.settings?.defaultTpPct||50}" min="0" step="any">
+              </div>
+              <div class="tf-group">
+                <label>Stop Loss %</label>
+                <input type="number" class="tf-input" id="demo-sl" placeholder="25" value="${demoAccount.settings?.defaultSlPct||25}" min="0" step="any">
+              </div>
+            </div>
+            <div class="tp-row" style="margin-bottom:8px">
+              <div style="font-size:.52rem;color:var(--tx3);font-family:var(--mono)">TP: <span id="demo-tp-price" style="color:var(--gn)">—</span></div>
+              <div style="font-size:.52rem;color:var(--tx3);font-family:var(--mono)">SL: <span id="demo-sl-price" style="color:var(--rd)">—</span></div>
+            </div>
             <div class="side-btns">
               <button class="btn btn-long" onclick="window._demoTrade('long')">▲ Buy</button>
               <button class="btn btn-short" onclick="window._demoTrade('short')">▼ Sell</button>
@@ -636,14 +695,22 @@
         const posHtml=positions.length?positions.map(p=>{
           const curPnl=demoAccount.price?p.pnl:0;
           const liq=p.liquidationPrice||0;
+          const tpP=p.tpPrice||0;
+          const slP=p.slPrice||0;
+          const pnlPct=((price-p.entryPrice)/p.entryPrice*p.leverage*(p.side==='long'?1:-1));
           return`<div class="pos-card">
-            <div class="pos-hd"><span class="pos-side ${p.side}">${p.side}</span><span class="pos-lev">${p.leverage}x</span></div>
+            <div class="pos-hd"><span class="pos-side ${p.side}">${p.side==='long'?'BUY':'SELL'}</span><span class="pos-lev">${p.leverage}x</span></div>
             <div class="pos-row"><span>Entry</span><span class="val">${fmtShort(p.entryPrice)}</span></div>
             <div class="pos-row"><span>Current</span><span class="val">${fmtShort(price)}</span></div>
             <div class="pos-row"><span>Margin</span><span class="val">$${fmtN(p.margin)}</span></div>
+            ${tpP?`<div class="pos-row"><span>Take Profit</span><span class="val" style="color:var(--gn)">${fmtShort(tpP)} (${p.tpPct}%)</span></div>`:''}
+            ${slP?`<div class="pos-row"><span>Stop Loss</span><span class="val" style="color:var(--rd)">${fmtShort(slP)} (${p.slPct}%)</span></div>`:''}
             <div class="pos-row"><span>Liq. Price</span><span class="val" style="color:var(--or)">${fmtShort(liq)}</span></div>
-            <div class="pos-pnl ${curPnl>=0?'profit':'loss'}">${curPnl>=0?'+':''}$${fmtN(curPnl)}</div>
-            <button class="btn-close-pos" onclick="window._demoClose('${p.id}')" style="margin-top:6px;width:100%">Close Position</button>
+            <div class="pos-pnl ${curPnl>=0?'profit':'loss'}">${curPnl>=0?'+':''}$${fmtN(curPnl)} (${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%)</div>
+            <div style="display:flex;gap:4px;margin-top:6px">
+              <button class="btn-close-pos" onclick="window._demoEditTpSl('${p.id}',${p.tpPct||0},${p.slPct||0})" style="flex:1;background:var(--ac);color:#000">Edit TP/SL</button>
+              <button class="btn-close-pos" onclick="window._demoClose('${p.id}')" style="flex:1">Close</button>
+            </div>
           </div>`;
         }).join(''):'<div class="hist-empty">No open positions</div>';
         body.innerHTML=`<div class="tp-section">${posHtml}</div>`;
@@ -651,7 +718,11 @@
         const hist=demoAccount.history||[];
         const histHtml=hist.length?hist.map(h=>{
           const isLiq=h.type==='liquidation';
-          return`<div class="hist-item"><span class="hist-side ${isLiq?'liq':(h.side||'')}">${isLiq?'LIQ':(h.side||'?')}</span><span>${fmtShort(h.entryPrice||0)} → ${fmtShort(h.closePrice||0)}</span><span class="hist-pnl ${(h.pnl||0)>=0?'profit':'loss'}">${(h.pnl||0)>=0?'+':''}$${fmtN(h.pnl||0)}</span></div>`;
+          const isTp=h.type==='take_profit';
+          const isSl=h.type==='stop_loss';
+          const label=isLiq?'LIQ':isTp?'TP':isSl?'SL':(h.side==='long'?'BUY':'SELL');
+          const badge=isLiq?'liq':isTp?'long':isSl?'short':(h.side||'');
+          return`<div class="hist-item"><span class="hist-side ${badge}">${label}</span><span>${fmtShort(h.entryPrice||0)} → ${fmtShort(h.closePrice||0)}</span><span class="hist-pnl ${(h.pnl||0)>=0?'profit':'loss'}">${(h.pnl||0)>=0?'+':''}$${fmtN(h.pnl||0)}</span></div>`;
         }).join(''):'<div class="hist-empty">No trade history</div>';
         body.innerHTML=`<div class="tp-section">${histHtml}</div>`;
       }
@@ -659,9 +730,18 @@
 
     window._demoConnect=connectWallet;
     window._demoMetaMask=connectMetaMask;
-    window._demoSetLev=function(v){demoLeverage=Number(v);const el=$('demo-posval');const m=parseFloat($('demo-margin')?.value)||0;if(el)el.textContent='$'+fmtN(m*demoLeverage);const valEl=$('demo-lev-val');if(valEl)valEl.textContent=demoLeverage+'x';document.querySelectorAll('.lev-btn').forEach(b=>b.classList.toggle('active',b.textContent===demoLeverage+'x'));};
+    window._demoSetLev=function(v){demoLeverage=Number(v);const el=$('demo-posval');const m=parseFloat($('demo-margin')?.value)||0;if(el)el.textContent='$'+fmtN(m*demoLeverage);const valEl=$('demo-lev-val');if(valEl)valEl.textContent=demoLeverage+'x';document.querySelectorAll('.lev-btn').forEach(b=>b.classList.toggle('active',b.textContent===demoLeverage+'x'));updateTpSlPreview();};
     window._demoTrade=openTrade;
     window._demoClose=closePos;
+    window._demoEditTpSl=editTpSl;
+
+    function hookTpSlInputs(){
+      const tpIn=$('demo-tp'),slIn=$('demo-sl');
+      if(tpIn)tpIn.addEventListener('input',updateTpSlPreview);
+      if(slIn)slIn.addEventListener('input',updateTpSlPreview);
+    }
+    const _origRender=renderDemoPanel;
+    renderDemoPanel=function(){_origRender();hookTpSlInputs();updateTpSlPreview();};
 
     if(demoAddr){
       showPanel();

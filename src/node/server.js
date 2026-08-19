@@ -1016,10 +1016,10 @@ async function startFullNode() {
 
   app.post('/api/demo/open', async (req, res) => {
     try {
-      const { address, side, margin, leverage } = req.body || {};
+      const { address, side, margin, leverage, tpPct, slPct } = req.body || {};
       if (!address || !side || !margin) return res.status(400).json({ success: false, error: 'address, side, margin required' });
-      const result = await demoEngine.openPosition(address, side, Number(margin), Number(leverage) || 10);
-      logEvent('DEMO_TRADE', 'tag-demo', `Demo ${side.toUpperCase()} $${margin} x${leverage || 10} @ $${result.position.entryPrice.toFixed(4)}`);
+      const result = await demoEngine.openPosition(address, side, Number(margin), Number(leverage) || 10, Number(tpPct) || 0, Number(slPct) || 0);
+      logEvent('DEMO_TRADE', 'tag-demo', `Demo ${side.toUpperCase()} $${margin} x${leverage || 10} @ $${result.position.entryPrice.toFixed(4)} TP:${tpPct||0}% SL:${slPct||0}%`);
       res.json({ success: true, ...result });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
@@ -1033,6 +1033,28 @@ async function startFullNode() {
       const result = await demoEngine.closePosition(address, positionId);
       logEvent('DEMO_CLOSE', 'tag-demo', `Demo position closed: PnL $${result.pnl.toFixed(4)}`);
       res.json({ success: true, ...result });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/demo/tpsl', async (req, res) => {
+    try {
+      const { address, positionId, tpPct, slPct } = req.body || {};
+      if (!address || !positionId) return res.status(400).json({ success: false, error: 'address, positionId required' });
+      const pos = await demoEngine.updatePositionTpSl(address, positionId, Number(tpPct) || 0, Number(slPct) || 0);
+      res.json({ success: true, position: pos });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/demo/settings', async (req, res) => {
+    try {
+      const { address, settings } = req.body || {};
+      if (!address) return res.status(400).json({ success: false, error: 'address required' });
+      const s = await demoEngine.updateSettings(address, settings || {});
+      res.json({ success: true, settings: s });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }

@@ -38,6 +38,7 @@ export class DemoTradingEngine {
       balance: DEMO_INITIAL_BALANCE,
       positions: [],
       history: [],
+      settings: { defaultTpPct: 50, defaultSlPct: 25 },
       createdAt: Date.now()
     };
     this.accounts.set(addr, acc);
@@ -58,9 +59,8 @@ export class DemoTradingEngine {
   calculatePnL(position, currentPrice) {
     if (!position || !currentPrice) return 0;
     const entry = position.entryPrice;
-    const size = position.size;
     const leverage = position.leverage;
-    const margin = Math.abs(size) * entry / leverage;
+    const margin = position.margin;
 
     if (position.side === 'long') {
       return (currentPrice - entry) / entry * margin * leverage;
@@ -82,7 +82,26 @@ export class DemoTradingEngine {
     }
   }
 
-  async openPosition(address, side, marginAmount, leverage) {
+  calculateTpSlPrices(position, tpPct, slPct) {
+    const entry = position.entryPrice;
+    const leverage = position.leverage;
+    const isLong = position.side === 'long';
+
+    let tpPrice = 0, slPrice = 0;
+    if (tpPct > 0) {
+      tpPrice = isLong
+        ? entry * (1 + (tpPct / 100) / leverage)
+        : entry * (1 - (tpPct / 100) / leverage);
+    }
+    if (slPct > 0) {
+      slPrice = isLong
+        ? entry * (1 - (slPct / 100) / leverage)
+        : entry * (1 + (slPct / 100) / leverage);
+    }
+    return { tpPrice, slPrice };
+  }
+
+  async openPosition(address, side, marginAmount, leverage, tpPct = 0, slPct = 0) {
     await this._loading;
     const addr = address.toLowerCase();
     const acc = this.accounts.get(addr);
@@ -108,12 +127,22 @@ export class DemoTradingEngine {
       size: positionSize,
       qty,
       fee,
+      tpPct: Math.max(0, Number(tpPct) || 0),
+      slPct: Math.max(0, Number(slPct) || 0),
+      tpPrice: 0,
+      slPrice: 0,
       liquidationPrice: 0,
       pnl: 0,
       openedAt: Date.now(),
       status: 'open'
     };
     position.liquidationPrice = this.calculateLiquidationPrice(position);
+
+    if (position.tpPct > 0 || position.slPct > 0) {
+      const { tpPrice, slPrice } = this.calculateTpSlPrices(position, position.tpPct, position.slPct);
+      position.tpPrice = tpPrice;
+      position.slPrice = slPrice;
+    }
 
     acc.balance -= (marginAmount + fee);
     acc.positions.push(position);
@@ -164,26 +193,76 @@ export class DemoTradingEngine {
     return { pnl: totalPnl, balance: acc.balance, closePrice: price };
   }
 
+  async updatePositionTpSl(address, positionId, tpPct, slPct) {
+    await this._loading;
+    const addr = address.toLowerCase();
+    const acc = this.accounts.get(addr);
+    if (!acc) throw new Error('Demo account not found');
+
+    const pos = acc.positions.find(p => p.id === positionId && p.status === 'open');
+    if (!pos) throw new Error('Position not found');
+
+    pos.tpPct = Math.max(0, Number(tpPct) || 0);
+    pos.slPct = Math.max(0, Number(slPct) || 0);
+    const { tpPrice, slPrice } = this.calculateTpSlPrices(pos, pos.tpPct, pos.slPct);
+    pos.tpPrice = tpPrice;
+    pos.slPrice = slPrice;
+
+    await this._saveAll();
+    return pos;
+  }
+
+  async updateSettings(address, settings) {
+    await this._loading;
+    const addr = address.toLowerCase();
+    const acc = this.accounts.get(addr);
+    if (!acc) throw new Error('Demo account not found');
+    if (!acc.settings) acc.settings = { defaultTpPct: 50, defaultSlPct: 25 };
+    if (settings.defaultTpPct !== undefined) acc.settings.defaultTpPct = Math.max(0, Number(settings.defaultTpPct) || 0);
+    if (settings.defaultSlPct !== undefined) acc.settings.defaultSlPct = Math.max(0, Number(settings.defaultSlPct) || 0);
+    await this._saveAll();
+    return acc.settings;
+  }
+
   async checkLiquidations() {
     const price = this.getCurrentPrice();
     if (!price) return [];
-    const liquidated = [];
+    const events = [];
 
     for (const [addr, acc] of this.accounts) {
       const openPositions = acc.positions.filter(p => p.status === 'open');
       for (const pos of openPositions) {
-        const liq = this.calculateLiquidationPrice(pos);
-        let shouldLiquidate = false;
-        if (pos.side === 'long' && price <= liq) shouldLiquidate = true;
-        if (pos.side === 'short' && price >= liq) shouldLiquidate = true;
+        let closed = false;
+        let closeType = '';
+        let closePnl = 0;
 
-        if (shouldLiquidate) {
+        if (pos.tpPrice > 0) {
+          if (pos.side === 'long' && price >= pos.tpPrice) { closed = true; closeType = 'take_profit'; }
+          if (pos.side === 'short' && price <= pos.tpPrice) { closed = true; closeType = 'take_profit'; }
+        }
+        if (!closed && pos.slPrice > 0) {
+          if (pos.side === 'long' && price <= pos.slPrice) { closed = true; closeType = 'stop_loss'; }
+          if (pos.side === 'short' && price >= pos.slPrice) { closed = true; closeType = 'stop_loss'; }
+        }
+
+        if (!closed) {
+          const liq = this.calculateLiquidationPrice(pos);
+          if (pos.side === 'long' && price <= liq) { closed = true; closeType = 'liquidation'; }
+          if (pos.side === 'short' && price >= liq) { closed = true; closeType = 'liquidation'; }
+        }
+
+        if (closed) {
           const pnl = this.calculatePnL(pos, price);
           const closeFee = pos.margin * FEE_RATE;
-          pos.status = 'liquidated';
+          const totalPnl = closeType === 'liquidation' ? -(pos.margin) : (pnl - closeFee);
+
+          pos.status = closeType === 'liquidation' ? 'liquidated' : 'closed';
           pos.closePrice = price;
           pos.closedAt = Date.now();
-          pos.pnl = -(pos.margin);
+          pos.pnl = totalPnl;
+          pos.closeType = closeType;
+
+          acc.balance += pos.margin + totalPnl;
 
           acc.history.unshift({
             id: pos.id,
@@ -192,20 +271,20 @@ export class DemoTradingEngine {
             closePrice: price,
             leverage: pos.leverage,
             margin: pos.margin,
-            pnl: -(pos.margin),
+            pnl: totalPnl,
             fee: pos.fee + closeFee,
             openedAt: pos.openedAt,
             closedAt: pos.closedAt,
-            type: 'liquidation'
+            type: closeType
           });
 
           acc.positions = acc.positions.filter(p => p.id !== pos.id);
-          liquidated.push({ address: addr, positionId: pos.id, loss: pos.margin });
+          events.push({ address: addr, positionId: pos.id, type: closeType, pnl: totalPnl });
         }
       }
     }
-    if (liquidated.length) await this._saveAll();
-    return liquidated;
+    if (events.length) await this._saveAll();
+    return events;
   }
 
   async resetAccount(address) {
@@ -216,6 +295,7 @@ export class DemoTradingEngine {
       balance: DEMO_INITIAL_BALANCE,
       positions: [],
       history: [],
+      settings: { defaultTpPct: 50, defaultSlPct: 25 },
       createdAt: Date.now()
     };
     this.accounts.set(addr, acc);
