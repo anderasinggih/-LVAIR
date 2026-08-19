@@ -38,7 +38,7 @@ export class DemoTradingEngine {
       balance: DEMO_INITIAL_BALANCE,
       positions: [],
       history: [],
-      settings: { defaultTpPct: 50, defaultSlPct: 25 },
+      settings: { defaultTpPct: 0, defaultSlPct: 0 },
       createdAt: Date.now()
     };
     this.accounts.set(addr, acc);
@@ -193,6 +193,45 @@ export class DemoTradingEngine {
     return { pnl: totalPnl, balance: acc.balance, closePrice: price };
   }
 
+  async closeAllPositions(address) {
+    await this._loading;
+    const addr = address.toLowerCase();
+    const acc = this.accounts.get(addr);
+    if (!acc) throw new Error('Demo account not found');
+
+    const price = this.getCurrentPrice();
+    if (!price || price <= 0) throw new Error('Price not available');
+
+    const openPositions = acc.positions.filter(p => p.status === 'open');
+    if (!openPositions.length) return { positions: [], balance: acc.balance };
+
+    const closed = [];
+    for (const pos of openPositions) {
+      const pnl = this.calculatePnL(pos, price);
+      const closeFee = pos.margin * FEE_RATE;
+      const totalPnl = pnl - closeFee;
+
+      pos.status = 'closed';
+      pos.closePrice = price;
+      pos.closedAt = Date.now();
+      pos.pnl = totalPnl;
+
+      acc.balance += pos.margin + totalPnl;
+
+      acc.history.unshift({
+        id: pos.id, side: pos.side, entryPrice: pos.entryPrice,
+        closePrice: price, leverage: pos.leverage, margin: pos.margin,
+        pnl: totalPnl, fee: pos.fee + closeFee,
+        openedAt: pos.openedAt, closedAt: pos.closedAt
+      });
+      closed.push({ id: pos.id, pnl: totalPnl });
+    }
+    if (acc.history.length > 200) acc.history = acc.history.slice(0, 200);
+    acc.positions = acc.positions.filter(p => p.status !== 'closed');
+    await this._saveAll();
+    return { positions: closed, balance: acc.balance };
+  }
+
   async updatePositionTpSl(address, positionId, tpPct, slPct, tpPrice, slPrice) {
     await this._loading;
     const addr = address.toLowerCase();
@@ -232,7 +271,7 @@ export class DemoTradingEngine {
     const addr = address.toLowerCase();
     const acc = this.accounts.get(addr);
     if (!acc) throw new Error('Demo account not found');
-    if (!acc.settings) acc.settings = { defaultTpPct: 50, defaultSlPct: 25 };
+    if (!acc.settings) acc.settings = { defaultTpPct: 0, defaultSlPct: 0 };
     if (settings.defaultTpPct !== undefined) acc.settings.defaultTpPct = Math.max(0, Number(settings.defaultTpPct) || 0);
     if (settings.defaultSlPct !== undefined) acc.settings.defaultSlPct = Math.max(0, Number(settings.defaultSlPct) || 0);
     await this._saveAll();
@@ -310,7 +349,7 @@ export class DemoTradingEngine {
       balance: DEMO_INITIAL_BALANCE,
       positions: [],
       history: [],
-      settings: { defaultTpPct: 50, defaultSlPct: 25 },
+      settings: { defaultTpPct: 0, defaultSlPct: 0 },
       createdAt: Date.now()
     };
     this.accounts.set(addr, acc);

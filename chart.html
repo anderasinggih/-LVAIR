@@ -141,8 +141,14 @@
       .t-btn{font-size:.56rem;padding:2px 5px}.t-btn svg{width:11px;height:11px}
       .t-btn .btn-label{display:none}
       .ind-btn{font-size:.56rem;padding:2px 6px}
-      .trade-panel{width:100%;position:absolute;right:0;top:0;bottom:0;z-index:50;border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .2s}
+      .trade-panel{width:100%;max-width:320px;position:fixed;right:0;top:0;bottom:0;z-index:50;border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .25s ease;box-shadow:-4px 0 24px rgba(0,0,0,.6)}
       .trade-panel.open{transform:translateX(0)}
+      .tp-body{padding-bottom:env(safe-area-inset-bottom)}
+      .tp-header{padding:10px 12px}
+      .pos-card{padding:10px}
+      .side-btns .btn{padding:12px;font-size:.82rem}
+      .lev-btns{gap:4px}
+      .lev-btn{padding:4px 8px;font-size:.58rem}
       .ohlcv-bar{height:20px;gap:8px;padding:1px 6px}.ohlcv-bar span{font-size:.52rem}
       .status-bar{height:16px}.status-bar span{font-size:.5rem}
     }
@@ -153,6 +159,11 @@
       .tf-btn{font-size:.52rem;padding:2px 3px}
       .toolbar{height:26px}
       .t-btn{font-size:.52rem;padding:2px 4px}.t-btn svg{width:10px;height:10px}
+      .trade-panel{max-width:100%}
+      .tf-input{padding:8px;font-size:.78rem}
+      .demo-connect input{padding:10px;font-size:.78rem}
+      .side-btns .btn{padding:14px;font-size:.88rem}
+      .pos-card{margin-bottom:8px}
     }
   </style>
 </head>
@@ -220,6 +231,7 @@
       </div>
     </div>
 
+    <div id="tp-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:49" onclick="window._tpClose()"></div>
     <div class="trade-panel" id="trade-panel">
       <div class="tp-header">
         <span class="tab active" data-tab="trade">Trade</span>
@@ -396,7 +408,7 @@
 
     function updateCountdown(){const cd=$('countdown');if(curTF==='LIVE'||!TF_SEC[curTF]||!candles.length){cd.style.display='none';return;}const sec=TF_SEC[curTF],now=Date.now()/1000,rem=Math.max(0,sec-(now%sec));cd.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');const last=candles[candles.length-1],y=priceToPx(last.close);if(y>0&&y<container.clientHeight){cd.style.display='';cd.style.top=y+'px';try{cd.style.left=(contentWidth()-cd.offsetWidth-2)+'px';}catch(e){cd.style.left='50%';}}else{cd.style.display='none';}}
     setInterval(updateCountdown,1000);
-    chart.timeScale().subscribeVisibleLogicalRangeChange(()=>updateCountdown());
+    chart.timeScale().subscribeVisibleLogicalRangeChange(()=>{updateCountdown();redraw();});
 
     /* ══════════════════════════════════════════════
        ── Demo Trading State ──
@@ -498,8 +510,8 @@
        ── Demo Trading Panel ──
        ══════════════════════════════════════════════ */
 
-    function showPanel(){$('trade-panel').classList.remove('collapsed');$('trade-panel').classList.add('open');}
-    function hidePanel(){$('trade-panel').classList.add('collapsed');$('trade-panel').classList.remove('open');}
+    function showPanel(){$('trade-panel').classList.remove('collapsed');$('trade-panel').classList.add('open');if(window.innerWidth<=768)$('tp-backdrop').style.display='block';}
+    function hidePanel(){$('trade-panel').classList.add('collapsed');$('trade-panel').classList.remove('open');$('tp-backdrop').style.display='none';}
     $('btn-trade-toggle').addEventListener('click',()=>{$('trade-panel').classList.contains('collapsed')?showPanel():hidePanel();setTimeout(()=>{syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}},250);});
     $('tp-close').addEventListener('click',()=>{hidePanel();setTimeout(()=>{syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}},250);});
 
@@ -607,6 +619,17 @@
         demoAccount.positions=demoAccount.positions.filter(p=>p.id!==posId);
         if(!demoAccount.history)demoAccount.history=[];
         demoAccount.history.unshift({side:'closed',pnl:r.pnl,closePrice:r.closePrice,closedAt:Date.now()});
+        renderDemoPanel();
+        redraw();
+      }
+    }
+
+    async function closeAllPositions(){
+      if(!demoAddr||!confirm('Close ALL open positions?'))return;
+      const r=await apiDemo('closeall',{address:demoAddr});
+      if(r.success){
+        demoAccount.balance=r.balance;
+        demoAccount.positions=demoAccount.positions.filter(p=>p.status==='open');
         renderDemoPanel();
         redraw();
       }
@@ -802,11 +825,11 @@
                 <label id="tpsl-tp-lbl">Take Profit %</label>
                 <span id="tpsl-mode" data-mode="pct" onclick="toggleTpSlMode()" style="cursor:pointer;font-size:.5rem;color:var(--ac);font-family:var(--mono);border:1px solid var(--bd);border-radius:4px;padding:1px 5px">Switch to Price</span>
               </div>
-              <input type="number" class="tf-input" id="demo-tp" placeholder="50" value="${demoAccount.settings?.defaultTpPct||50}" min="0" step="any" oninput="onTpSlInput()">
+              <input type="number" class="tf-input" id="demo-tp" placeholder="0" value="${demoAccount.settings?.defaultTpPct||0}" min="0" step="any" oninput="onTpSlInput()">
             </div>
             <div class="tf-group">
               <label id="tpsl-sl-lbl">Stop Loss %</label>
-              <input type="number" class="tf-input" id="demo-sl" placeholder="25" value="${demoAccount.settings?.defaultSlPct||25}" min="0" step="any" oninput="onTpSlInput()">
+              <input type="number" class="tf-input" id="demo-sl" placeholder="0" value="${demoAccount.settings?.defaultSlPct||0}" min="0" step="any" oninput="onTpSlInput()">
             </div>
             <div class="tp-row" style="margin-bottom:8px">
               <div style="font-size:.52rem;color:var(--tx3);font-family:var(--mono)">TP: <span id="demo-tp-price" style="color:var(--gn)">—</span></div>
@@ -818,6 +841,8 @@
             </div>
           </div>`;
       } else if(demoTab==='positions'){
+        const totalPnlPos=positions.reduce((s,p)=>s+(p.pnl||0),0);
+        const closeAllBtn=positions.length>1?`<button class="btn-close-pos" onclick="window._demoCloseAll()" style="background:var(--rd);color:#fff;font-size:.52rem;padding:3px 8px;border-radius:4px;border:none;cursor:pointer;white-space:nowrap">Close All (${positions.length})</button>`:'';
         const posHtml=positions.length?positions.map(p=>{
           const curPnl=demoAccount.price?p.pnl:0;
           const liq=p.liquidationPrice||0;
@@ -840,21 +865,22 @@
             </div>`;
           }
           return`<div class="pos-card">
-            <div class="pos-hd"><span class="pos-side ${p.side}">${p.side==='long'?'BUY':'SELL'}</span><span class="pos-lev">${p.leverage}x</span></div>
+            <div class="pos-hd">
+              <span class="pos-side ${p.side}">${p.side==='long'?'BUY':'SELL'}</span>
+              <span class="pos-lev">${p.leverage}x</span>
+              <span class="pos-pnl ${curPnl>=0?'profit':'loss'}" style="margin-left:auto;font-size:.56rem;color:${curPnl>=0?'var(--gn)':'var(--rd)'}">${curPnl>=0?'+':''}$${fmtN(curPnl)}</span>
+            </div>
             <div class="pos-row"><span>Entry</span><span class="val">${fmtShort(p.entryPrice)}</span></div>
             <div class="pos-row"><span>Current</span><span class="val">${fmtShort(price)}</span></div>
-            <div class="pos-row"><span>Margin</span><span class="val">$${fmtN(p.margin)}</span></div>
-            ${tpP?`<div class="pos-row"><span>Take Profit</span><span class="val" style="color:var(--gn)">${fmtShort(tpP)} (${p.tpPct}%)</span></div>`:'<div class="pos-row"><span>Take Profit</span><span class="val" style="color:var(--tx3)">Off</span></div>'}
-            ${slP?`<div class="pos-row"><span>Stop Loss</span><span class="val" style="color:var(--rd)">${fmtShort(slP)} (${p.slPct}%)</span></div>`:'<div class="pos-row"><span>Stop Loss</span><span class="val" style="color:var(--tx3)">Off</span></div>'}
+            <div class="pos-row"><span>Size</span><span class="val">$${fmtN(p.margin*p.leverage)}</span></div>
             <div class="pos-row"><span>Liq. Price</span><span class="val" style="color:var(--or)">${fmtShort(liq)}</span></div>
-            <div class="pos-pnl ${curPnl>=0?'profit':'loss'}">${curPnl>=0?'+':''}$${fmtN(curPnl)} (${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%)</div>
             <div style="display:flex;gap:4px;margin-top:6px">
-              <button class="btn-close-pos" onclick="window._demoEditTpSl('${p.id}',${p.tpPct||0},${p.slPct||0})" style="flex:1;background:var(--ac);color:#000">Edit TP/SL</button>
-              <button class="btn-close-pos" onclick="window._demoClose('${p.id}')" style="flex:1">Close</button>
+              <button class="btn-close-pos" onclick="window._demoEditTpSl('${p.id}',${p.tpPct||0},${p.slPct||0})" style="flex:1;background:var(--ac);color:#000;font-size:.52rem">TP/SL</button>
+              <button class="btn-close-pos" onclick="window._demoClose('${p.id}')" style="flex:1;background:var(--rd);color:#fff;font-size:.52rem">Close</button>
             </div>
           </div>`;
         }).join(''):'<div class="hist-empty">No open positions</div>';
-        body.innerHTML=`<div class="tp-section">${posHtml}</div>`;
+        body.innerHTML=`<div class="tp-section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">${positions.length?`<span style="font-size:.54rem;color:var(--tx3);font-family:var(--mono)">${positions.length} pos · PnL <span style="color:${totalPnlPos>=0?'var(--gn)':'var(--rd)'}">${totalPnlPos>=0?'+':''}$${fmtN(totalPnlPos)}</span></span>`:'<span></span>'}${closeAllBtn}</div>${posHtml}</div>`;
       } else if(demoTab==='history'){
         const hist=demoAccount.history||[];
         const histHtml=hist.length?hist.map(h=>{
@@ -874,6 +900,8 @@
     window._demoSetLev=function(v){demoLeverage=Number(v);const el=$('demo-posval');const m=parseFloat($('demo-margin')?.value)||0;if(el)el.textContent='$'+fmtN(m*demoLeverage);const valEl=$('demo-lev-val');if(valEl)valEl.textContent=demoLeverage+'x';document.querySelectorAll('.lev-btn').forEach(b=>b.classList.toggle('active',b.textContent===demoLeverage+'x'));updateTpSlPreview();};
     window._demoTrade=openTrade;
     window._demoClose=closePos;
+    window._demoCloseAll=closeAllPositions;
+    window._tpClose=()=>hidePanel();
     window._demoEditTpSl=editTpSl;
     window._demoSaveTpSl=saveTpSl;
 

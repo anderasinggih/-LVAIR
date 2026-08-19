@@ -1038,6 +1038,18 @@ async function startFullNode() {
     }
   });
 
+  app.post('/api/demo/closeall', async (req, res) => {
+    try {
+      const { address } = req.body || {};
+      if (!address) return res.status(400).json({ success: false, error: 'address required' });
+      const result = await demoEngine.closeAllPositions(address);
+      logEvent('DEMO_CLOSEALL', 'tag-demo', `Demo close all: ${result.positions.length} positions closed`);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
   app.post('/api/demo/tpsl', async (req, res) => {
     try {
       const { address, positionId, tpPct, slPct, tpPrice, slPrice } = req.body || {};
