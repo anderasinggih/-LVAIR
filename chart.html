@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>LVAIR Chart | Analysis</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230a0a0a'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-size='16' font-weight='900' font-family='Arial' fill='white'>L</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,49 +11,85 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{--bg:#0a0a0a;--bgc:#111113;--bge:#18181b;--bgh:#27272a;--bd:#27272a;--bd2:#3f3f46;--tx:#fafafa;--tx2:#a1a1aa;--tx3:#71717a;--ac:#60a5fa;--gn:#10b981;--rd:#ef4444;--yl:#eab308;--pu:#a78bfa;--or:#f97316;--font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace}
-    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:var(--font)}
+    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:var(--font);-webkit-tap-highlight-color:transparent}
     body{display:flex;flex-direction:column}
-    .topbar{display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--bd);background:var(--bgc);height:40px;flex-shrink:0}
-    .tb-t{font-weight:800;font-size:.82rem}.tb-p{font-family:var(--mono);color:var(--ac);font-weight:700;font-size:.8rem}
-    .tb-pr{font-family:var(--mono);font-weight:800;font-size:.92rem;margin-left:4px}
-    .tb-c{font-family:var(--mono);font-size:.72rem;margin-left:4px}
-    .tb-s{flex:1}.sep{color:var(--bd2);font-size:.6rem}
-    .tf-bar{display:flex;gap:1px}
-    .tf-btn{background:0 0;border:1px solid transparent;color:var(--tx2);font-family:var(--mono);font-size:.62rem;font-weight:600;padding:3px 6px;border-radius:3px;cursor:pointer;transition:all .1s}
+
+    .topbar{display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid var(--bd);background:var(--bgc);height:38px;flex-shrink:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .topbar::-webkit-scrollbar{display:none}
+    .tb-t{font-weight:800;font-size:.8rem;white-space:nowrap;flex-shrink:0}
+    .tb-p{font-family:var(--mono);color:var(--ac);font-weight:700;font-size:.78rem;white-space:nowrap;flex-shrink:0}
+    .tb-pr{font-family:var(--mono);font-weight:800;font-size:.9rem;margin-left:2px;white-space:nowrap;flex-shrink:0}
+    .tb-c{font-family:var(--mono);font-size:.7rem;margin-left:2px;white-space:nowrap;flex-shrink:0}
+    .tb-s{min-width:4px;flex-shrink:0}
+    .sep{color:var(--bd2);font-size:.6rem;flex-shrink:0}
+    .hl{font-size:.66rem;color:var(--tx3);font-family:var(--mono);white-space:nowrap;flex-shrink:0}
+    .tf-bar{display:flex;gap:2px;flex-shrink:0}
+    .tf-btn{background:0 0;border:1px solid transparent;color:var(--tx2);font-family:var(--mono);font-size:.6rem;font-weight:600;padding:3px 5px;border-radius:3px;cursor:pointer;transition:all .1s;white-space:nowrap;touch-action:manipulation}
     .tf-btn:hover{background:var(--bgh);color:var(--tx)}.tf-btn.active{background:var(--ac);color:#000}
-    .cls-btn{background:0 0;border:1px solid var(--bd);color:var(--tx2);font-size:.68rem;padding:3px 8px;border-radius:3px;cursor:pointer;font-weight:600}
+    .cls-btn{background:0 0;border:1px solid var(--bd);color:var(--tx2);font-size:.66rem;padding:3px 8px;border-radius:3px;cursor:pointer;font-weight:600;flex-shrink:0;touch-action:manipulation}
     .cls-btn:hover{border-color:var(--rd);color:var(--rd)}
-    .toolbar{display:flex;align-items:center;gap:1px;padding:0 12px;border-bottom:1px solid var(--bd);background:var(--bgc);height:32px;flex-shrink:0}
-    .tg{display:flex;gap:1px;padding:0 5px;border-right:1px solid var(--bd)}.tg:last-child{border-right:none}
-    .t-btn{background:0 0;border:none;color:var(--tx2);padding:3px 7px;border-radius:3px;cursor:pointer;font-size:.62rem;font-family:var(--mono);font-weight:500;display:flex;align-items:center;gap:3px;transition:all .1s;white-space:nowrap}
+
+    .toolbar{display:flex;align-items:center;gap:1px;padding:0 8px;border-bottom:1px solid var(--bd);background:var(--bgc);height:30px;flex-shrink:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .toolbar::-webkit-scrollbar{display:none}
+    .tg{display:flex;gap:1px;padding:0 4px;border-right:1px solid var(--bd);flex-shrink:0}.tg:last-child{border-right:none}
+    .t-btn{background:0 0;border:none;color:var(--tx2);padding:3px 6px;border-radius:3px;cursor:pointer;font-size:.6rem;font-family:var(--mono);font-weight:500;display:flex;align-items:center;gap:3px;transition:all .1s;white-space:nowrap;touch-action:manipulation}
     .t-btn:hover{background:var(--bgh);color:var(--tx)}.t-btn.active{background:var(--ac);color:#000}
-    .t-btn svg{width:12px;height:12px}.t-sep{flex:1}
-    .ind-wrap{position:relative}
-    .ind-btn{background:0 0;border:none;color:var(--tx2);padding:3px 8px;border-radius:3px;cursor:pointer;font-size:.62rem;font-family:var(--mono);font-weight:600;display:flex;align-items:center;gap:4px;transition:all .1s}
+    .t-btn svg{width:12px;height:12px;flex-shrink:0}.t-sep{flex:1;min-width:4px}
+
+    .ind-wrap{position:relative;flex-shrink:0}
+    .ind-btn{background:0 0;border:none;color:var(--tx2);padding:3px 8px;border-radius:3px;cursor:pointer;font-size:.6rem;font-family:var(--mono);font-weight:600;display:flex;align-items:center;gap:4px;transition:all .1s;touch-action:manipulation}
     .ind-btn:hover{background:var(--bgh);color:var(--tx)}.ind-btn.open{background:var(--ac);color:#000}
-    .ind-dd{display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--bge);border:1px solid var(--bd);border-radius:6px;padding:8px 10px;z-index:100;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+    .ind-dd{display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--bge);border:1px solid var(--bd);border-radius:6px;padding:8px 10px;z-index:100;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
     .ind-dd.show{display:block}
-    .ind-hd{font-size:.56rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin:6px 0 3px}.ind-hd:first-child{margin-top:0}
-    .ind-opt{display:flex;align-items:center;gap:6px;padding:2px 0;cursor:pointer;font-size:.68rem;color:var(--tx2);user-select:none}.ind-opt input{accent-color:var(--ac)}.ind-opt:hover{color:var(--tx)}
+    .ind-hd{font-size:.54rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin:6px 0 3px}.ind-hd:first-child{margin-top:0}
+    .ind-opt{display:flex;align-items:center;gap:6px;padding:2px 0;cursor:pointer;font-size:.66rem;color:var(--tx2);user-select:none;touch-action:manipulation}.ind-opt input{accent-color:var(--ac)}.ind-opt:hover{color:var(--tx)}
     .ind-cl{width:10px;height:3px;border-radius:2px;flex-shrink:0}
-    .ind-vals{font-family:var(--mono);font-size:.6rem;color:var(--tx2);line-height:1.4;margin-top:6px;padding-top:6px;border-top:1px solid var(--bd)}
-    .chart-area{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+    .ind-vals{font-family:var(--mono);font-size:.58rem;color:var(--tx2);line-height:1.4;margin-top:6px;padding-top:6px;border-top:1px solid var(--bd)}
+
+    .chart-area{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative}
     .main-wrap{flex:1;position:relative;min-height:0}
     #main-chart{width:100%;height:100%}
-    #draw-overlay{position:absolute;inset:0;pointer-events:none;z-index:5}
+    #draw-overlay{position:absolute;top:0;left:0;pointer-events:none;z-index:5}
     #draw-overlay.drawing{pointer-events:auto;cursor:crosshair}
     .sub-wrap{flex-shrink:0;border-top:1px solid var(--bd);position:relative}
-    .sub-lbl{position:absolute;top:3px;left:6px;font-size:.55rem;color:var(--tx3);font-family:var(--mono);z-index:2;pointer-events:none}
-    .drag-handle{height:5px;flex-shrink:0;cursor:row-resize;position:relative;z-index:10;background:transparent}
+    .sub-lbl{position:absolute;top:3px;left:6px;font-size:.54rem;color:var(--tx3);font-family:var(--mono);z-index:2;pointer-events:none}
+    .drag-handle{height:5px;flex-shrink:0;cursor:row-resize;position:relative;z-index:10;background:transparent;touch-action:none}
     .drag-handle::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28px;height:2px;background:var(--bd2);border-radius:1px;transition:background .15s}
     .drag-handle:hover::after,.drag-handle:active::after{background:var(--ac)}
     .countdown{position:absolute;z-index:10;pointer-events:none;background:var(--ac);color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;transform:translateY(-50%);white-space:nowrap;display:none;line-height:1.4}
     .draw-tip{position:absolute;z-index:6;pointer-events:none;background:var(--bge);border:1px solid var(--bd);border-radius:3px;padding:2px 7px;font-family:var(--mono);font-size:.6rem;color:var(--tx2);white-space:nowrap;display:none;transform:translate(-50%,-130%)}
-    .ohlcv-bar{display:flex;gap:12px;padding:2px 12px;border-top:1px solid var(--bd);background:var(--bgc);height:24px;flex-shrink:0;align-items:center}
-    .ohlcv-bar span{font-family:var(--mono);font-size:.6rem;color:var(--tx2)}.ohlcv-bar .l{color:var(--tx3);margin-right:1px}.ohlcv-bar .up{color:var(--gn)}.ohlcv-bar .dn{color:var(--rd)}
-    .status-bar{display:flex;align-items:center;gap:6px;padding:1px 12px;border-top:1px solid var(--bd);background:var(--bgc);height:20px;flex-shrink:0}
-    .status-bar span{font-family:var(--mono);font-size:.55rem;color:var(--tx3)}
+    .ohlcv-bar{display:flex;gap:10px;padding:2px 10px;border-top:1px solid var(--bd);background:var(--bgc);height:22px;flex-shrink:0;align-items:center;overflow-x:auto;scrollbar-width:none}
+    .ohlcv-bar::-webkit-scrollbar{display:none}
+    .ohlcv-bar span{font-family:var(--mono);font-size:.58rem;color:var(--tx2);white-space:nowrap;flex-shrink:0}.ohlcv-bar .l{color:var(--tx3);margin-right:1px}.ohlcv-bar .up{color:var(--gn)}.ohlcv-bar .dn{color:var(--rd)}
+    .status-bar{display:flex;align-items:center;gap:6px;padding:1px 10px;border-top:1px solid var(--bd);background:var(--bgc);height:18px;flex-shrink:0}
+    .status-bar span{font-family:var(--mono);font-size:.52rem;color:var(--tx3)}
     .dot{width:4px;height:4px;border-radius:50%;background:var(--gn);display:inline-block}
+
+    @media(max-width:768px){
+      .topbar{height:36px;padding:0 6px;gap:6px}
+      .tb-t{font-size:.72rem}.tb-p{font-size:.7rem}.tb-pr{font-size:.82rem}.tb-c{font-size:.64rem}
+      .hl{display:none}
+      .tf-bar{gap:1px}
+      .tf-btn{font-size:.56rem;padding:2px 4px}
+      .cls-btn{font-size:.6rem;padding:2px 6px}
+      .toolbar{height:28px;padding:0 6px;gap:0}
+      .t-btn{font-size:.56rem;padding:2px 5px}.t-btn svg{width:11px;height:11px}
+      .t-btn .btn-label{display:none}
+      .ind-btn{font-size:.56rem;padding:2px 6px}
+      .ohlcv-bar{height:20px;gap:8px;padding:1px 6px}
+      .ohlcv-bar span{font-size:.52rem}
+      .status-bar{height:16px}
+      .status-bar span{font-size:.5rem}
+    }
+    @media(max-width:480px){
+      .topbar{height:34px;gap:4px}
+      .tb-t{font-size:.66rem}.tb-p{font-size:.64rem}.tb-pr{font-size:.76rem}.tb-c{font-size:.6rem}
+      .sep{display:none}
+      .tf-btn{font-size:.52rem;padding:2px 3px}
+      .toolbar{height:26px}
+      .t-btn{font-size:.52rem;padding:2px 4px}.t-btn svg{width:10px;height:10px}
+      .ohlc{font-size:.5rem}
+    }
   </style>
 </head>
 <body>
@@ -63,11 +99,11 @@
     <span class="tb-pr" id="tb-price">$0.0000</span>
     <span class="tb-c" id="tb-change">0.00%</span>
     <span class="sep">|</span>
-    <span style="font-size:.68rem;color:var(--tx3);font-family:var(--mono)" id="tb-hi">H —</span>
-    <span style="font-size:.68rem;color:var(--tx3);font-family:var(--mono);margin-left:6px" id="tb-lo">L —</span>
+    <span class="hl" id="tb-hi">H —</span>
+    <span class="hl" id="tb-lo">L —</span>
     <span class="tb-s"></span>
     <div class="tf-bar" id="tf-bar"></div>
-    <span class="sep" style="margin-left:4px">|</span>
+    <span class="sep" style="margin-left:2px">|</span>
     <button class="cls-btn" id="btn-close"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> Close</button>
   </div>
   <div class="toolbar">
@@ -75,16 +111,16 @@
       <button class="t-btn active" id="tool-cross" title="Crosshair (C)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg></button>
     </div>
     <div class="tg">
-      <button class="t-btn" id="tool-trend" title="Trendline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="4"/></svg> Trend</button>
-      <button class="t-btn" id="tool-hline" title="Horizontal Line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="12" x2="22" y2="12"/></svg> H-Line</button>
-      <button class="t-btn" id="tool-vline" title="Vertical Line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/></svg> V-Line</button>
-      <button class="t-btn" id="tool-fib" title="Fibonacci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="4" x2="21" y2="4"/><line x1="3" y1="9.6" x2="21" y2="9.6"/><line x1="3" y1="14.4" x2="21" y2="14.4"/><line x1="3" y1="20" x2="21" y2="20"/></svg> Fib</button>
-      <button class="t-btn" id="tool-rect" title="Rectangle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="1"/></svg> Rect</button>
+      <button class="t-btn" id="tool-trend" title="Trendline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="4"/></svg><span class="btn-label">Trend</span></button>
+      <button class="t-btn" id="tool-hline" title="Horizontal Line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="12" x2="22" y2="12"/></svg><span class="btn-label">H-Line</span></button>
+      <button class="t-btn" id="tool-vline" title="Vertical Line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/></svg><span class="btn-label">V-Line</span></button>
+      <button class="t-btn" id="tool-fib" title="Fibonacci Retracement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="4" x2="21" y2="4"/><line x1="3" y1="9.6" x2="21" y2="9.6"/><line x1="3" y1="14.4" x2="21" y2="14.4"/><line x1="3" y1="20" x2="21" y2="20"/></svg><span class="btn-label">Fib</span></button>
+      <button class="t-btn" id="tool-rect" title="Rectangle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="1"/></svg><span class="btn-label">Rect</span></button>
     </div>
-    <div class="tg"><button class="t-btn" id="tool-clear" title="Clear drawings">Clear</button></div>
+    <div class="tg"><button class="t-btn" id="tool-clear" title="Clear drawings"><span class="btn-label">Clear</span></button></div>
     <span class="t-sep"></span>
     <div class="ind-wrap">
-      <button class="ind-btn" id="ind-toggle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg> Indicators <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button class="ind-btn" id="ind-toggle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg> <span class="btn-label">Indicators</span> <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="ind-dd" id="ind-dd">
         <div class="ind-hd">Overlays</div>
         <label class="ind-opt"><input type="checkbox" id="ind-ma20" checked><span class="ind-cl" style="background:var(--yl)"></span> MA 20</label>
@@ -143,6 +179,7 @@
     let hasFitted=false;
     const $=id=>document.getElementById(id);
     const container=$('main-chart');
+    const mainWrap=$('main-wrap');
     const ov=$('draw-overlay');
     const ctx=ov.getContext('2d');
 
@@ -166,7 +203,6 @@
     const volS=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
     chart.priceScale('vol').applyOptions({scaleMargins:{top:.85,bottom:0}});
 
-    /* ── Overlay Indicators ── */
     let ma20L=null,ma50L=null,ma200L=null,bbU=null,bbD=null;
     function ensureOv(){
       if(!ma20L)ma20L=chart.addLineSeries({color:'#eab308',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
@@ -242,13 +278,21 @@
     const tfBar=$('tf-bar');
     TF_LIST.forEach(tf=>{const b=document.createElement('button');b.className='tf-btn'+(tf===curTF?' active':'');b.textContent=tf==='S30'?'30S':tf;b.addEventListener('click',()=>{curTF=tf;tfBar.querySelectorAll('.tf-btn').forEach(x=>x.classList.toggle('active',x===b));candles=[];hasFitted=false;loadChart();});tfBar.appendChild(b);});
 
-    new ResizeObserver(()=>{layoutSubCharts();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}}).observe($('chart-area'));
+    function syncOverlaySize(){
+      const rect=mainWrap.getBoundingClientRect();
+      const dpr=window.devicePixelRatio||1;
+      ov.width=rect.width*dpr;
+      ov.height=rect.height*dpr;
+      ov.style.width=rect.width+'px';
+      ov.style.height=rect.height+'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    new ResizeObserver(()=>{layoutSubCharts();syncOverlaySize();try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}}).observe($('chart-area'));
 
     $('ind-toggle').addEventListener('click',e=>{e.stopPropagation();$('ind-dd').classList.toggle('show');$('ind-toggle').classList.toggle('open');});
     document.addEventListener('click',e=>{if(!$('ind-dd').contains(e.target)&&e.target!==$('ind-toggle')){$('ind-dd').classList.remove('show');$('ind-toggle').classList.remove('open');}});
     ['ind-ma20','ind-ma50','ind-ma200','ind-bb','ind-rsi','ind-macd'].forEach(id=>{$(id).addEventListener('change',()=>{updOv();updSub();});});
 
-    /* ── Resizable Panels ── */
     let dragTarget=null,dragStartY=0,dragStartH=0;
     function initDrag(handleId,target,getter,setter){
       $(handleId).addEventListener('mousedown',e=>{
@@ -256,6 +300,10 @@
         document.addEventListener('mousemove',onDragMove);document.addEventListener('mouseup',onDragEnd);
         document.body.style.cursor='row-resize';document.body.style.userSelect='none';
       });
+      $(handleId).addEventListener('touchstart',e=>{
+        e.preventDefault();dragTarget=target;dragStartY=e.touches[0].clientY;dragStartH=getter();
+        document.addEventListener('touchmove',onDragTouchMove,{passive:false});document.addEventListener('touchend',onDragTouchEnd);
+      },{passive:false});
     }
     function onDragMove(e){
       if(!dragTarget)return;
@@ -264,9 +312,19 @@
       if(dragTarget==='macd')$('macd-panel').style.height=(macdHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';
       resizeAll();
     }
+    function onDragTouchMove(e){
+      e.preventDefault();
+      if(!dragTarget)return;
+      const dy=dragStartY-e.touches[0].clientY;
+      if(dragTarget==='rsi')$('rsi-panel').style.height=(rsiHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';
+      if(dragTarget==='macd')$('macd-panel').style.height=(macdHeight=Math.max(60,Math.min(350,dragStartH+dy)))+'px';
+      resizeAll();
+    }
     function onDragEnd(){dragTarget=null;document.removeEventListener('mousemove',onDragMove);document.removeEventListener('mouseup',onDragEnd);document.body.style.cursor='';document.body.style.userSelect='';}
+    function onDragTouchEnd(){dragTarget=null;document.removeEventListener('touchmove',onDragTouchMove);document.removeEventListener('touchend',onDragTouchEnd);}
     initDrag('drag-rsi','rsi',()=>rsiHeight,v=>{rsiHeight=v;});initDrag('drag-macd','macd',()=>macdHeight,v=>{macdHeight=v;});
     function resizeAll(){
+      syncOverlaySize();
       try{chart.applyOptions({width:container.clientWidth,height:container.clientHeight});}catch(e){}
       if(rsiChart&&$('ind-rsi').checked)try{rsiChart.applyOptions({width:$('rsi-chart').clientWidth,height:$('rsi-chart').clientHeight});}catch(e){}
       if(macdChart&&$('ind-macd').checked)try{macdChart.applyOptions({width:$('macd-chart').clientWidth,height:$('macd-chart').clientHeight});}catch(e){}
@@ -274,7 +332,7 @@
 
     /* ══════════════════════════════════════════════════════════════
        COORDINATE SYSTEM — pure manual, no LWC coordinate methods
-       Round-trip guaranteed: pxToTime(timeToPx(t)) === t
+       Uses mainWrap (parent of both chart and overlay) for alignment
        ══════════════════════════════════════════════════════════════ */
     const SM={top:.08,bottom:.15};
 
@@ -338,15 +396,12 @@
        ══════════════════════════════════════════════ */
     let drawMode=null,drawPts=[],drawings=[],mouseX=0,mouseY=0;
 
-    function resizeOv(){const r=ov.parentElement.getBoundingClientRect();ov.width=r.width*devicePixelRatio;ov.height=r.height*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);redraw();}
-    new ResizeObserver(resizeOv).observe(ov.parentElement);resizeOv();
-
     const tip=$('draw-tip');
     function showTip(x,y,text){tip.style.display='block';tip.style.left=x+'px';tip.style.top=y+'px';tip.textContent=text;}
     function hideTip(){tip.style.display='none';}
 
     function redraw(){
-      const W=ov.clientWidth,H=ov.clientHeight;
+      const W=mainWrap.clientWidth,H=mainWrap.clientHeight;
       ctx.clearRect(0,0,W,H);
       drawings.forEach(d=>{
         ctx.save();
@@ -366,13 +421,14 @@
           ctx.fillStyle='rgba(96,165,250,.06)';ctx.fillRect(lx,ly,w,h);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1;ctx.strokeRect(lx,ly,w,h);
         }else if(d.type==='fib'){
           const x1=timeToPx(d.t1),y1=priceToPx(d.p1),x2=timeToPx(d.t2),y2=priceToPx(d.p2);
-          const lvls=[0,.236,.382,.5,.618,.786,1];const dp=d.p2-d.p1;
-          ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1));
-          lvls.forEach(lv=>{const y=y1+(y2-y1)*lv;const price=d.p2-dp*lv;
-            ctx.strokeStyle='rgba(234,179,8,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(Math.min(x1,x2),y);ctx.lineTo(Math.max(x1,x2),y);ctx.stroke();ctx.setLineDash([]);
+          const lvls=[0,.236,.382,.5,.618,.786,1];
+          const minX=Math.min(x1,x2),maxX=Math.max(x1,x2),minY=Math.min(y1,y2),maxY=Math.max(y1,y2);
+          ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(minX,minY,maxX-minX,maxY-minY);
+          lvls.forEach(lv=>{const y=y1+(y2-y1)*lv;const price=d.p1+(d.p2-d.p1)*lv;
+            ctx.strokeStyle='rgba(234,179,8,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(minX,y);ctx.lineTo(maxX,y);ctx.stroke();ctx.setLineDash([]);
             const lbl=(lv*100).toFixed(1)+'% '+fmt(price);const tw=ctx.measureText(lbl).width;
-            ctx.fillStyle=lv===0||lv===1?'rgba(234,179,8,.15)':'rgba(234,179,8,.08)';ctx.fillRect(Math.min(x1,x2),y-9,tw+10,18);
-            ctx.fillStyle='rgba(234,179,8,.8)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText(lbl,Math.min(x1,x2)+4,y+3);
+            ctx.fillStyle=lv===0||lv===1?'rgba(234,179,8,.15)':'rgba(234,179,8,.08)';ctx.fillRect(minX,y-9,tw+10,18);
+            ctx.fillStyle='rgba(234,179,8,.8)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText(lbl,minX+4,y+3);
           });
         }
         ctx.restore();
@@ -382,12 +438,14 @@
 
     function drawPreview(){
       if(!drawMode||!drawPts.length)return;
-      const W=ov.clientWidth,H=ov.clientHeight;
+      const W=mainWrap.clientWidth,H=mainWrap.clientHeight;
       ctx.save();ctx.strokeStyle='rgba(96,165,250,.7)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.globalAlpha=.8;
       if(drawMode==='trend'&&drawPts.length===1){
         const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
         ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(mouseX,mouseY);ctx.stroke();
         ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(x1,y1,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(mouseX,mouseY,3,0,Math.PI*2);ctx.fill();
+        const price2=pxToPrice(mouseY),time2=pxToTime(mouseX);
+        if(price2!==null&&time2)showTip(mouseX,mouseY,fmt(price2)+' @ '+new Date(time2*1000).toLocaleTimeString());
       }else if(drawMode==='hline'){
         ctx.beginPath();ctx.moveTo(0,mouseY);ctx.lineTo(W,mouseY);ctx.stroke();
         const price=pxToPrice(mouseY);if(price!==null)showTip(mouseX,mouseY,fmt(price));
@@ -395,34 +453,65 @@
         ctx.beginPath();ctx.moveTo(mouseX,0);ctx.lineTo(mouseX,H);ctx.stroke();
         const time=pxToTime(mouseX);if(time)showTip(mouseX,mouseY,new Date(time*1000).toLocaleString());
       }else if(drawMode==='fib'&&drawPts.length===1){
-        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p),dy=mouseY-y1;
-        [0,.236,.382,.5,.618,.786,1].forEach(lv=>{const y=y1+dy*lv;
-          ctx.strokeStyle='rgba(234,179,8,.5)';ctx.beginPath();ctx.moveTo(Math.min(x1,mouseX),y);ctx.lineTo(Math.max(x1,mouseX),y);ctx.stroke();
-          const p1=pxToPrice(y1),p2=pxToPrice(mouseY);
-          if(p1!==null&&p2!==null){const price=p1-(p1-p2)*lv;ctx.setLineDash([]);ctx.fillStyle='rgba(234,179,8,.7)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';ctx.fillText((lv*100).toFixed(1)+'% '+fmt(price),Math.min(x1,mouseX)+4,y-3);}
+        const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
+        const p1=drawPts[0].p;
+        const p2=pxToPrice(mouseY);
+        if(p2===null){ctx.restore();return;}
+        const minX=Math.min(x1,mouseX),maxX=Math.max(x1,mouseX);
+        ctx.fillStyle='rgba(234,179,8,.04)';ctx.fillRect(minX,Math.min(y1,mouseY),maxX-minX,Math.abs(mouseY-y1));
+        [0,.236,.382,.5,.618,.786,1].forEach(lv=>{
+          const y=y1+(mouseY-y1)*lv;
+          const price=p1+(p2-p1)*lv;
+          ctx.strokeStyle='rgba(234,179,8,.5)';ctx.beginPath();ctx.moveTo(minX,y);ctx.lineTo(maxX,y);ctx.stroke();
+          ctx.setLineDash([]);ctx.fillStyle='rgba(234,179,8,.7)';ctx.font='9px JetBrains Mono';ctx.textAlign='left';
+          ctx.fillText((lv*100).toFixed(1)+'% '+fmt(price),minX+4,y-3);
         });
       }else if(drawMode==='rect'&&drawPts.length===1){
         const x1=timeToPx(drawPts[0].t),y1=priceToPx(drawPts[0].p);
-        ctx.fillStyle='rgba(96,165,250,.04)';ctx.fillRect(Math.min(x1,mouseX),Math.min(y1,mouseY),Math.abs(mouseX-x1),Math.abs(mouseY-y1));
-        ctx.strokeRect(Math.min(x1,mouseX),Math.min(y1,mouseY),Math.abs(mouseX-x1),Math.abs(mouseY-y1));
+        const lx=Math.min(x1,mouseX),ly=Math.min(y1,mouseY),w=Math.abs(mouseX-x1),h=Math.abs(mouseY-y1);
+        ctx.fillStyle='rgba(96,165,250,.04)';ctx.fillRect(lx,ly,w,h);ctx.strokeStyle='#60a5fa';ctx.lineWidth=1;ctx.strokeRect(lx,ly,w,h);
       }
       ctx.restore();
     }
 
+    function getCanvasXY(e){
+      const r=mainWrap.getBoundingClientRect();
+      return{x:e.clientX-r.left,y:e.clientY-r.top};
+    }
+
     ov.addEventListener('mousemove',e=>{
-      const r=ov.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;
+      const xy=getCanvasXY(e);mouseX=xy.x;mouseY=xy.y;
       if(drawMode){redraw();if(drawMode==='hline'){const p=pxToPrice(mouseY);if(p!==null)showTip(mouseX,mouseY,fmt(p));}else if(drawMode==='vline'){const t=pxToTime(mouseX);if(t)showTip(mouseX,mouseY,new Date(t*1000).toLocaleString());}else{hideTip();}}
     });
+    ov.addEventListener('touchmove',e=>{
+      if(!drawMode)return;
+      e.preventDefault();
+      const t=e.touches[0];const xy=getCanvasXY(t);mouseX=xy.x;mouseY=xy.y;
+      redraw();
+      if(drawMode==='hline'){const p=pxToPrice(mouseY);if(p!==null)showTip(mouseX,mouseY,fmt(p));}
+      else if(drawMode==='vline'){const t2=pxToTime(mouseX);if(t2)showTip(mouseX,mouseY,new Date(t2*1000).toLocaleString());}
+      else{hideTip();}
+    },{passive:false});
 
     ov.addEventListener('mousedown',e=>{
       if(!drawMode)return;if(e.button===2){drawPts=[];hideTip();redraw();return;}
-      e.preventDefault();const r=ov.getBoundingClientRect();const px=e.clientX-r.left,py=e.clientY-r.top;
-      if(drawMode==='hline'){const price=pxToPrice(py);if(price===null)return;drawings.push({type:'hline',price});hideTip();redraw();return;}
-      if(drawMode==='vline'){const time=pxToTime(px);if(!time)return;drawings.push({type:'vline',time});hideTip();redraw();return;}
-      const time=pxToTime(px),price=pxToPrice(py);if(time===null||price===null)return;
+      e.preventDefault();const xy=getCanvasXY(e);
+      if(drawMode==='hline'){const price=pxToPrice(xy.y);if(price===null)return;drawings.push({type:'hline',price});hideTip();redraw();return;}
+      if(drawMode==='vline'){const time=pxToTime(xy.x);if(!time)return;drawings.push({type:'vline',time});hideTip();redraw();return;}
+      const time=pxToTime(xy.x),price=pxToPrice(xy.y);if(time===null||price===null)return;
       drawPts.push({t:time,p:price});
       if(drawPts.length===2){drawings.push({type:drawMode,t1:drawPts[0].t,p1:drawPts[0].p,t2:drawPts[1].t,p2:drawPts[1].p});drawPts=[];hideTip();redraw();}
     });
+    ov.addEventListener('touchend',e=>{
+      if(!drawMode)return;
+      e.preventDefault();
+      const time=pxToTime(mouseX),price=pxToPrice(mouseY);
+      if(drawMode==='hline'){if(price!==null){drawings.push({type:'hline',price});hideTip();redraw();}return;}
+      if(drawMode==='vline'){if(time){drawings.push({type:'vline',time});hideTip();redraw();}return;}
+      if(time===null||price===null)return;
+      drawPts.push({t:time,p:price});
+      if(drawPts.length===2){drawings.push({type:drawMode,t1:drawPts[0].t,p1:drawPts[0].p,t2:drawPts[1].t,p2:drawPts[1].p});drawPts=[];hideTip();redraw();}
+    },{passive:false});
     ov.addEventListener('contextmenu',e=>{e.preventDefault();drawPts=[];hideTip();redraw();});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'){drawPts=[];hideTip();redraw();}if((e.key==='Delete'||e.key==='Backspace')&&drawings.length){drawings.pop();redraw();}});
 
